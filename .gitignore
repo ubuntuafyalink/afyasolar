@@ -8,4 +8,6 @@ certs/
 
 # local/editor artifacts
 .cursor/
+AGENTS.md
+CLAUDE.md
 tsconfig.tsbuildinfo
