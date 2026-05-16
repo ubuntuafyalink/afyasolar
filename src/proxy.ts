@@ -65,7 +65,7 @@ const handler = withAuth(
 )
 
 export function proxy(request: NextRequest, event: NextFetchEvent) {
-  return handler(request, event)
+  return handler(request as Parameters<typeof handler>[0], event)
 }
 
 export default proxy
