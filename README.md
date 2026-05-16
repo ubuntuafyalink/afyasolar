@@ -131,7 +131,7 @@ Full variable names and placeholders are in [`.env.example`](.env.example). Runt
 | `npm run dev` | Start dev server (webpack) |
 | `npm run build` | Production build |
 | `npm run start` | Run production server (after `build`) |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint (`eslint src`) |
 | `npm run type-check` | TypeScript check without emit |
 | `npm run db:migrate` | Run database migrations |
 | `npm run create-admin` | Create an admin user |

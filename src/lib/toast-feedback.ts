@@ -22,5 +22,5 @@ export async function notifyPromise<T>(
     loading: messages.loading,
     success: messages.success,
     error: (err) => messages.error ?? getErrorMessage(err),
-  })
+  }) as unknown as Promise<T>
 }
