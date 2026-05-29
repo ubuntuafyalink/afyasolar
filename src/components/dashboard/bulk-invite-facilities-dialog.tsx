@@ -10,6 +10,7 @@ import { Upload, FileSpreadsheet, Mail, Plus, X, Loader2, CheckCircle2, AlertCir
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 interface BulkInviteFacilitiesDialogProps {
   onSuccess?: () => void
@@ -303,14 +304,14 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
-          <Upload className="h-4 w-4" />
+          <Upload className="h-4 w-4" aria-hidden="true" />
           Bulk Invite
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+            <Mail className="h-5 w-5" aria-hidden="true" />
             Bulk Invite Facilities
           </DialogTitle>
           <DialogDescription>
@@ -321,11 +322,11 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "file" | "manual")} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="file" className="gap-2">
-              <FileSpreadsheet className="h-4 w-4" />
+              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
               Upload File
             </TabsTrigger>
             <TabsTrigger value="manual" className="gap-2">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Manual Entry
             </TabsTrigger>
           </TabsList>
@@ -353,8 +354,9 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
                         fileInputRef.current.value = ""
                       }
                     }}
+                    aria-label="Remove file"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 )}
               </div>
@@ -365,7 +367,7 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
 
             {isProcessing && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 Processing file...
               </div>
             )}
@@ -387,7 +389,7 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
                   {emailsFromFile.map((entry) => (
                     <div
                       key={entry.id}
-                      className="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100"
+                      className="flex items-center justify-between gap-2 p-2 bg-muted rounded-lg hover:bg-muted/70 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate">{entry.email}</div>
@@ -400,8 +402,9 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
                         size="sm"
                         onClick={() => removeFileEmail(entry.id)}
                         className="h-7 w-7 p-0"
+                        aria-label={`Remove ${entry.email}`}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3" aria-hidden="true" />
                       </Button>
                     </div>
                   ))}
@@ -420,21 +423,22 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
                   onClick={addManualEmail}
                   className="gap-2"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4" aria-hidden="true" />
                   Add Email
                 </Button>
               </div>
             </div>
 
             {manualEmails.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Click "Add Email" to start adding email addresses</p>
-              </div>
+              <EmptyState
+                icon={<Mail aria-hidden="true" />}
+                title="No emails added yet"
+                description='Click "Add Email" to start adding email addresses'
+              />
             ) : (
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {manualEmails.map((entry) => (
-                  <div key={entry.id} className="flex items-center gap-2 p-2 border rounded-md">
+                  <div key={entry.id} className="flex items-center gap-2 p-2 border border-border rounded-lg">
                     <Input
                       type="email"
                       placeholder="facility@example.com"
@@ -454,8 +458,9 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
                       size="sm"
                       onClick={() => removeManualEmail(entry.id)}
                       className="h-9 w-9 p-0"
+                      aria-label="Remove email row"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 ))}
@@ -466,13 +471,13 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
 
         {/* Summary */}
         {totalEmails > 0 && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="mt-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-sm font-medium text-blue-900">
+                <div className="text-sm font-medium text-foreground">
                   Ready to send {totalEmails} invitation{totalEmails !== 1 ? "s" : ""}
                 </div>
-                <div className="text-xs text-blue-700 mt-1">
+                <div className="text-xs text-muted-foreground mt-1">
                   {emailsFromFile.length > 0 && `${emailsFromFile.length} from file`}
                   {emailsFromFile.length > 0 && manualEmails.length > 0 && " + "}
                   {manualEmails.length > 0 && `${manualEmails.length} manual`}
@@ -484,15 +489,15 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
 
         {/* Progress */}
         {isSending && (
-          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
+          <div className="mt-4 p-4 bg-success/10 border border-success/30 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
-              <Loader2 className="h-4 w-4 animate-spin text-green-600" />
-              <span className="text-sm font-medium text-green-900">
+              <Loader2 className="h-4 w-4 animate-spin text-success" aria-hidden="true" />
+              <span className="text-sm font-medium text-success">
                 Sending invitations... ({sendProgress.sent}/{sendProgress.total})
               </span>
             </div>
             {sendProgress.failed > 0 && (
-              <div className="text-xs text-red-600 mt-1">
+              <div className="text-xs text-destructive mt-1">
                 {sendProgress.failed} failed
               </div>
             )}
@@ -514,12 +519,12 @@ export function BulkInviteFacilitiesDialog({ onSuccess }: BulkInviteFacilitiesDi
           >
             {isSending ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 Sending...
               </>
             ) : (
               <>
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4" aria-hidden="true" />
                 Send {totalEmails > 0 && `${totalEmails} `}Invitation{totalEmails !== 1 ? "s" : ""}
               </>
             )}

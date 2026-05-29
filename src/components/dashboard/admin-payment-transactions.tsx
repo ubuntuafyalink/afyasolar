@@ -46,6 +46,8 @@ import { formatCurrency, cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { SubscriptionCountdown } from "@/components/ui/subscription-countdown"
 import { AdminBlockingDialog } from "@/components/admin/admin-blocking-dialog"
+import { StatCard } from "@/components/ui/stat-card"
+import { EmptyState } from "@/components/ui/empty-state"
 
 interface PaymentTransaction {
   id: string
@@ -242,36 +244,36 @@ export function AdminPaymentTransactions() {
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { label: string; className: string; icon: typeof Clock }> = {
-      initiated: { label: "Initiated", className: "bg-gray-100 text-gray-800 border border-gray-300", icon: Clock },
-      pending: { label: "Pending", className: "bg-yellow-100 text-yellow-800 border border-yellow-300", icon: Clock },
-      awaiting_confirmation: { label: "Awaiting PIN", className: "bg-blue-100 text-blue-800 border border-blue-300", icon: AlertCircle },
-      processing: { label: "Processing", className: "bg-purple-100 text-purple-800 border border-purple-300", icon: RefreshCw },
-      completed: { label: "Completed", className: "bg-green-100 text-green-800 border border-green-300", icon: CheckCircle2 },
-      failed: { label: "Failed", className: "bg-red-100 text-red-800 border border-red-300", icon: XCircle },
-      cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-800 border border-gray-300", icon: XCircle },
+    const variants: Record<string, { label: string; variant: "secondary" | "warning" | "success" | "destructive"; icon: typeof Clock }> = {
+      initiated: { label: "Initiated", variant: "secondary", icon: Clock },
+      pending: { label: "Pending", variant: "warning", icon: Clock },
+      awaiting_confirmation: { label: "Awaiting PIN", variant: "secondary", icon: AlertCircle },
+      processing: { label: "Processing", variant: "secondary", icon: RefreshCw },
+      completed: { label: "Completed", variant: "success", icon: CheckCircle2 },
+      failed: { label: "Failed", variant: "destructive", icon: XCircle },
+      cancelled: { label: "Cancelled", variant: "secondary", icon: XCircle },
     }
 
     const variant = variants[status] || variants.pending
     const Icon = variant.icon
 
     return (
-      <Badge className={cn("flex items-center gap-1.5 px-2.5 py-1 font-semibold shadow-sm", variant.className)}>
-        <Icon className="h-3.5 w-3.5" />
+      <Badge variant={variant.variant} className="flex items-center gap-1.5 px-2.5 py-1 font-semibold">
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         {variant.label}
       </Badge>
     )
   }
 
   const getServiceBadge = (serviceName: string) => {
-    const variants: Record<string, { label: string; className: string }> = {
-      'afya-solar': { label: "Afya Solar", className: "bg-yellow-50 text-yellow-700 border border-yellow-300 shadow-sm" },
+    const variants: Record<string, { label: string }> = {
+      'afya-solar': { label: "Afya Solar" },
     }
 
-    const variant = variants[serviceName] || { label: serviceName, className: "bg-gray-50 text-gray-700 border border-gray-300" }
+    const variant = variants[serviceName] || { label: serviceName }
 
     return (
-      <Badge variant="outline" className={cn("px-2.5 py-1 font-semibold shadow-sm", variant.className)}>
+      <Badge variant="solar" className="px-2.5 py-1 font-semibold">
         {variant.label}
       </Badge>
     )
@@ -282,7 +284,7 @@ export function AdminPaymentTransactions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Payment Transactions</h2>
+          <h2 className="text-2xl font-semibold">Payment Transactions</h2>
           <p className="text-muted-foreground">
             View all Azam Pay payment transactions from facilities
           </p>
@@ -290,7 +292,7 @@ export function AdminPaymentTransactions() {
         <div className="flex items-center gap-2">
           {isFetching && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <RefreshCw className="h-4 w-4 animate-spin" />
+              <RefreshCw className="h-4 w-4 animate-spin" aria-hidden="true" />
               <span>Updating...</span>
             </div>
           )}
@@ -300,58 +302,38 @@ export function AdminPaymentTransactions() {
             disabled={isFetching}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
+            <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} aria-hidden="true" />
             Refresh
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <CreditCard className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Completed</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              </div>
-              <CheckCircle2 className="h-8 w-8 text-green-500/50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-500/50" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Revenue</p>
-                <p className="text-xl font-bold text-green-600">{formatCurrency(stats.totalAmount)}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-500/50" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total"
+          value={stats.total}
+          icon={<CreditCard aria-hidden="true" />}
+          accent="muted"
+        />
+        <StatCard
+          title="Completed"
+          value={stats.completed}
+          icon={<CheckCircle2 aria-hidden="true" />}
+          accent="success"
+        />
+        <StatCard
+          title="Pending"
+          value={stats.pending}
+          icon={<Clock aria-hidden="true" />}
+          accent="warning"
+        />
+        <StatCard
+          title="Revenue"
+          value={formatCurrency(stats.totalAmount)}
+          icon={<TrendingUp aria-hidden="true" />}
+          accent="success"
+        />
       </div>
 
       {/* Filters */}
@@ -359,7 +341,7 @@ export function AdminPaymentTransactions() {
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" aria-hidden="true" />
               <Input
                 placeholder="Search by transaction ID, mobile number..."
                 value={searchQuery}
@@ -372,7 +354,7 @@ export function AdminPaymentTransactions() {
             </div>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1) }}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -387,7 +369,7 @@ export function AdminPaymentTransactions() {
             </Select>
             <Select value={serviceFilter} onValueChange={(v) => { setServiceFilter(v); setPage(1) }}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <Building2 className="h-4 w-4 mr-2" />
+                <Building2 className="h-4 w-4 mr-2" aria-hidden="true" />
                 <SelectValue placeholder="Service" />
               </SelectTrigger>
               <SelectContent>
@@ -397,7 +379,7 @@ export function AdminPaymentTransactions() {
             </Select>
             <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1) }}>
               <SelectTrigger className="w-full sm:w-[150px]">
-                <TrendingUp className="h-4 w-4 mr-2" />
+                <TrendingUp className="h-4 w-4 mr-2" aria-hidden="true" />
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -461,7 +443,7 @@ export function AdminPaymentTransactions() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8 text-muted-foreground">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" aria-hidden="true" />
               Loading transactions...
             </div>
           </CardContent>
@@ -470,8 +452,8 @@ export function AdminPaymentTransactions() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <AlertCircle className="h-12 w-12 mx-auto mb-3 text-red-500" />
-              <p className="text-red-600 font-medium">Error loading transactions</p>
+              <AlertCircle className="h-12 w-12 mx-auto mb-3 text-destructive" aria-hidden="true" />
+              <p className="text-destructive font-medium">Error loading transactions</p>
               <p className="text-sm text-muted-foreground mt-2">
                 {error instanceof Error ? error.message : 'An unexpected error occurred'}
               </p>
@@ -480,34 +462,30 @@ export function AdminPaymentTransactions() {
                 variant="outline"
                 className="mt-4"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
                 Retry
               </Button>
             </div>
           </CardContent>
         </Card>
       ) : transactions.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground">
-              <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No transactions found</p>
-              <p className="text-sm mt-1">Try adjusting your filters</p>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<CreditCard aria-hidden="true" />}
+          title="No transactions found"
+          description="Try adjusting your filters"
+        />
       ) : (
         <div className="space-y-3">
           {transactions.map((transaction) => (
             <Card
               key={transaction.id}
               className={cn(
-                "hover:shadow-lg transition-all cursor-pointer border-2",
-                transaction.status === "pending" && "border-yellow-300 border-l-4 bg-yellow-50/30",
-                transaction.status === "failed" && "border-red-300 border-l-4 bg-red-50/30",
-                transaction.status === "completed" && "border-green-300 border-l-4 bg-green-50/20",
-                transaction.status === "awaiting_confirmation" && "border-blue-300 border-l-4 bg-blue-50/30",
-                transaction.status === "processing" && "border-purple-300 border-l-4 bg-purple-50/30"
+                "hover:shadow-md transition-shadow cursor-pointer border",
+                transaction.status === "pending" && "border-l-4 border-l-warning",
+                transaction.status === "failed" && "border-l-4 border-l-destructive",
+                transaction.status === "completed" && "border-l-4 border-l-success",
+                transaction.status === "awaiting_confirmation" && "border-l-4 border-l-primary",
+                transaction.status === "processing" && "border-l-4 border-l-primary"
               )}
               onClick={() => handleViewDetails(transaction)}
             >
@@ -519,11 +497,11 @@ export function AdminPaymentTransactions() {
                       <div className="flex items-center gap-2">
                         <Smartphone className={cn(
                           "h-4 w-4",
-                          transaction.status === "completed" ? "text-green-600" : 
-                          transaction.status === "failed" ? "text-red-600" :
-                          transaction.status === "pending" ? "text-yellow-600" :
+                          transaction.status === "completed" ? "text-success" :
+                          transaction.status === "failed" ? "text-destructive" :
+                          transaction.status === "pending" ? "text-warning" :
                           "text-muted-foreground"
-                        )} />
+                        )} aria-hidden="true" />
                         <span className="font-medium">
                           {transaction.mobileNumber || transaction.externalId.substring(0, 16)}
                         </span>
@@ -545,34 +523,34 @@ export function AdminPaymentTransactions() {
                     {/* Details */}
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
+                        <Building2 className="h-3 w-3" aria-hidden="true" />
                         <span className="font-medium">{transaction.facilityName || "Unknown Facility"}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
+                        <Calendar className="h-3 w-3" aria-hidden="true" />
                         {format(new Date(transaction.createdAt), "MMM dd, HH:mm")}
                       </div>
                       {transaction.completedAt && transaction.status === "completed" && (
-                        <div className="flex items-center gap-1 text-green-600">
-                          <CheckCircle2 className="h-3 w-3" />
+                        <div className="flex items-center gap-1 text-success">
+                          <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
                           <span className="font-medium">Completed {format(new Date(transaction.completedAt), "MMM dd")}</span>
                         </div>
                       )}
                       {transaction.mobileProvider && (
                         <div className="flex items-center gap-1">
-                          <Smartphone className="h-3 w-3" />
+                          <Smartphone className="h-3 w-3" aria-hidden="true" />
                           {transaction.mobileProvider}
                         </div>
                       )}
-                      <div className="text-xs font-mono bg-gray-100 px-2 py-0.5 rounded border">
+                      <div className="text-xs font-mono bg-muted px-2 py-0.5 rounded border border-border">
                         {transaction.externalId.substring(0, 20)}...
                       </div>
                     </div>
 
                     {transaction.failureReason && (
-                      <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                        <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm text-red-700">{transaction.failureReason}</p>
+                      <div className="flex items-start gap-2 p-2 bg-destructive/10 border border-destructive/30 rounded-lg">
+                        <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" aria-hidden="true" />
+                        <p className="text-sm text-destructive">{transaction.failureReason}</p>
                       </div>
                     )}
                   </div>
@@ -581,10 +559,10 @@ export function AdminPaymentTransactions() {
                   <div className="text-right space-y-2">
                     <div className={cn(
                       "text-2xl font-bold",
-                      transaction.status === "completed" ? "text-green-600" : 
-                      transaction.status === "failed" ? "text-red-600" :
-                      transaction.status === "pending" ? "text-yellow-600" :
-                      "text-gray-700"
+                      transaction.status === "completed" ? "text-success" :
+                      transaction.status === "failed" ? "text-destructive" :
+                      transaction.status === "pending" ? "text-warning" :
+                      "text-foreground"
                     )}>
                       {formatCurrency(Number(transaction.amount))}
                     </div>
@@ -614,8 +592,9 @@ export function AdminPaymentTransactions() {
               size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
+              aria-label="Previous page"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
             <span className="text-sm px-3">
               Page {page} of {pagination.totalPages}
@@ -625,8 +604,9 @@ export function AdminPaymentTransactions() {
               size="sm"
               onClick={() => setPage(p => p + 1)}
               disabled={!pagination.hasMore}
+              aria-label="Next page"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -645,7 +625,7 @@ export function AdminPaymentTransactions() {
           {selectedTransaction && (
             <div className="space-y-6">
               {/* Status and Amount */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg border border-border">
                 <div>
                   <p className="text-sm text-muted-foreground font-medium">Status</p>
                   <div className="mt-1">{getStatusBadge(selectedTransaction.status)}</div>
@@ -654,7 +634,7 @@ export function AdminPaymentTransactions() {
                   <p className="text-sm text-muted-foreground font-medium">Amount</p>
                   <p className={cn(
                     "text-3xl font-bold",
-                    selectedTransaction.status === "completed" ? "text-green-600" : "text-gray-700"
+                    selectedTransaction.status === "completed" ? "text-success" : "text-foreground"
                   )}>
                     {formatCurrency(Number(selectedTransaction.amount))}
                   </p>
@@ -663,15 +643,15 @@ export function AdminPaymentTransactions() {
 
               {/* Subscription Countdown - Show for completed transactions */}
               {selectedTransaction.status === "completed" && selectedTransaction.subscriptionExpiryDate && (
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                  <p className="text-sm font-medium text-green-900 mb-2">Subscription Status</p>
+                <div className="p-4 bg-success/10 rounded-lg border border-success/30">
+                  <p className="text-sm font-medium text-success mb-2">Subscription Status</p>
                   <SubscriptionCountdown
                     expiryDate={selectedTransaction.subscriptionExpiryDate}
                     billingCycle={selectedTransaction.billingCycle as "monthly" | "yearly" | null}
                     className="w-full"
                   />
                   {selectedTransaction.subscriptionExpiryDate && (
-                    <p className="text-xs text-green-700 mt-2">
+                    <p className="text-xs text-success/90 mt-2">
                       Expires: {format(new Date(selectedTransaction.subscriptionExpiryDate), "MMM dd, yyyy 'at' HH:mm")}
                     </p>
                   )}
@@ -722,34 +702,34 @@ export function AdminPaymentTransactions() {
               </div>
 
               {/* Payment Method */}
-              <div className="p-4 bg-blue-50 rounded-lg space-y-2">
-                <label className="text-sm font-medium text-blue-900">Payment Details</label>
+              <div className="p-4 bg-muted rounded-lg space-y-2">
+                <label className="text-sm font-medium text-foreground">Payment Details</label>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-blue-700">Type:</span>
+                    <span className="text-muted-foreground">Type:</span>
                     <span className="ml-2 font-medium capitalize">{selectedTransaction.paymentType}</span>
                   </div>
                   {selectedTransaction.mobileProvider && (
                     <div>
-                      <span className="text-blue-700">Provider:</span>
+                      <span className="text-muted-foreground">Provider:</span>
                       <span className="ml-2 font-medium">{selectedTransaction.mobileProvider}</span>
                     </div>
                   )}
                   {selectedTransaction.mobileNumber && (
                     <div>
-                      <span className="text-blue-700">Mobile:</span>
+                      <span className="text-muted-foreground">Mobile:</span>
                       <span className="ml-2 font-medium">{selectedTransaction.mobileNumber}</span>
                     </div>
                   )}
                   {selectedTransaction.bankName && (
                     <div>
-                      <span className="text-blue-700">Bank:</span>
+                      <span className="text-muted-foreground">Bank:</span>
                       <span className="ml-2 font-medium">{selectedTransaction.bankName}</span>
                     </div>
                   )}
                   {selectedTransaction.billingCycle && (
                     <div>
-                      <span className="text-blue-700">Billing:</span>
+                      <span className="text-muted-foreground">Billing:</span>
                       <span className="ml-2 font-medium capitalize">{selectedTransaction.billingCycle}</span>
                     </div>
                   )}
@@ -769,13 +749,13 @@ export function AdminPaymentTransactions() {
                 {selectedTransaction.completedAt && (
                   <div>
                     <label className="text-muted-foreground">Completed</label>
-                    <p className="mt-1 text-green-600">{format(new Date(selectedTransaction.completedAt), "MMM dd, yyyy HH:mm:ss")}</p>
+                    <p className="mt-1 text-success">{format(new Date(selectedTransaction.completedAt), "MMM dd, yyyy HH:mm:ss")}</p>
                   </div>
                 )}
                 {selectedTransaction.failedAt && (
                   <div>
                     <label className="text-muted-foreground">Failed</label>
-                    <p className="mt-1 text-red-600">{format(new Date(selectedTransaction.failedAt), "MMM dd, yyyy HH:mm:ss")}</p>
+                    <p className="mt-1 text-destructive">{format(new Date(selectedTransaction.failedAt), "MMM dd, yyyy HH:mm:ss")}</p>
                   </div>
                 )}
               </div>
@@ -784,7 +764,7 @@ export function AdminPaymentTransactions() {
               {(selectedTransaction.statusMessage || selectedTransaction.failureReason) && (
                 <div className={cn(
                   "p-4 rounded-lg",
-                  selectedTransaction.status === "failed" ? "bg-red-50" : "bg-gray-50"
+                  selectedTransaction.status === "failed" ? "bg-destructive/10" : "bg-muted"
                 )}>
                   {selectedTransaction.statusMessage && (
                     <div>
@@ -794,8 +774,8 @@ export function AdminPaymentTransactions() {
                   )}
                   {selectedTransaction.failureReason && (
                     <div className="mt-2">
-                      <label className="text-sm font-medium text-red-700">Failure Reason</label>
-                      <p className="mt-1 text-sm text-red-600">{selectedTransaction.failureReason}</p>
+                      <label className="text-sm font-medium text-destructive">Failure Reason</label>
+                      <p className="mt-1 text-sm text-destructive">{selectedTransaction.failureReason}</p>
                     </div>
                   )}
                 </div>
@@ -814,16 +794,16 @@ export function AdminPaymentTransactions() {
                       }}
                       disabled={updateStatusMutation.isPending}
                       variant="default"
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full"
                     >
                       {updateStatusMutation.isPending ? (
                         <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                           Marking as Completed...
                         </>
                       ) : (
                         <>
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />
                           Mark as Completed & Send SMS
                         </>
                       )}
@@ -845,12 +825,12 @@ export function AdminPaymentTransactions() {
                     >
                       {verifyPaymentMutation.isPending ? (
                         <>
-                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                          <RefreshCw className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                           Verifying with Azam Pay...
                         </>
                       ) : (
                         <>
-                          <ShieldCheck className="mr-2 h-4 w-4" />
+                          <ShieldCheck className="mr-2 h-4 w-4" aria-hidden="true" />
                           Verify Payment with Azam Pay
                         </>
                       )}
@@ -899,7 +879,7 @@ export function AdminPaymentTransactions() {
                 >
                   {updateStatusMutation.isPending ? (
                     <>
-                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                       Updating...
                     </>
                   ) : (

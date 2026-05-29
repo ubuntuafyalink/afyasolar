@@ -28,6 +28,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { StatCard } from "@/components/ui/stat-card"
+import { EmptyState } from "@/components/ui/empty-state"
 import {
   Dialog,
   DialogContent,
@@ -61,10 +63,10 @@ interface Referral {
 }
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700 border-yellow-300",
-  registered: "bg-blue-100 text-blue-700 border-blue-300",
-  benefit_applied: "bg-green-100 text-green-700 border-green-300",
-  expired: "bg-gray-100 text-gray-700 border-gray-300",
+  pending: "bg-warning/15 text-warning border-warning/30",
+  registered: "bg-primary/10 text-primary border-primary/30",
+  benefit_applied: "bg-success/15 text-success border-success/30",
+  expired: "bg-muted text-muted-foreground border-border",
 }
 
 export function AdminReferrals() {
@@ -140,7 +142,7 @@ export function AdminReferrals() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
       </div>
     )
   }
@@ -150,8 +152,8 @@ export function AdminReferrals() {
       <Card>
         <CardContent className="py-12">
           <div className="text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-600">Failed to load referrals</p>
+            <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" aria-hidden="true" />
+            <p className="text-destructive">Failed to load referrals</p>
           </div>
         </CardContent>
       </Card>
@@ -170,7 +172,7 @@ export function AdminReferrals() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-green-600" />
+            <Gift className="h-5 w-5 text-primary" aria-hidden="true" />
             Referral Program Management
           </CardTitle>
           <CardDescription>
@@ -179,30 +181,38 @@ export function AdminReferrals() {
         </CardHeader>
         <CardContent>
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-600 font-medium">Total Referrals</p>
-              <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-600 font-medium">Pending</p>
-              <p className="text-2xl font-bold text-yellow-900">{stats.pending}</p>
-            </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-sm text-green-600 font-medium">Registered</p>
-              <p className="text-2xl font-bold text-green-900">{stats.registered}</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-              <p className="text-sm text-emerald-600 font-medium">Approved</p>
-              <p className="text-2xl font-bold text-emerald-900">{stats.approved}</p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard
+              title="Total Referrals"
+              value={stats.total}
+              icon={<Gift aria-hidden="true" />}
+              accent="primary"
+            />
+            <StatCard
+              title="Pending"
+              value={stats.pending}
+              icon={<Clock aria-hidden="true" />}
+              accent="warning"
+            />
+            <StatCard
+              title="Registered"
+              value={stats.registered}
+              icon={<Building2 aria-hidden="true" />}
+              accent="primary"
+            />
+            <StatCard
+              title="Approved"
+              value={stats.approved}
+              icon={<CheckCircle2 aria-hidden="true" />}
+              accent="success"
+            />
           </div>
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   placeholder="Search by referral code, referrer, or referred facility..."
                   value={searchQuery}
@@ -213,7 +223,7 @@ export function AdminReferrals() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -233,12 +243,12 @@ export function AdminReferrals() {
                 <Card
                   key={referral.id}
                   className={cn(
-                    "border-l-4",
+                    "border-l-4 transition-shadow hover:shadow-md",
                     referral.benefitApproved
-                      ? "border-l-green-500"
+                      ? "border-l-success"
                       : referral.status === "registered"
-                      ? "border-l-blue-500"
-                      : "border-l-yellow-500"
+                      ? "border-l-primary"
+                      : "border-l-warning"
                   )}
                 >
                   <CardContent className="p-4">
@@ -249,10 +259,7 @@ export function AdminReferrals() {
                             <div className="flex flex-wrap items-center gap-2 mb-2">
                               <Badge
                                 variant="outline"
-                                className={cn(
-                                  "text-xs font-mono",
-                                  "bg-gray-100 text-gray-700 border-gray-300"
-                                )}
+                                className="text-xs font-mono bg-muted text-muted-foreground border-border"
                               >
                                 Code: {referral.referralCode}
                               </Badge>
@@ -266,10 +273,7 @@ export function AdminReferrals() {
                                 {referral.status.replace("_", " ").toUpperCase()}
                               </Badge>
                               {referral.benefitApproved && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs bg-green-100 text-green-700 border-green-300"
-                                >
+                                <Badge variant="success" className="text-xs">
                                   Benefit Approved
                                 </Badge>
                               )}
@@ -279,46 +283,46 @@ export function AdminReferrals() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <p className="text-xs font-semibold text-gray-500">Referrer Facility</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Referrer Facility</p>
                             <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-gray-400" />
-                              <p className="text-sm font-medium text-gray-900">
+                              <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                              <p className="text-sm font-medium text-foreground">
                                 {referral.referrer?.name || "Unknown"}
                               </p>
                             </div>
                             {referral.referrer?.email && (
-                              <p className="text-xs text-gray-600 ml-6">
+                              <p className="text-xs text-muted-foreground ml-6">
                                 {referral.referrer.email}
                               </p>
                             )}
                           </div>
 
                           <div className="space-y-1">
-                            <p className="text-xs font-semibold text-gray-500">Referred Facility</p>
+                            <p className="text-xs font-semibold text-muted-foreground">Referred Facility</p>
                             <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-gray-400" />
-                              <p className="text-sm font-medium text-gray-900">
+                              <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                              <p className="text-sm font-medium text-foreground">
                                 {referral.referred?.name || "Not yet registered"}
                               </p>
                             </div>
                             {referral.referred?.email && (
-                              <p className="text-xs text-gray-600 ml-6">
+                              <p className="text-xs text-muted-foreground ml-6">
                                 {referral.referred.email}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5" />
+                            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>
                               Referred: {format(new Date(referral.createdAt), "MMM d, yyyy")}
                             </span>
                           </div>
                           {referral.benefitApprovedAt && (
                             <div className="flex items-center gap-1.5">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                              <CheckCircle2 className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
                               <span>
                                 Approved: {format(new Date(referral.benefitApprovedAt), "MMM d, yyyy")}
                               </span>
@@ -327,11 +331,11 @@ export function AdminReferrals() {
                         </div>
 
                         {referral.status === "registered" && !referral.benefitApproved && (
-                          <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <p className="text-xs font-semibold text-yellow-800 mb-1">
+                          <div className="mt-3 p-3 bg-warning/10 border border-warning/30 rounded-lg">
+                            <p className="text-xs font-semibold text-warning mb-1">
                               Benefit Available
                             </p>
-                            <p className="text-xs text-yellow-700">
+                            <p className="text-xs text-warning/90">
                               This facility registered via referral. Approve to grant them free Afya
                               Booking for the next month.
                             </p>
@@ -345,18 +349,14 @@ export function AdminReferrals() {
                             size="sm"
                             onClick={() => handleApprove(referral)}
                             disabled={approveMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700"
                           >
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            <CheckCircle2 className="h-4 w-4 mr-2" aria-hidden="true" />
                             Approve Benefit
                           </Button>
                         )}
                         {referral.benefitApproved && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs bg-green-100 text-green-700 border-green-300 w-full justify-center"
-                          >
-                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                          <Badge variant="success" className="text-xs w-full justify-center">
+                            <CheckCircle2 className="h-3 w-3 mr-1" aria-hidden="true" />
                             Benefit Approved
                           </Badge>
                         )}
@@ -367,10 +367,10 @@ export function AdminReferrals() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No referrals found</p>
-            </div>
+            <EmptyState
+              icon={<Gift aria-hidden="true" />}
+              title="No referrals found"
+            />
           )}
         </CardContent>
       </Card>
@@ -387,17 +387,17 @@ export function AdminReferrals() {
           </DialogHeader>
           {selectedReferral && (
             <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg space-y-2">
+              <div className="p-4 bg-muted rounded-lg space-y-2">
                 <p className="text-sm font-semibold">Referrer Facility:</p>
-                <p className="text-sm text-gray-700">{selectedReferral.referrer?.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedReferral.referrer?.name}</p>
                 <p className="text-sm font-semibold mt-2">Referred Facility:</p>
-                <p className="text-sm text-gray-700">{selectedReferral.referred?.name}</p>
+                <p className="text-sm text-muted-foreground">{selectedReferral.referred?.name}</p>
                 <p className="text-sm font-semibold mt-2">Referral Code:</p>
-                <p className="text-sm font-mono text-gray-700">{selectedReferral.referralCode}</p>
+                <p className="text-sm font-mono text-muted-foreground">{selectedReferral.referralCode}</p>
               </div>
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800">
-                  <strong>Benefit:</strong> Free Afya Booking access for the next month (upon
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm text-foreground">
+                  <strong className="text-primary">Benefit:</strong> Free Afya Booking access for the next month (upon
                   approval)
                 </p>
               </div>
@@ -414,16 +414,15 @@ export function AdminReferrals() {
             <Button
               onClick={confirmApprove}
               disabled={approveMutation.isPending}
-              className="bg-green-600 hover:bg-green-700"
             >
               {approveMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                   Approving...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />
                   Approve Benefit
                 </>
               )}

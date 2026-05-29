@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, Trash2, Phone } from "lucide-react"
 import { toast } from "sonner"
+import { EmptyState } from "@/components/ui/empty-state"
 
 interface User {
   id: string
@@ -31,35 +32,35 @@ function getInvitationStatus(user: User): { label: string; color: string; icon: 
   if (user.emailVerified) {
     return {
       label: 'Verified',
-      color: 'bg-green-100 text-green-700 border-green-200',
-      icon: <CheckCircle2 className="w-3 h-3" />,
+      color: 'bg-success/15 text-success border-success/30',
+      icon: <CheckCircle2 className="w-3 h-3" aria-hidden="true" />,
     }
   }
-  
+
   if (user.invitationSentAt) {
     const sentDate = new Date(user.invitationSentAt)
     const now = new Date()
     const hoursSinceSent = (now.getTime() - sentDate.getTime()) / (1000 * 60 * 60)
-    
+
     if (hoursSinceSent > 24) {
       return {
         label: 'Expired',
-        color: 'bg-red-100 text-red-700 border-red-200',
-        icon: <XCircle className="w-3 h-3" />,
+        color: 'bg-destructive/10 text-destructive border-destructive/30',
+        icon: <XCircle className="w-3 h-3" aria-hidden="true" />,
       }
     }
-    
+
     return {
       label: 'Pending',
-      color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      icon: <Clock className="w-3 h-3" />,
+      color: 'bg-warning/15 text-warning border-warning/30',
+      icon: <Clock className="w-3 h-3" aria-hidden="true" />,
     }
   }
-  
+
   return {
     label: 'Not Sent',
-    color: 'bg-gray-100 text-gray-700 border-gray-200',
-    icon: <Mail className="w-3 h-3" />,
+    color: 'bg-muted text-muted-foreground border-border',
+    icon: <Mail className="w-3 h-3" aria-hidden="true" />,
   }
 }
 
@@ -232,8 +233,8 @@ export function UserManagement() {
       <Card>
         <CardContent className="py-6">
           <div className="text-center">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-green-600" />
-            <p className="text-sm text-gray-600">Loading...</p>
+            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" aria-hidden="true" />
+            <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
         </CardContent>
       </Card>
@@ -246,7 +247,7 @@ export function UserManagement() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="w-4 h-4 text-green-600" />
+              <Users className="w-4 h-4 text-primary" aria-hidden="true" />
               User Management
             </CardTitle>
             <CardDescription className="text-xs">
@@ -255,8 +256,8 @@ export function UserManagement() {
           </div>
           <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700 text-xs h-8 px-3">
-                <Plus className="w-3 h-3 mr-1.5" />
+              <Button className="text-xs h-8 px-3">
+                <Plus className="w-3 h-3 mr-1.5" aria-hidden="true" />
                 Add Admin
               </Button>
             </DialogTrigger>
@@ -289,14 +290,14 @@ export function UserManagement() {
                     className="text-sm h-8"
                   />
                 </div>
-                <Button 
-                  onClick={handleInviteAdmin} 
-                  disabled={isInviting} 
-                  className="w-full bg-green-600 hover:bg-green-700 text-xs h-8"
+                <Button
+                  onClick={handleInviteAdmin}
+                  disabled={isInviting}
+                  className="w-full text-xs h-8"
                 >
                   {isInviting ? (
                     <>
-                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                      <Loader2 className="w-3 h-3 mr-1.5 animate-spin" aria-hidden="true" />
                       Sending...
                     </>
                   ) : (
@@ -322,7 +323,7 @@ export function UserManagement() {
               <Button variant="outline" onClick={() => setUserToDelete(null)} disabled={deleting}>
                 Cancel
               </Button>
-              <Button className="bg-red-600 hover:bg-red-700" onClick={confirmDelete} disabled={deleting}>
+              <Button variant="destructive" onClick={confirmDelete} disabled={deleting}>
                 {deleting ? 'Deleting...' : 'Delete'}
               </Button>
             </div>
@@ -332,7 +333,7 @@ export function UserManagement() {
         {/* Search and Filters */}
         <div className="space-y-3 mb-4">
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-gray-400" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             <Input
               placeholder="Search by name or email..."
               value={searchQuery}
@@ -375,13 +376,13 @@ export function UserManagement() {
                 return (
                   <div
                     key={user.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded bg-white gap-3"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border border-border rounded-lg bg-card gap-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h3 className="font-medium text-sm truncate">{user.name}</h3>
                         {user.type === 'admin' && (
-                          <Badge variant="outline" className="text-xs px-1.5 py-0 bg-purple-50 text-purple-700 border-purple-200 flex-shrink-0">
+                          <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
                             Admin
                           </Badge>
                         )}
@@ -393,18 +394,18 @@ export function UserManagement() {
                           </span>
                         </Badge>
                       </div>
-                      <p className="text-xs text-gray-600 break-words">{user.email}</p>
+                      <p className="text-xs text-muted-foreground break-words">{user.email}</p>
                       {user.phone && (
-                        <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <Phone className="w-3 h-3" aria-hidden="true" />
                           {user.phone}
                         </p>
                       )}
-                      <p className="text-[11px] text-gray-500 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
                         Last login: {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : '—'} · Failed attempts: {user.failedLoginAttempts ?? 0}
                       </p>
                       {user.invitationSentAt && (
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           Sent: {new Date(user.invitationSentAt).toLocaleDateString()}
                           {user.invitationCount && user.invitationCount > 1 && ` (${user.invitationCount}x)`}
                         </p>
@@ -415,10 +416,10 @@ export function UserManagement() {
                         <Button
                           onClick={() => handleResendInvitation(user.id)}
                           disabled={resendingUserId === user.id || (user.invitationCount || 0) >= 3}
-                          className="text-xs h-7 px-2 bg-green-600 hover:bg-green-700 flex-shrink-0 w-full sm:w-auto"
+                          className="text-xs h-7 px-2 flex-shrink-0 w-full sm:w-auto"
                         >
                           {resendingUserId === user.id ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                           ) : (
                             'Resend'
                           )}
@@ -426,10 +427,10 @@ export function UserManagement() {
                       )}
                       <Button
                         variant="outline"
-                        className="text-xs h-7 px-2 text-red-700 border-red-200 hover:bg-red-50 flex-shrink-0 w-full sm:w-auto"
+                        className="text-xs h-7 px-2 text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive flex-shrink-0 w-full sm:w-auto"
                         onClick={() => setUserToDelete(user)}
                       >
-                        <Trash2 className="w-3 h-3 mr-1.5" />
+                        <Trash2 className="w-3 h-3 mr-1.5" aria-hidden="true" />
                         Delete
                       </Button>
                     </div>
@@ -441,7 +442,7 @@ export function UserManagement() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length}
                 </p>
                 <div className="flex gap-2">
@@ -452,7 +453,7 @@ export function UserManagement() {
                     disabled={currentPage === 1}
                     className="text-xs h-7 px-2"
                   >
-                    <ChevronLeft className="w-3 h-3 mr-1" />
+                    <ChevronLeft className="w-3 h-3 mr-1" aria-hidden="true" />
                     Previous
                   </Button>
                   <div className="flex items-center gap-1">
@@ -473,9 +474,7 @@ export function UserManagement() {
                           variant={currentPage === pageNum ? "default" : "outline"}
                           size="sm"
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`text-xs h-7 w-7 p-0 ${
-                            currentPage === pageNum ? 'bg-green-600 hover:bg-green-700' : ''
-                          }`}
+                          className="text-xs h-7 w-7 p-0"
                         >
                           {pageNum}
                         </Button>
@@ -490,21 +489,21 @@ export function UserManagement() {
                     className="text-xs h-7 px-2"
                   >
                     Next
-                    <ChevronRight className="w-3 h-3 ml-1" />
+                    <ChevronRight className="w-3 h-3 ml-1" aria-hidden="true" />
                   </Button>
                 </div>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-6">
-            <Users className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">
-              {searchQuery || roleFilter !== 'all' || statusFilter !== 'all' 
-                ? 'No users match your filters' 
-                : 'No users found'}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Users aria-hidden="true" />}
+            title={
+              searchQuery || roleFilter !== 'all' || statusFilter !== 'all'
+                ? 'No users match your filters'
+                : 'No users found'
+            }
+          />
         )}
       </CardContent>
     </Card>

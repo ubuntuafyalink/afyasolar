@@ -25,8 +25,8 @@ export function AdminMaintenanceSettings() {
 
   if (isLoading && !data) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Loading settings...
       </div>
     )
@@ -34,8 +34,8 @@ export function AdminMaintenanceSettings() {
 
   if (!localSettings) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         Loading settings...
       </div>
     )
@@ -70,7 +70,7 @@ export function AdminMaintenanceSettings() {
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase text-gray-500">Quote visibility</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Quote visibility</p>
           <Select
             value={localSettings.quoteVisibility}
             onValueChange={(value) => setLocalSettings((prev: any) => ({ ...prev, quoteVisibility: value }))}
@@ -87,7 +87,7 @@ export function AdminMaintenanceSettings() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase text-gray-500">Require report before quote</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Require report before quote</p>
           <Select
             value={localSettings.requireReportBeforeQuote ? 'yes' : 'no'}
             onValueChange={(value) => setLocalSettings((prev: any) => ({ ...prev, requireReportBeforeQuote: value === 'yes' }))}
@@ -103,10 +103,10 @@ export function AdminMaintenanceSettings() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase text-gray-500">Reminder SLA (hours)</p>
+          <p className="text-xs font-semibold uppercase text-muted-foreground">Reminder SLA (hours)</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[11px] text-gray-500 mb-1">Report due</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Report due</p>
               <Input
                 type="number"
                 value={localSettings.reminders.reportDueHours}
@@ -117,7 +117,7 @@ export function AdminMaintenanceSettings() {
               />
             </div>
             <div>
-              <p className="text-[11px] text-gray-500 mb-1">Quote due</p>
+              <p className="text-[11px] text-muted-foreground mb-1">Quote due</p>
               <Input
                 type="number"
                 value={localSettings.reminders.quoteDueHours}
@@ -134,7 +134,7 @@ export function AdminMaintenanceSettings() {
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />
                 Saving...
               </>
             ) : (
