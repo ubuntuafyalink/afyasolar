@@ -100,18 +100,18 @@ function CompleteRegistrationContent() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <AuthLogoBadge className="mb-4" size={80} />
             <CardTitle className="text-lg flex items-center justify-center gap-2">
-              <XCircle className="w-5 h-5 text-red-600" />
+              <XCircle className="w-5 h-5 text-destructive" aria-hidden />
               Invalid Invitation
             </CardTitle>
             <CardDescription className="text-sm">No token provided</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+            <Button asChild className="w-full">
               <Link href="/auth/signin">Sign In</Link>
             </Button>
           </CardContent>
@@ -122,21 +122,21 @@ function CompleteRegistrationContent() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <AuthLogoBadge className="mb-4" size={80} />
             <CardTitle className="text-lg flex items-center justify-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <CheckCircle2 className="w-5 h-5 text-primary" aria-hidden />
               Registration Complete
             </CardTitle>
             <CardDescription className="text-sm">{message}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="bg-green-50 p-3 rounded text-xs text-gray-700">
+            <div className="bg-muted p-3 rounded-lg text-xs text-muted-foreground">
               Check your email to verify your account.
             </div>
-            <Button asChild className="w-full bg-green-600 hover:bg-green-700">
+            <Button asChild className="w-full">
               <Link href="/auth/signin">Sign In</Link>
             </Button>
           </CardContent>
@@ -146,7 +146,7 @@ function CompleteRegistrationContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <AuthLogoBadge className="mb-4" size={80} />
@@ -155,7 +155,7 @@ function CompleteRegistrationContent() {
         </CardHeader>
         <CardContent>
           {status === 'error' && (
-            <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+            <div className="mb-3 p-2.5 bg-destructive/10 border border-destructive/20 rounded-lg text-xs text-destructive">
               {message}
             </div>
           )}
@@ -177,7 +177,7 @@ function CompleteRegistrationContent() {
               {password && (
                 <PasswordStrengthIndicator password={password} className="mt-2" />
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Must include uppercase, lowercase, number, and special character
               </p>
             </div>
@@ -196,14 +196,14 @@ function CompleteRegistrationContent() {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={isLoading || !password || !confirmPassword} 
-              className="w-full bg-green-600 hover:bg-green-700 text-sm"
+            <Button
+              type="submit"
+              disabled={isLoading || !password || !confirmPassword}
+              className="w-full text-sm"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" aria-hidden />
                   Setting Password...
                 </>
               ) : (
@@ -213,9 +213,9 @@ function CompleteRegistrationContent() {
           </form>
 
           <div className="mt-3 text-center">
-            <Link 
-              href="/auth/signin" 
-              className="text-xs text-gray-600 hover:text-gray-900 hover:underline"
+            <Link
+              href="/auth/signin"
+              className="text-xs text-muted-foreground hover:text-foreground hover:underline"
             >
               Already have an account? Sign in
             </Link>
@@ -229,7 +229,7 @@ function CompleteRegistrationContent() {
 export default function CompleteRegistrationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-sm">Loading...</CardTitle>

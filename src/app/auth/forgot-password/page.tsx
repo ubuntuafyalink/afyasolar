@@ -59,41 +59,41 @@ function ForgotPasswordContent() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-green-200/50 to-emerald-200/50 rounded-full blur-3xl -z-10 animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-green-200/40 to-emerald-200/40 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }} />
-        
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" style={{ animationDelay: '1s' }} />
+
         <div className="w-full max-w-sm relative z-10">
-          <Link 
-            href="/auth/signin" 
-            className="inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800 font-medium mb-6 transition-colors group"
+          <Link
+            href="/auth/signin"
+            className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium mb-6 transition-colors group"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" aria-hidden />
             <span>Back to sign in</span>
           </Link>
 
-          <Card className="border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+          <Card className="border border-border shadow-xl bg-card/90 backdrop-blur-sm">
             <CardHeader className="text-center pb-5">
               <AuthLogoBadge className="mb-4" priority size={90} />
-              <CardTitle className="text-2xl font-bold text-gray-900 mb-1.5 flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-2xl font-semibold text-foreground mb-1.5 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-primary" aria-hidden />
                 Check Your Email
               </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
+              <CardDescription className="text-sm text-muted-foreground">
                 We've sent a password reset link to your email address
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-sm text-muted-foreground text-center">
                   If an account with that email exists, you will receive a password reset link shortly.
                 </p>
-                <p className="text-xs text-gray-500 text-center">
+                <p className="text-xs text-muted-foreground text-center">
                   The link will expire in 1 hour. Please check your spam folder if you don't see it.
                 </p>
                 <Button
                   onClick={() => router.push('/auth/signin')}
-                  className="w-full h-11 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  className="w-full h-11 text-sm font-semibold"
                 >
                   Back to Sign In
                 </Button>
@@ -106,34 +106,34 @@ function ForgotPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-green-200/50 to-emerald-200/50 rounded-full blur-3xl -z-10 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-green-200/40 to-emerald-200/40 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }} />
-      
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" style={{ animationDelay: '1s' }} />
+
       <div className="w-full max-w-sm relative z-10">
-        <Link 
-          href="/auth/signin" 
-          className="inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800 font-medium mb-6 transition-colors group"
+        <Link
+          href="/auth/signin"
+          className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium mb-6 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" aria-hidden />
           <span>Back to sign in</span>
         </Link>
 
-        <Card className="border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+        <Card className="border border-border shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center pb-5">
             <AuthLogoBadge className="mb-4" priority size={90} />
-            <CardTitle className="text-2xl font-bold text-gray-900 mb-1.5">
+            <CardTitle className="text-2xl font-semibold text-foreground mb-1.5">
               Forgot Password?
             </CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardDescription className="text-sm text-muted-foreground">
               Enter your email address and we'll send you a link to reset your password
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-green-800 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-green-600" />
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-primary" aria-hidden />
                   Email Address
                 </Label>
                 <div className="relative">
@@ -143,26 +143,26 @@ function ForgotPasswordContent() {
                     placeholder="you@example.com"
                     {...register("email")}
                     disabled={isLoading}
-                    className="h-11 pl-10 border border-green-200/60 bg-green-50/30 focus:border-green-500 focus:ring-green-500/30 focus:bg-green-50/50 transition-all text-sm"
+                    className="h-11 pl-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
                   />
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
                 </div>
                 {errors.email && (
-                  <p className="text-sm text-red-600 mt-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.email.message}
                   </p>
                 )}
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full h-11 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all" 
+              <Button
+                type="submit"
+                className="w-full h-11 text-sm font-semibold"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
                     Sending...
                   </>
                 ) : (
@@ -171,12 +171,12 @@ function ForgotPasswordContent() {
               </Button>
             </form>
 
-            <div className="mt-5 pt-5 border-t border-green-200/60">
-              <p className="text-center text-xs text-green-800">
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-center text-xs text-muted-foreground">
                 Remember your password?{" "}
-                <Link 
-                  href="/auth/signin" 
-                  className="text-green-600 hover:text-green-700 font-bold transition-colors underline underline-offset-2"
+                <Link
+                  href="/auth/signin"
+                  className="text-primary hover:underline font-bold transition-colors underline-offset-2"
                 >
                   Sign in
                 </Link>
@@ -192,11 +192,11 @@ function ForgotPasswordContent() {
 export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4">
-        <Card className="w-full max-w-sm border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4">
+        <Card className="w-full max-w-sm border border-border shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center">
             <AuthLogoBadge className="mb-4" priority size={90} />
-            <CardTitle className="text-xl text-green-800">Loading...</CardTitle>
+            <CardTitle className="text-xl text-foreground">Loading...</CardTitle>
           </CardHeader>
         </Card>
       </div>
