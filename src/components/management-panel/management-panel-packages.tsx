@@ -10,6 +10,7 @@ import {
   ManagementPanelPageSkeleton,
   ManagementPanelErrorState,
 } from '@/components/management-panel/management-panel-loading'
+import { EmptyState } from '@/components/ui/empty-state'
 
 /** Same shape as admin package management /api/afya-solar/packages */
 interface SolarPackagePlan {
@@ -57,13 +58,13 @@ function getPackageName(ratedKw: number, originalName: string): string {
 function getPlanTypeColor(planTypeCode: string): string {
   switch (planTypeCode) {
     case 'CASH':
-      return 'bg-green-100 text-green-800'
+      return 'border-transparent bg-primary/10 text-primary'
     case 'INSTALLMENT':
-      return 'bg-blue-100 text-blue-800'
+      return 'border-transparent bg-secondary text-secondary-foreground'
     case 'EAAS':
-      return 'bg-purple-100 text-purple-800'
+      return 'border-transparent bg-solar/15 text-solar-foreground'
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'border-transparent bg-muted text-muted-foreground'
   }
 }
 
@@ -119,8 +120,8 @@ export function ManagementPanelPackages() {
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Package Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Solar package offerings and pricing (read-only)</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Package Management</h1>
+          <p className="text-sm text-muted-foreground mt-1">Solar package offerings and pricing (read-only)</p>
         </div>
         <Button
           variant="outline"
@@ -129,35 +130,35 @@ export function ManagementPanelPackages() {
           disabled={refreshing}
           className="gap-2"
         >
-          <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+          <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} aria-hidden />
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </Button>
       </div>
 
       {packages.length === 0 ? (
-        <Card className="rounded-xl border shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <CardContent className="text-center py-12">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No packages found</p>
-            <p className="text-sm text-gray-500 mt-1">Packages are managed in the main admin panel.</p>
-          </CardContent>
-        </Card>
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <EmptyState
+            icon={<Package />}
+            title="No packages found"
+            description="Packages are managed in the main admin panel."
+          />
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
           {packages.map((pkg) => (
             <Card
               key={pkg.id}
-              className={cn('rounded-xl border shadow-sm', !pkg.isActive && 'opacity-60')}
+              className={cn('rounded-lg border-border shadow-sm transition-shadow hover:shadow-md', !pkg.isActive && 'opacity-60')}
             >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-emerald-600" />
+                    <Package className="h-5 w-5 text-primary" aria-hidden />
                     <CardTitle className="text-lg">
                       {getPackageName(Number(pkg.ratedKw), pkg.name)}
                     </CardTitle>
                   </div>
-                  <Badge variant={pkg.isActive ? 'default' : 'secondary'}>
+                  <Badge variant={pkg.isActive ? 'success' : 'secondary'}>
                     {pkg.isActive ? 'Active' : 'Inactive'}
                   </Badge>
                 </div>
@@ -168,18 +169,18 @@ export function ManagementPanelPackages() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-medium text-sm text-gray-700 mb-2">Available plans</h4>
+                    <h4 className="font-medium text-sm text-foreground mb-2">Available plans</h4>
                     <div className="space-y-2">
                       {(pkg.plans || []).map((plan) => (
                         <div
                           key={plan.id}
-                          className="flex items-center justify-between p-2 rounded-lg border border-gray-100 bg-gray-50/50"
+                          className="flex items-center justify-between p-2 rounded-lg border border-border bg-muted/50"
                         >
                           <div className="flex items-center gap-2 flex-wrap">
                             <Badge className={cn('shrink-0', getPlanTypeColor(plan.planTypeCode))}>
                               {plan.planTypeCode}
                             </Badge>
-                            <span className="text-sm text-gray-700">
+                            <span className="text-sm text-foreground">
                               {plan.planTypeCode === 'CASH' && plan.pricing?.cashPrice != null &&
                                 `TZS ${Number(plan.pricing.cashPrice).toLocaleString()}`}
                               {plan.planTypeCode === 'INSTALLMENT' && plan.pricing?.defaultMonthlyAmount != null &&
@@ -189,7 +190,7 @@ export function ManagementPanelPackages() {
                               {!plan.pricing && '—'}
                             </span>
                           </div>
-                          <DollarSign className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <DollarSign className="h-4 w-4 text-primary shrink-0" aria-hidden />
                         </div>
                       ))}
                     </div>
