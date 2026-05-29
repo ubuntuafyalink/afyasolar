@@ -120,11 +120,11 @@ function ResetPasswordContent() {
 
   if (isValidating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4">
-        <Card className="w-full max-w-sm border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4">
+        <Card className="w-full max-w-sm border border-border shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center">
             <AuthLogoBadge className="mb-4" priority size={90} />
-            <CardTitle className="text-xl text-green-800">Validating token...</CardTitle>
+            <CardTitle className="text-xl text-foreground">Validating token...</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -133,29 +133,29 @@ function ResetPasswordContent() {
 
   if (!isValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-green-200/50 to-emerald-200/50 rounded-full blur-3xl -z-10 animate-pulse" />
-        
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+
         <div className="w-full max-w-sm relative z-10">
-          <Card className="border border-red-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+          <Card className="border border-destructive/30 shadow-xl bg-card/90 backdrop-blur-sm">
             <CardHeader className="text-center pb-5">
               <AuthLogoBadge className="mb-4" size={90} />
-              <CardTitle className="text-2xl font-bold text-gray-900 mb-1.5 flex items-center justify-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-600" />
+              <CardTitle className="text-2xl font-semibold text-foreground mb-1.5 flex items-center justify-center gap-2">
+                <AlertCircle className="w-5 h-5 text-destructive" aria-hidden />
                 Invalid or Expired Link
               </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
+              <CardDescription className="text-sm text-muted-foreground">
                 This password reset link is invalid or has expired
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-sm text-muted-foreground text-center">
                   Password reset links expire after 1 hour. Please request a new one.
                 </p>
                 <Button
                   onClick={() => router.push('/auth/forgot-password')}
-                  className="w-full h-11 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                  className="w-full h-11 text-sm font-semibold"
                 >
                   Request New Reset Link
                 </Button>
@@ -176,28 +176,28 @@ function ResetPasswordContent() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-green-200/50 to-emerald-200/50 rounded-full blur-3xl -z-10 animate-pulse" />
-        
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+
         <div className="w-full max-w-sm relative z-10">
-          <Card className="border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+          <Card className="border border-border shadow-xl bg-card/90 backdrop-blur-sm">
             <CardHeader className="text-center pb-5">
               <AuthLogoBadge className="mb-4" size={90} />
-              <CardTitle className="text-2xl font-bold text-gray-900 mb-1.5 flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-2xl font-semibold text-foreground mb-1.5 flex items-center justify-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-primary" aria-hidden />
                 Password Reset Successful!
               </CardTitle>
-              <CardDescription className="text-sm text-gray-600">
+              <CardDescription className="text-sm text-muted-foreground">
                 Your password has been reset successfully
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 text-center mb-4">
+              <p className="text-sm text-muted-foreground text-center mb-4">
                 Redirecting to sign in page...
               </p>
               <Button
                 onClick={() => router.push('/auth/signin')}
-                className="w-full h-11 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                className="w-full h-11 text-sm font-semibold"
               >
                 Go to Sign In
               </Button>
@@ -209,34 +209,34 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-green-200/50 to-emerald-200/50 rounded-full blur-3xl -z-10 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-green-200/40 to-emerald-200/40 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1s' }} />
-      
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" style={{ animationDelay: '1s' }} />
+
       <div className="w-full max-w-sm relative z-10">
-        <Link 
-          href="/auth/signin" 
-          className="inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800 font-medium mb-6 transition-colors group"
+        <Link
+          href="/auth/signin"
+          className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium mb-6 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" aria-hidden />
           <span>Back to sign in</span>
         </Link>
 
-        <Card className="border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+        <Card className="border border-border shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center pb-5">
             <AuthLogoBadge className="mb-4" size={90} />
-            <CardTitle className="text-2xl font-bold text-gray-900 mb-1.5">
+            <CardTitle className="text-2xl font-semibold text-foreground mb-1.5">
               Reset Password
             </CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardDescription className="text-sm text-muted-foreground">
               Enter your new password below
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-green-800 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-green-600" />
+                <Label htmlFor="password" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" aria-hidden />
                   New Password
                 </Label>
                 <div className="relative">
@@ -246,34 +246,34 @@ function ResetPasswordContent() {
                     placeholder="Enter your new password"
                     {...register("password")}
                     disabled={isLoading}
-                    className="h-11 pl-10 pr-10 border border-green-200/60 bg-green-50/30 focus:border-green-500 focus:ring-green-500/30 focus:bg-green-50/50 transition-all text-sm"
+                    className="h-11 pl-10 pr-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
                   />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                      <EyeOff className="w-4 h-4" aria-hidden />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4 h-4" aria-hidden />
                     )}
                   </button>
                 </div>
                 {password && <PasswordStrengthIndicator password={password} />}
                 {errors.password && (
-                  <p className="text-sm text-red-600 mt-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-green-800 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-green-600" />
+                <Label htmlFor="confirmPassword" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" aria-hidden />
                   Confirm Password
                 </Label>
                 <div className="relative">
@@ -283,38 +283,38 @@ function ResetPasswordContent() {
                     placeholder="Confirm your new password"
                     {...register("confirmPassword")}
                     disabled={isLoading}
-                    className="h-11 pl-10 pr-10 border border-green-200/60 bg-green-50/30 focus:border-green-500 focus:ring-green-500/30 focus:bg-green-50/50 transition-all text-sm"
+                    className="h-11 pl-10 pr-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
                   />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                      <EyeOff className="w-4 h-4" aria-hidden />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-4 h-4" aria-hidden />
                     )}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-sm text-red-600 mt-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.confirmPassword.message}
                   </p>
                 )}
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full h-11 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all" 
+              <Button
+                type="submit"
+                className="w-full h-11 text-sm font-semibold"
                 disabled={isLoading}
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
                     Resetting...
                   </>
                 ) : (
@@ -323,12 +323,12 @@ function ResetPasswordContent() {
               </Button>
             </form>
 
-            <div className="mt-5 pt-5 border-t border-green-200/60">
-              <p className="text-center text-xs text-green-800">
+            <div className="mt-5 pt-5 border-t border-border">
+              <p className="text-center text-xs text-muted-foreground">
                 Remember your password?{" "}
-                <Link 
-                  href="/auth/signin" 
-                  className="text-green-600 hover:text-green-700 font-bold transition-colors underline underline-offset-2"
+                <Link
+                  href="/auth/signin"
+                  className="text-primary hover:underline font-bold transition-colors underline-offset-2"
                 >
                   Sign in
                 </Link>
@@ -344,11 +344,11 @@ function ResetPasswordContent() {
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4">
-        <Card className="w-full max-w-sm border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4">
+        <Card className="w-full max-w-sm border border-border shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center">
             <AuthLogoBadge className="mb-4" size={90} />
-            <CardTitle className="text-xl text-green-800">Loading...</CardTitle>
+            <CardTitle className="text-xl text-foreground">Loading...</CardTitle>
           </CardHeader>
         </Card>
       </div>
