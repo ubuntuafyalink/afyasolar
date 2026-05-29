@@ -108,6 +108,9 @@ import AfyaSolarInvoiceRequests from '@/components/afya-solar/invoice-requests'
 import { ServiceVisibilityPanel } from "@/components/dashboard/ServiceVisibilityPanel"
 import { useNotificationCount } from "@/hooks/use-notification-count"
 import { FacilityDetailsDialog } from "@/components/dashboard/facility-details-dialog"
+import { StatCard } from "@/components/ui/stat-card"
+import { EmptyState } from "@/components/ui/empty-state"
+import { StatCardSkeleton } from "@/components/ui/skeleton"
 
 type AdminTransactionStats = {
   total: number
@@ -404,34 +407,34 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-sm text-gray-600">Loading dashboard...</p>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-muted/40 flex overflow-hidden">
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-white border-r shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
+          "bg-card border-r border-border shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
           sidebarOpen ? "w-72" : "w-16",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="p-4 border-b flex items-center justify-between">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center gap-3">
-                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-emerald-100 bg-emerald-50 flex items-center justify-center">
-                  <span className="text-lg font-bold text-emerald-700">AL</span>
+                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-primary/20 bg-primary/10 flex items-center justify-center">
+                  <span className="text-lg font-bold text-primary">AL</span>
                 </div>
-                <span className="text-base font-semibold text-gray-900">Afya Link</span>
+                <span className="text-base font-semibold text-foreground">Afya Link</span>
               </div>
             )}
             <Button
@@ -464,10 +467,10 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                   <button
                     onClick={() => toggleGroup(groupKey as NavGroup)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded transition-colors",
+                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-lg transition-colors",
                       hasActiveItem
-                        ? "bg-green-50 text-green-700 border border-green-200"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-primary/10 text-primary border border-primary/20"
+                        : "text-muted-foreground hover:bg-muted"
                     )}
                   >
                     <GroupIcon className="w-4 h-4 flex-shrink-0" />
@@ -518,15 +521,15 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                               setMobileMenuOpen(false)
                             }}
                             className={cn(
-                              "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors",
+                              "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                               isActive
-                                ? "bg-green-600 text-white shadow-sm"
+                                ? "bg-primary text-primary-foreground shadow-sm"
                                 : item.id === 'notifications'
-                                ? "text-red-600 hover:bg-red-50 border border-red-200"
-                                : "text-gray-600 hover:bg-gray-100"
+                                ? "text-destructive hover:bg-destructive/10 border border-destructive/20"
+                                : "text-muted-foreground hover:bg-muted"
                             )}
                           >
-                            <ItemIcon className={cn("w-4 h-4 flex-shrink-0", item.id === 'notifications' && !isActive && "text-red-600")} />
+                            <ItemIcon className={cn("w-4 h-4 flex-shrink-0", item.id === 'notifications' && !isActive && "text-destructive")} />
                             {sidebarOpen && (
                               <span className="flex-1 text-left">{item.label}</span>
                             )}
@@ -551,7 +554,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
           </nav>
 
           {/* Sidebar Footer */}
-          <div className="p-3 border-t mt-auto">
+          <div className="p-3 border-t border-border mt-auto">
             <LogoutButton
               variant="ghost"
               className={cn("w-full justify-center text-xs", sidebarOpen && "justify-start")}
@@ -565,7 +568,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gradient-to-br from-emerald-900/30 via-slate-900/35 to-black/30 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-foreground/30 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -573,7 +576,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white border-b shadow-sm sticky top-0 z-30">
+        <header className="bg-card border-b border-border shadow-sm sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between gap-3">
@@ -587,16 +590,16 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                     }}
                     className="lg:hidden"
                   >
-                    <Menu className="w-5 h-4" />
+                    <Menu className="w-5 h-5" />
                   </Button>
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide sr-only">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide sr-only">
                       Admin Dashboard
                     </p>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
+                    <h1 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
                       Management Panel
                     </h1>
-                    <p className="text-xs text-gray-500 mt-0.5 truncate hidden sm:block">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate hidden sm:block">
                       Monitor Afya Solar facilities and operations
                     </p>
                   </div>
@@ -604,7 +607,6 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Button
                     variant="outline"
-                    className="text-green-700 border-green-200"
                     onClick={() => {
                       setMobileMenuOpen(false)
                       window.location.href = "/services/afya-solar"
@@ -655,55 +657,50 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                     <CardDescription>Facilities, users, devices, alerts, and payments.</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {overviewFetching && !overviewData ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                        <StatCardSkeleton />
+                      </div>
+                    ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                      <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
-                        <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-3">
-                          <Building2 className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="text-2xl font-bold text-blue-700">{overviewData?.kpis.facilitiesTotal ?? facilities?.length ?? 0}</div>
-                        <div className="text-sm text-blue-600 font-medium">Facilities</div>
-                        <div className="text-xs text-blue-700/80 mt-1">
-                          {overviewData?.kpis.facilitiesActive ?? 0} active
-                        </div>
-                      </div>
-                      <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
-                        <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-3">
-                          <Users className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="text-2xl font-bold text-green-700">{overviewData?.kpis.usersTotal ?? 0}</div>
-                        <div className="text-sm text-green-600 font-medium">Users</div>
-                        <div className="text-xs text-green-700/80 mt-1">
-                          {overviewData?.kpis.usersFacility ?? 0} facility · {overviewData?.kpis.usersAdmin ?? 0} admin
-                        </div>
-                      </div>
-                      <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
-                        <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center mx-auto mb-3">
-                          <Zap className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="text-2xl font-bold text-purple-700">{overviewData?.kpis.devicesTotal ?? 0}</div>
-                        <div className="text-sm text-purple-600 font-medium">Devices</div>
-                        <div className="text-xs text-purple-700/80 mt-1">
-                          {overviewData?.kpis.devicesOnline ?? 0} online
-                        </div>
-                      </div>
-                      <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
-                        <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center mx-auto mb-3">
-                          <DollarSign className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="text-2xl font-bold text-orange-700">
-                          {formatCurrency(overviewData?.kpis.revenueTotalCompleted ?? 0)}
-                        </div>
-                        <div className="text-sm text-orange-600 font-medium">Revenue (completed)</div>
-                        <div className="text-xs text-orange-700/80 mt-1">
-                          {formatCurrency(overviewData?.kpis.revenue30dCompleted ?? 0)} last 30d
-                        </div>
-                      </div>
+                      <StatCard
+                        title="Facilities"
+                        value={overviewData?.kpis.facilitiesTotal ?? facilities?.length ?? 0}
+                        icon={<Building2 />}
+                        accent="primary"
+                        meta={`${overviewData?.kpis.facilitiesActive ?? 0} active`}
+                      />
+                      <StatCard
+                        title="Users"
+                        value={overviewData?.kpis.usersTotal ?? 0}
+                        icon={<Users />}
+                        accent="success"
+                        meta={`${overviewData?.kpis.usersFacility ?? 0} facility · ${overviewData?.kpis.usersAdmin ?? 0} admin`}
+                      />
+                      <StatCard
+                        title="Devices"
+                        value={overviewData?.kpis.devicesTotal ?? 0}
+                        icon={<Zap />}
+                        accent="muted"
+                        meta={`${overviewData?.kpis.devicesOnline ?? 0} online`}
+                      />
+                      <StatCard
+                        title="Revenue (completed)"
+                        value={formatCurrency(overviewData?.kpis.revenueTotalCompleted ?? 0)}
+                        icon={<DollarSign />}
+                        accent="solar"
+                        meta={`${formatCurrency(overviewData?.kpis.revenue30dCompleted ?? 0)} last 30d`}
+                      />
                     </div>
+                    )}
 
                     <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">Activity & usage</h3>
-                        <p className="text-xs text-gray-600">
+                        <h3 className="text-sm font-semibold text-foreground">Activity & usage</h3>
+                        <p className="text-xs text-muted-foreground">
                           Showing login activity for:{" "}
                           {activityRange === "weekly"
                             ? "last 7 days"
@@ -727,7 +724,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                       </Select>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-sm">Facilities (usage)</CardTitle>
@@ -740,25 +737,25 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                             <Badge variant="secondary" className="text-xs">
                               Total facilities: {overviewData?.kpis.facilitiesTotal ?? facilities?.length ?? 0}
                             </Badge>
-                            {facilityActivityFetching && <span className="text-[11px] text-gray-500">Updating…</span>}
+                            {facilityActivityFetching && <span className="text-[11px] text-muted-foreground">Updating…</span>}
                           </div>
                           <div className="space-y-2">
                             {(facilityActivityData?.rows || []).slice(0, 12).map((row: any) => (
-                              <div key={row.facilityId || row.facilityName} className="flex items-center justify-between border rounded-md p-2">
+                              <div key={row.facilityId || row.facilityName} className="flex items-center justify-between border border-border rounded-md p-2">
                                 <div className="min-w-0">
-                                  <div className="text-sm font-medium text-gray-900 truncate">{row.facilityName}</div>
-                                  <div className="text-[11px] text-gray-500 truncate">
+                                  <div className="text-sm font-medium text-foreground truncate">{row.facilityName}</div>
+                                  <div className="text-[11px] text-muted-foreground truncate">
                                     {row.city ? `${row.city}, ` : ""}{row.region || ""} · Last login:{" "}
                                     {row.lastLoginAt ? format(new Date(row.lastLoginAt), "PPp") : "—"}
                                   </div>
                                 </div>
-                                <Badge className="bg-blue-50 text-blue-700 border border-blue-200">
+                                <Badge variant="secondary">
                                   {row.loginCount} logins
                                 </Badge>
                               </div>
                             ))}
                             {(!facilityActivityData?.rows || facilityActivityData.rows.length === 0) && (
-                              <p className="text-xs text-gray-500">No login events yet. Users will start appearing after they sign in.</p>
+                              <p className="text-xs text-muted-foreground">No login events yet. Users will start appearing after they sign in.</p>
                             )}
                           </div>
                         </CardContent>
@@ -774,21 +771,21 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                         <CardContent>
                           <div className="space-y-2">
                             {(userActivityData?.rows || []).slice(0, 12).map((row: any) => (
-                              <div key={row.userId || row.email} className="flex items-center justify-between border rounded-md p-2">
+                              <div key={row.userId || row.email} className="flex items-center justify-between border border-border rounded-md p-2">
                                 <div className="min-w-0">
-                                  <div className="text-sm font-medium text-gray-900 truncate">{row.name || row.email}</div>
-                                  <div className="text-[11px] text-gray-500 truncate">
+                                  <div className="text-sm font-medium text-foreground truncate">{row.name || row.email}</div>
+                                  <div className="text-[11px] text-muted-foreground truncate">
                                     {row.email} · {row.role} · Last login: {row.lastLoginAt ? format(new Date(row.lastLoginAt), "PPp") : "—"}
                                   </div>
                                 </div>
-                                <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <Badge variant="success">
                                   {row.loginCount} logins
                                 </Badge>
                               </div>
                             ))}
-                            {userActivityFetching && <p className="text-[11px] text-gray-500">Updating…</p>}
+                            {userActivityFetching && <p className="text-[11px] text-muted-foreground">Updating…</p>}
                             {(!userActivityData?.rows || userActivityData.rows.length === 0) && (
-                              <p className="text-xs text-gray-500">No login events yet. Users will start appearing after they sign in.</p>
+                              <p className="text-xs text-muted-foreground">No login events yet. Users will start appearing after they sign in.</p>
                             )}
                           </div>
                         </CardContent>
@@ -807,23 +804,23 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                           <Badge variant="secondary" className="text-xs">
                             Active: {activeFinanceSubs?.data?.length ?? 0}
                           </Badge>
-                          {subsFetching && <span className="text-[11px] text-gray-500">Updating…</span>}
+                          {subsFetching && <span className="text-[11px] text-muted-foreground">Updating…</span>}
                         </div>
                         <div className="space-y-2">
                           {(activeFinanceSubs?.data || []).slice(0, 20).map((row: any) => (
-                            <div key={row.facilityId} className="flex items-center justify-between border rounded-md p-2">
+                            <div key={row.facilityId} className="flex items-center justify-between border border-border rounded-md p-2">
                               <div className="min-w-0">
-                                <div className="text-sm font-medium text-gray-900 truncate">{row.facilityName}</div>
-                                <div className="text-[11px] text-gray-500 truncate">
+                                <div className="text-sm font-medium text-foreground truncate">{row.facilityName}</div>
+                                <div className="text-[11px] text-muted-foreground truncate">
                                   {row.city ? `${row.city}, ` : ""}{row.region || ""} · Plan: {row.planType || "—"} · Billing: {row.billingCycle || "—"} · Expires:{" "}
                                   {row.expiryDate ? format(new Date(row.expiryDate), "PP") : "—"}
                                 </div>
                               </div>
-                              <Badge className="bg-purple-50 text-purple-700 border border-purple-200">Active</Badge>
+                              <Badge variant="success">Active</Badge>
                             </div>
                           ))}
                           {(!activeFinanceSubs?.data || activeFinanceSubs.data.length === 0) && (
-                            <p className="text-xs text-gray-500">No active subscriptions found.</p>
+                            <p className="text-xs text-muted-foreground">No active subscriptions found.</p>
                           )}
                         </div>
                       </CardContent>
@@ -847,7 +844,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-xs h-8 px-3 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                          className="text-xs h-8 px-3"
                           asChild
                         >
                           <Link href="/dashboard/admin/service-visibility">
@@ -867,8 +864,8 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                   <CardContent>
                     {comprehensiveFacilitiesLoading ? (
                       <div className="text-center py-8">
-                        <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                        <p className="text-sm text-gray-600">Loading facilities...</p>
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                        <p className="text-sm text-muted-foreground">Loading facilities...</p>
                       </div>
                     ) : filteredFacilities && filteredFacilities.length > 0 ? (
                       <div className="space-y-2">
@@ -879,33 +876,31 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                           return (
                             <div
                               key={facility.id}
-                              className="border rounded-lg bg-white hover:shadow-md transition-all"
+                              className="border border-border rounded-lg bg-card hover:shadow-md transition-shadow"
                             >
-                              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white border-b">
+                              <div className="flex items-center justify-between p-4 bg-muted/40 border-b border-border">
                                 <div className="flex items-center gap-4 flex-1">
-                                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                                    <Building2 className="w-5 h-5 text-white" />
+                                  <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+                                    <Building2 aria-hidden className="w-5 h-5 text-primary-foreground" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-lg text-gray-900 truncate">{facility.name}</h3>
+                                    <h3 className="font-semibold text-lg text-foreground truncate">{facility.name}</h3>
                                     <div className="flex items-center gap-3 mt-2 flex-wrap">
-                                      <Badge 
-                                        variant={facility.status === 'active' ? 'default' : 'secondary'}
-                                        className={`text-xs px-3 py-1 font-semibold ${
-                                          facility.status === 'active' 
-                                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white border-green-400 shadow-sm' 
-                                            : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-400'
-                                        }`}
+                                      <Badge
+                                        variant={facility.status === 'active' ? 'success' : 'secondary'}
+                                        className="gap-1"
                                       >
-                                        {facility.status === 'active' ? '✓ Active' : facility.status}
+                                        {facility.status === 'active' && <CheckCircle2 aria-hidden className="w-3 h-3" />}
+                                        {facility.status === 'active' ? 'Active' : facility.status}
                                       </Badge>
                                       {isLowCredit && (
-                                        <Badge className="text-xs px-3 py-1 font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-400 shadow-sm">
-                                          ⚠️ Low Credit
+                                        <Badge variant="warning" className="gap-1">
+                                          <AlertTriangle aria-hidden className="w-3 h-3" />
+                                          Low Credit
                                         </Badge>
                                       )}
-                                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                                        <MapPin className="w-4 h-4" />
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                        <MapPin aria-hidden className="w-4 h-4" />
                                         <span>{facility.city}, {facility.region}</span>
                                       </div>
                                     </div>
@@ -916,7 +911,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                                     variant="outline"
                                     size="sm"
                                     onClick={() => toggleFacilityExpansion(facility.id)}
-                                    className="text-xs h-9 px-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-400 hover:from-blue-600 hover:to-blue-700 shadow-sm transition-all duration-200"
+                                    className="text-xs h-9 px-4 transition-shadow"
                                   >
                                     {expandedFacilities.has(facility.id) ? (
                                       <>
@@ -933,7 +928,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="text-xs h-9 px-3 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-all duration-200"
+                                    className="text-xs h-9 px-3 text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/40 transition-colors"
                                     onClick={() => {
                                       setFacilityToDelete({ id: facility.id, name: facility.name })
                                       setDeleteFacilityDialogOpen(true)
@@ -948,30 +943,30 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                               {expandedFacilities.has(facility.id) && (
                                 <div className="p-4">
                                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    <div className="border rounded-md p-3 bg-white">
-                                      <div className="text-[11px] text-gray-500">Credit balance</div>
-                                      <div className="text-sm font-semibold text-gray-900">
+                                    <div className="border border-border rounded-md p-3 bg-card">
+                                      <div className="text-[11px] text-muted-foreground">Credit balance</div>
+                                      <div className="text-sm font-semibold text-foreground">
                                         {formatCurrency(Number(facility.creditBalance || 0))}
                                       </div>
                                     </div>
-                                    <div className="border rounded-md p-3 bg-white">
-                                      <div className="text-[11px] text-gray-500">Devices</div>
-                                      <div className="text-sm font-semibold text-gray-900">
+                                    <div className="border border-border rounded-md p-3 bg-card">
+                                      <div className="text-[11px] text-muted-foreground">Devices</div>
+                                      <div className="text-sm font-semibold text-foreground">
                                         {facility.activeDevices || 0}/{facility.deviceCount || 0} active
                                       </div>
                                     </div>
-                                    <div className="border rounded-md p-3 bg-white">
-                                      <div className="text-[11px] text-gray-500">Users</div>
-                                      <div className="text-sm font-semibold text-gray-900">{facility.userCount || 0}</div>
+                                    <div className="border border-border rounded-md p-3 bg-card">
+                                      <div className="text-[11px] text-muted-foreground">Users</div>
+                                      <div className="text-sm font-semibold text-foreground">{facility.userCount || 0}</div>
                                     </div>
-                                    <div className="border rounded-md p-3 bg-white">
-                                      <div className="text-[11px] text-gray-500">Payments</div>
-                                      <div className="text-sm font-semibold text-gray-900">{facility.totalPayments || 0}</div>
+                                    <div className="border border-border rounded-md p-3 bg-card">
+                                      <div className="text-[11px] text-muted-foreground">Payments</div>
+                                      <div className="text-sm font-semibold text-foreground">{facility.totalPayments || 0}</div>
                                     </div>
                                   </div>
 
                                   <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                                    <Button asChild size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white">
+                                    <Button asChild size="sm" className="text-xs">
                                       <Link href={`/dashboard/admin/facility/${facility.id}`}>
                                         <Monitor className="w-4 h-4 mr-2" />
                                         Open facility dashboard
@@ -1000,14 +995,14 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                         })}
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <Building2 className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-600">
-                          {searchQuery || statusFilter !== 'all' 
-                            ? 'No facilities match your filters' 
-                            : 'No facilities yet'}
-                        </p>
-                      </div>
+                      <EmptyState
+                        icon={<Building2 />}
+                        title={
+                          searchQuery || statusFilter !== 'all'
+                            ? 'No facilities match your filters'
+                            : 'No facilities yet'
+                        }
+                      />
                     )}
                   </CardContent>
                 </Card>
@@ -1149,7 +1144,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Leaf className="w-5 h-5 text-green-600" />
+                      <Leaf aria-hidden className="w-5 h-5 text-primary" />
                       Carbon Credits Assessment
                     </CardTitle>
                     <CardDescription>
@@ -1165,7 +1160,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                           <SelectValue placeholder="Choose a facility for carbon credits assessment...">
                             {isLoading && (
                               <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                 <span>Loading facilities...</span>
                               </div>
                             )}
@@ -1176,22 +1171,22 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                             <SelectItem key={facility.id} value={facility.id}>
                               <div className="flex flex-col">
                                 <span className="font-medium">{facility.name}</span>
-                                <span className="text-xs text-gray-500">{facility.city}, {facility.region}</span>
+                                <span className="text-xs text-muted-foreground">{facility.city}, {facility.region}</span>
                               </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                       {facilities?.length === 0 && !isLoading && (
-                        <p className="text-sm text-gray-500">No facilities found. Please ensure facilities are registered in the system.</p>
+                        <p className="text-sm text-muted-foreground">No facilities found. Please ensure facilities are registered in the system.</p>
                       )}
                     </div>
 
                     {/* Assessment Content */}
                     {carbonCreditsFacility && (
-                      <div className="border border-gray-200 rounded-lg p-4">
-                        <p className="text-sm text-gray-600 mb-4">
-                          Performing carbon credits assessment for: 
+                      <div className="border border-border rounded-lg p-4">
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Performing carbon credits assessment for:
                           <strong> {facilities?.find(f => f.id === carbonCreditsFacility)?.name}</strong>
                         </p>
                         <FacilityCarbonCredits facilityId={carbonCreditsFacility} />
@@ -1214,7 +1209,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                     <select
                       value={deviceStatusFilter}
                       onChange={(e) => setDeviceStatusFilter(e.target.value)}
-                      className="text-xs h-8 px-2 border rounded bg-white w-full sm:w-auto"
+                      className="text-xs h-8 px-2 border border-border rounded-lg bg-background text-foreground w-full sm:w-auto"
                     >
                       <option value="all">All Status</option>
                       <option value="pending">Pending</option>
@@ -1233,33 +1228,34 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                       ).map((request) => (
                         <div
                           key={request.id}
-                          className="p-4 border rounded bg-white hover:bg-gray-50 transition-colors"
+                          className="p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <h3 className="font-medium text-sm truncate">{request.facilityName || 'Unknown Facility'}</h3>
-                                <Badge 
-                                  className={`text-xs px-1.5 py-0 flex-shrink-0 ${
-                                    request.status === 'pending' 
-                                      ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                                      : request.status === 'approved'
-                                      ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                <Badge
+                                  variant={
+                                    request.status === 'pending'
+                                      ? 'warning'
                                       : request.status === 'fulfilled'
-                                      ? 'bg-green-100 text-green-700 border-green-200'
-                                      : 'bg-red-100 text-red-700 border-red-200'
-                                  }`}
+                                      ? 'success'
+                                      : request.status === 'approved'
+                                      ? 'secondary'
+                                      : 'destructive'
+                                  }
+                                  className="flex-shrink-0"
                                 >
                                   {request.status}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-gray-600 mb-2">
+                              <p className="text-xs text-muted-foreground mb-2">
                                 <strong>Request:</strong> {request.quantity} {request.deviceType || 'device(s)'}
                               </p>
                               {request.message && (
-                                <p className="text-xs text-gray-600 mb-2 break-words">{request.message}</p>
+                                <p className="text-xs text-muted-foreground mb-2 break-words">{request.message}</p>
                               )}
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-gray-500 mb-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground mb-2">
                                 <span className="break-words"><strong>From:</strong> {request.name} ({request.email})</span>
                                 <span><strong>Phone:</strong> {request.phone}</span>
                                 <span><strong>Date:</strong> {new Date(request.createdAt).toLocaleString()}</span>
@@ -1270,10 +1266,10 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <Package className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600">No device requests found</p>
-                    </div>
+                    <EmptyState
+                      icon={<Package />}
+                      title="No device requests found"
+                    />
                   )}
                 </CardContent>
               </Card>
