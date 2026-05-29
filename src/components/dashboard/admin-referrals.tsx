@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatGridSkeleton, CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -141,8 +142,9 @@ export function AdminReferrals() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+      <div className="space-y-6">
+        <StatGridSkeleton />
+        <CardListSkeleton rows={5} />
       </div>
     )
   }

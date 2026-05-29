@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -188,9 +189,7 @@ export function TechnicianManagement() {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
-          </div>
+          <CardListSkeleton rows={5} />
         </CardContent>
       </Card>
     )

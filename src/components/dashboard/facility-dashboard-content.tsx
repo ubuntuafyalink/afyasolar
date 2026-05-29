@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/ui/stat-card"
 import { EmptyState } from "@/components/ui/empty-state"
+import { ChartSkeleton } from "@/components/ui/skeleton"
 import { 
   Zap, 
   DollarSign, 
@@ -1010,9 +1011,10 @@ export function FacilityDashboardContent({
                   {assessmentSnapshotBusy ? (
                     <div className="grid gap-4 lg:grid-cols-2">
                       {Array.from({ length: 8 }).map((_, i) => (
-                        <div
+                        <ChartSkeleton
                           key={i}
-                          className={`h-64 rounded-lg border border-border bg-muted animate-pulse motion-reduce:animate-none ${i === 4 || i === 6 ? "lg:col-span-2" : ""}`}
+                          height="h-64"
+                          className={i === 4 || i === 6 ? "lg:col-span-2" : undefined}
                         />
                       ))}
                     </div>

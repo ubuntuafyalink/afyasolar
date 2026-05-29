@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { StatCard } from "@/components/ui/stat-card"
+import { DashboardSkeleton } from "@/components/ui/skeleton"
 import { cn, formatCurrency } from "@/lib/utils"
 import { useComprehensiveFacilities, type ComprehensiveFacility } from "@/hooks/use-facilities"
 
@@ -46,11 +47,8 @@ export function FacilityDetailsPage({ facilityId }: FacilityDetailsPageProps) {
 
   if (isLoading || !facilities) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Loading facility details...</p>
-        </div>
+      <div className="min-h-screen bg-muted/30 p-6">
+        <DashboardSkeleton />
       </div>
     )
   }

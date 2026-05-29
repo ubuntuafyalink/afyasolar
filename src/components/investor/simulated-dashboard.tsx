@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { StatCard } from '@/components/ui/stat-card'
+import { DashboardSkeleton } from '@/components/ui/skeleton'
 
 interface SimulatedFacility {
   id: string
@@ -97,11 +98,8 @@ export default function SimulatedDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden></div>
-          <p className="text-muted-foreground">Loading investor dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-muted/30 p-6">
+        <DashboardSkeleton />
       </div>
     )
   }

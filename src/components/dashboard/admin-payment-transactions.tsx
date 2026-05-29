@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -442,10 +443,7 @@ export function AdminPaymentTransactions() {
       {isLoading ? (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" aria-hidden="true" />
-              Loading transactions...
-            </div>
+            <CardListSkeleton rows={5} />
           </CardContent>
         </Card>
       ) : isError ? (

@@ -110,7 +110,7 @@ import { useNotificationCount } from "@/hooks/use-notification-count"
 import { FacilityDetailsDialog } from "@/components/dashboard/facility-details-dialog"
 import { StatCard } from "@/components/ui/stat-card"
 import { EmptyState } from "@/components/ui/empty-state"
-import { StatCardSkeleton } from "@/components/ui/skeleton"
+import { StatCardSkeleton, DashboardSkeleton, CardListSkeleton } from "@/components/ui/skeleton"
 
 type AdminTransactionStats = {
   total: number
@@ -407,11 +407,8 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-muted/40 p-6">
+        <DashboardSkeleton />
       </div>
     )
   }
@@ -863,10 +860,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                   </CardHeader>
                   <CardContent>
                     {comprehensiveFacilitiesLoading ? (
-                      <div className="text-center py-8">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                        <p className="text-sm text-muted-foreground">Loading facilities...</p>
-                      </div>
+                      <CardListSkeleton rows={5} className="py-2" />
                     ) : filteredFacilities && filteredFacilities.length > 0 ? (
                       <div className="space-y-2">
                         {filteredFacilities.map((facility) => {

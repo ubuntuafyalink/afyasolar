@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/ui/stat-card"
 import { EmptyState } from "@/components/ui/empty-state"
+import { DashboardSkeleton } from "@/components/ui/skeleton"
 import { useFacility } from "@/hooks/use-facilities"
 import { useEnergyData } from "@/hooks/use-energy-data"
 import { useDevices } from "@/hooks/use-devices"
@@ -101,11 +102,8 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
 
   if (facilityLoading || energyLoading || devicesLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground font-medium">Loading facility metrics...</p>
-        </div>
+      <div className="min-h-screen bg-muted/30 p-6">
+        <DashboardSkeleton />
       </div>
     )
   }
