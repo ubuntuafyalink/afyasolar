@@ -22,6 +22,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { StatCard } from '@/components/ui/stat-card'
 
 interface SimulatedFacility {
   id: string
@@ -84,55 +85,48 @@ export default function SimulatedDashboard() {
     fetchSimulatedData()
   }, [])
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-      case 'operational':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+  const isOperational = (status: string) =>
+    status.toLowerCase() === 'active' || status.toLowerCase() === 'operational'
 
   const getPerformanceBadge = (savingsPercent: number) => {
-    if (savingsPercent >= 50) return { text: 'Excellent', color: 'bg-green-100 text-green-800' }
-    if (savingsPercent >= 40) return { text: 'Very Good', color: 'bg-blue-100 text-blue-800' }
-    if (savingsPercent >= 30) return { text: 'Good', color: 'bg-yellow-100 text-yellow-800' }
-    return { text: 'Fair', color: 'bg-gray-100 text-gray-800' }
+    if (savingsPercent >= 50) return { text: 'Excellent', color: 'border-transparent bg-success/10 text-success' }
+    if (savingsPercent >= 40) return { text: 'Very Good', color: 'border-transparent bg-secondary text-secondary-foreground' }
+    if (savingsPercent >= 30) return { text: 'Good', color: 'border-transparent bg-warning/15 text-warning-foreground' }
+    return { text: 'Fair', color: 'border-transparent bg-muted text-muted-foreground' }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading investor dashboard...</p>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" aria-hidden></div>
+          <p className="text-muted-foreground">Loading investor dashboard...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-muted/30 p-6">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Afya Solar - Investor Dashboard</h1>
-            <p className="text-gray-600 mt-2">Real-time performance monitoring of installed facilities</p>
+            <h1 className="text-2xl font-semibold text-foreground">Afya Solar - Investor Dashboard</h1>
+            <p className="text-muted-foreground mt-2">Real-time performance monitoring of installed facilities</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button
               variant="outline"
               onClick={fetchSimulatedData}
               disabled={refreshing}
               className="flex items-center gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} aria-hidden />
               Refresh Data
             </Button>
             <Button className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4" aria-hidden />
               Export Report
             </Button>
           </div>
@@ -142,66 +136,43 @@ export default function SimulatedDashboard() {
       {/* Key Metrics */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Active Facilities</CardTitle>
-                <Building2 className="w-5 h-5 text-blue-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalFacilities}</div>
-              <p className="text-sm text-gray-600">Fully operational sites</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-green-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Monthly Energy Savings</CardTitle>
-                <Zap className="w-5 h-5 text-green-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalEnergySavings.toLocaleString()}</div>
-              <p className="text-sm text-gray-600">kWh per month</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-yellow-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Monthly Cost Savings</CardTitle>
-                <DollarSign className="w-5 h-5 text-yellow-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">TZS {Number(stats.totalCostSavings).toLocaleString()}</div>
-              <p className="text-sm text-gray-600">Across all facilities</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-emerald-500">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">CO₂ Reduction</CardTitle>
-                <Leaf className="w-5 h-5 text-emerald-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalCarbonReduction.toLocaleString()}</div>
-              <p className="text-sm text-gray-600">kg per month</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Active Facilities"
+            value={stats.totalFacilities}
+            icon={<Building2 />}
+            meta="Fully operational sites"
+            accent="primary"
+          />
+          <StatCard
+            title="Monthly Energy Savings"
+            value={stats.totalEnergySavings.toLocaleString()}
+            icon={<Zap />}
+            meta="kWh per month"
+            accent="success"
+          />
+          <StatCard
+            title="Monthly Cost Savings"
+            value={`TZS ${Number(stats.totalCostSavings).toLocaleString()}`}
+            icon={<DollarSign />}
+            meta="Across all facilities"
+            accent="solar"
+          />
+          <StatCard
+            title="CO₂ Reduction"
+            value={stats.totalCarbonReduction.toLocaleString()}
+            icon={<Leaf />}
+            meta="kg per month"
+            accent="success"
+          />
         </div>
       )}
 
       {/* Performance Overview */}
       {stats && (
-        <Card className="mb-8">
+        <Card className="mb-8 border-border shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
+              <BarChart3 className="w-5 h-5" aria-hidden />
               Performance Overview
             </CardTitle>
             <CardDescription>Average improvements across all installed facilities</CardDescription>
@@ -209,16 +180,16 @@ export default function SimulatedDashboard() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">{stats.averageEnergyReduction}%</div>
-                <p className="text-sm text-gray-600">Average Energy Reduction</p>
+                <div className="text-3xl font-bold text-primary mb-2">{stats.averageEnergyReduction}%</div>
+                <p className="text-sm text-muted-foreground">Average Energy Reduction</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">{stats.averageCostReduction}%</div>
-                <p className="text-sm text-gray-600">Average Cost Reduction</p>
+                <div className="text-3xl font-bold text-foreground mb-2">{stats.averageCostReduction}%</div>
+                <p className="text-sm text-muted-foreground">Average Cost Reduction</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-2">{stats.totalSolarCapacity} kW</div>
-                <p className="text-sm text-gray-600">Total Solar Capacity</p>
+                <div className="text-3xl font-bold text-foreground mb-2">{stats.totalSolarCapacity} kW</div>
+                <p className="text-sm text-muted-foreground">Total Solar Capacity</p>
               </div>
             </div>
           </CardContent>
@@ -226,10 +197,10 @@ export default function SimulatedDashboard() {
       )}
 
       {/* Facilities Details */}
-      <Card>
+      <Card className="border-border shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5" />
+            <Building2 className="w-5 h-5" aria-hidden />
             Installed Facilities - Performance Details
           </CardTitle>
           <CardDescription>Before and after comparison for each facility</CardDescription>
@@ -242,25 +213,25 @@ export default function SimulatedDashboard() {
               const performanceBadge = getPerformanceBadge(energyReductionPercent)
 
               return (
-                <div key={facility.id} className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
+                <div key={facility.id} className="border border-border rounded-lg p-6 hover:shadow-md transition-shadow">
                   {/* Facility Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{facility.name}</h3>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                      <h3 className="text-lg font-semibold text-foreground">{facility.name}</h3>
+                      <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="w-4 h-4" aria-hidden />
                           {facility.location}, {facility.region}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
+                          <Calendar className="w-4 h-4" aria-hidden />
                           Installed: {new Date(facility.installationDate).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={getStatusColor(facility.status)}>
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                      <Badge variant={isOperational(facility.status) ? 'success' : 'secondary'}>
+                        <CheckCircle2 className="w-3 h-3 mr-1" aria-hidden />
                         {facility.status}
                       </Badge>
                       <Badge variant="outline" className={performanceBadge.color}>
@@ -272,21 +243,21 @@ export default function SimulatedDashboard() {
                   {/* Performance Metrics */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     {/* Energy Consumption */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-muted rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Zap className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-medium text-gray-700">Energy Consumption</span>
+                        <Zap className="w-4 h-4 text-primary" aria-hidden />
+                        <span className="text-sm font-medium text-foreground">Energy Consumption</span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Before:</span>
+                          <span className="text-muted-foreground">Before:</span>
                           <span className="font-medium">{facility.energyConsumptionBefore.toLocaleString()} kWh</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">After:</span>
-                          <span className="font-medium text-green-600">{facility.energyConsumptionAfter.toLocaleString()} kWh</span>
+                          <span className="text-muted-foreground">After:</span>
+                          <span className="font-medium text-primary">{facility.energyConsumptionAfter.toLocaleString()} kWh</span>
                         </div>
-                        <div className="flex justify-between text-sm font-semibold text-green-600">
+                        <div className="flex justify-between text-sm font-semibold text-primary">
                           <span>Savings:</span>
                           <span>-{energyReductionPercent}%</span>
                         </div>
@@ -294,21 +265,21 @@ export default function SimulatedDashboard() {
                     </div>
 
                     {/* Cost Analysis */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-muted rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <DollarSign className="w-4 h-4 text-yellow-500" />
-                        <span className="text-sm font-medium text-gray-700">Monthly Costs</span>
+                        <DollarSign className="w-4 h-4 text-solar-foreground" aria-hidden />
+                        <span className="text-sm font-medium text-foreground">Monthly Costs</span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Before:</span>
+                          <span className="text-muted-foreground">Before:</span>
                           <span className="font-medium">TZS {Number(facility.electricityCostBefore).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">After:</span>
-                          <span className="font-medium text-green-600">TZS {Number(facility.electricityCostAfter).toLocaleString()}</span>
+                          <span className="text-muted-foreground">After:</span>
+                          <span className="font-medium text-primary">TZS {Number(facility.electricityCostAfter).toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-sm font-semibold text-green-600">
+                        <div className="flex justify-between text-sm font-semibold text-primary">
                           <span>Savings:</span>
                           <span>-{costReductionPercent}%</span>
                         </div>
@@ -316,44 +287,44 @@ export default function SimulatedDashboard() {
                     </div>
 
                     {/* System Specs */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-muted rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Sun className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm font-medium text-gray-700">System Specifications</span>
+                        <Sun className="w-4 h-4 text-solar-foreground" aria-hidden />
+                        <span className="text-sm font-medium text-foreground">System Specifications</span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Solar Capacity:</span>
+                          <span className="text-muted-foreground">Solar Capacity:</span>
                           <span className="font-medium">{facility.solarCapacity} kW</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Battery:</span>
+                          <span className="text-muted-foreground">Battery:</span>
                           <span className="font-medium">{facility.batteryCapacity} kWh</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Meter:</span>
+                          <span className="text-muted-foreground">Meter:</span>
                           <span className="font-medium">{facility.smartMeterSerial}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Environmental Impact */}
-                    <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="bg-muted rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Leaf className="w-4 h-4 text-emerald-500" />
-                        <span className="text-sm font-medium text-gray-700">Environmental Impact</span>
+                        <Leaf className="w-4 h-4 text-success" aria-hidden />
+                        <span className="text-sm font-medium text-foreground">Environmental Impact</span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">CO₂ Reduction:</span>
+                          <span className="text-muted-foreground">CO₂ Reduction:</span>
                           <span className="font-medium">{facility.carbonEmissionReduction.toLocaleString()} kg/month</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">PAYG Status:</span>
-                          <span className="font-medium text-green-600">{facility.paygStatus}</span>
+                          <span className="text-muted-foreground">PAYG Status:</span>
+                          <span className="font-medium text-primary">{facility.paygStatus}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Type:</span>
+                          <span className="text-muted-foreground">Type:</span>
                           <span className="font-medium">{facility.facilityType}</span>
                         </div>
                       </div>
@@ -362,8 +333,8 @@ export default function SimulatedDashboard() {
 
                   {/* Notes */}
                   {facility.notes && (
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800">
+                    <div className="mt-4 p-3 bg-primary/5 rounded-lg">
+                      <p className="text-sm text-foreground">
                         <strong>Note:</strong> {facility.notes}
                       </p>
                     </div>
