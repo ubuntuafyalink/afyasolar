@@ -6,8 +6,8 @@ export default async function SettingsPage() {
   const session = await getServerSession(authOptions)
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Settings</h1>
-      <p className="text-gray-600 mb-6">Manage your account and panel preferences.</p>
+      <h1 className="text-2xl font-semibold text-foreground mb-2">Settings</h1>
+      <p className="text-muted-foreground mb-6">Manage your account and panel preferences.</p>
       <ManagementPanelSettings user={session?.user} />
     </div>
   )
