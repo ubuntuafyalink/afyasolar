@@ -41,6 +41,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { DashboardSkeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { useComprehensiveFacilities, type ComprehensiveFacility } from "@/hooks/use-facilities"
 
@@ -138,11 +139,8 @@ export function FacilityFullDetailsPage({ facilityId }: FacilityFullDetailsPageP
 
   if (isLoading || !facilities) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Loading facility details...</p>
-        </div>
+      <div className="min-h-screen bg-muted/30 p-6">
+        <DashboardSkeleton />
       </div>
     )
   }

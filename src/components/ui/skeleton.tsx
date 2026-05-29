@@ -63,3 +63,85 @@ export function ChartSkeleton({
     </div>
   )
 }
+
+/** Responsive grid of StatCard placeholders for a KPI row. */
+export function StatGridSkeleton({
+  count = 4,
+  className,
+}: {
+  count?: number
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4",
+        className,
+      )}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <StatCardSkeleton key={i} />
+      ))}
+    </div>
+  )
+}
+
+/** Vertical list of card rows (icon chip + two text lines + trailing badge). */
+export function CardListSkeleton({
+  rows = 5,
+  className,
+}: {
+  rows?: number
+  className?: string
+}) {
+  return (
+    <div className={cn("space-y-3", className)}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-4 rounded-lg border border-border bg-card p-4"
+        >
+          <Skeleton className="size-10 shrink-0 rounded-lg" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-4 w-3/5" />
+            <Skeleton className="h-3 w-2/5" />
+          </div>
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Full-page dashboard placeholder: header bars + KPI grid + optional chart + list. */
+export function DashboardSkeleton({
+  stats = 4,
+  withChart = true,
+  className,
+}: {
+  stats?: number
+  withChart?: boolean
+  className?: string
+}) {
+  return (
+    <div className={cn("space-y-6", className)}>
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="h-4 w-72" />
+      </div>
+      <StatGridSkeleton count={stats} />
+      {withChart ? (
+        <Card className="overflow-hidden">
+          <CardContent className="p-6">
+            <ChartSkeleton height="h-[260px]" />
+          </CardContent>
+        </Card>
+      ) : null}
+      <Card className="overflow-hidden">
+        <CardContent className="p-4 md:p-6">
+          <CardListSkeleton rows={5} />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

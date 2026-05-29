@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -177,7 +178,7 @@ export function AdminTransactions() {
       {isLoading ? (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground">Loading transactions...</div>
+            <CardListSkeleton rows={5} />
           </CardContent>
         </Card>
       ) : filteredWithdrawals.length === 0 ? (
