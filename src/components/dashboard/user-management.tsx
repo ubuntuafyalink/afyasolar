@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -232,10 +233,7 @@ export function UserManagement() {
     return (
       <Card>
         <CardContent className="py-6">
-          <div className="text-center">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" aria-hidden="true" />
-            <p className="text-sm text-muted-foreground">Loading...</p>
-          </div>
+          <CardListSkeleton rows={5} />
         </CardContent>
       </Card>
     )
