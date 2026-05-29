@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { StatCard } from "@/components/ui/stat-card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { 
   Zap, 
   DollarSign, 
@@ -230,11 +232,11 @@ export function FacilityDashboardContent({
       fetchNotifications()
     }
   }, [adminMode])
-  const sectionTitleClass = "text-base font-semibold text-gray-900"
-  const metricTitleClass = "text-xs font-medium text-gray-700"
-  const metaTextClass = "text-xs text-gray-500"
-  const panelCardClass = "shadow-sm border border-gray-100 bg-white"
-  const subtleBadgeClass = "bg-gray-50 text-gray-700 border-gray-200"
+  const sectionTitleClass = "text-base font-semibold text-foreground"
+  const metricTitleClass = "text-xs font-medium text-muted-foreground"
+  const metaTextClass = "text-xs text-muted-foreground"
+  const panelCardClass = "shadow-sm border border-border bg-card"
+  const subtleBadgeClass = "bg-muted text-muted-foreground border-border"
 
   // Prefer live subscriber remaining balance when available, otherwise fall back to facility.creditBalance
   const subscriberCredit =
@@ -541,36 +543,36 @@ export function FacilityDashboardContent({
   const afyaLinkUrl = getAfyaLinkAssessmentUrl()
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-muted/30 flex overflow-hidden">
       <aside
         className={cn(
-          "bg-white border-r shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
+          "bg-card border-r border-border shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
           sidebarOpen ? "w-60" : "w-16",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 border-b flex items-center justify-between">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
               {facility?.logoUrl ? (
-                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-green-100">
-                  <Image 
-                    key={facility.logoUrl} 
-                    src={facility.logoUrl} 
-                    alt={facility.name} 
-                    fill 
-                    className="object-cover rounded" 
-                    priority={false} 
-                    unoptimized 
+                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-primary/20">
+                  <Image
+                    key={facility.logoUrl}
+                    src={facility.logoUrl}
+                    alt={facility.name}
+                    fill
+                    className="object-cover rounded"
+                    priority={false}
+                    unoptimized
                   />
                 </div>
               ) : (
-                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-green-100 bg-gray-100 flex items-center justify-center">
-                  <Sun className="w-5 h-5 text-gray-400" />
+                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-primary/20 bg-muted flex items-center justify-center">
+                  <Sun className="w-5 h-5 text-muted-foreground" aria-hidden />
                 </div>
               )}
               {sidebarOpen && (
-                <span className="text-base font-semibold text-gray-900 truncate">{facility?.name || "Facility"}</span>
+                <span className="text-base font-semibold text-foreground truncate">{facility?.name || "Facility"}</span>
               )}
             </div>
           <Button
@@ -606,19 +608,19 @@ export function FacilityDashboardContent({
                   setMobileMenuOpen(false)
                 }}
                 className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors",
-                  isActive ? "bg-green-600 text-white shadow-sm" : "text-gray-700 hover:bg-gray-100"
+                  "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                  isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className="w-4 h-4 flex-shrink-0" />
+                <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
                 {sidebarOpen && <span>{item.label}</span>}
               </button>
             )
           })}
           {subscribedServices.length > 0 && (
-            <div className="pt-4 border-t mt-4 space-y-1">
+            <div className="pt-4 border-t border-border mt-4 space-y-1">
               {sidebarOpen && (
-                <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   Subscribed Services
                 </p>
               )}
@@ -632,11 +634,11 @@ export function FacilityDashboardContent({
                       setMobileMenuOpen(false)
                     }}
                     className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors",
-                      "text-gray-700 hover:bg-gray-100"
+                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
                   >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {sidebarOpen && <span>{service.label}</span>}
                   </button>
                 )
@@ -645,7 +647,7 @@ export function FacilityDashboardContent({
           )}
         </nav>
 
-          <div className="p-3 border-t mt-auto space-y-1">
+          <div className="p-3 border-t border-border mt-auto space-y-1">
             {!adminMode && (
               <>
                 <FeatureRequestDialog
@@ -699,7 +701,7 @@ export function FacilityDashboardContent({
 
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gradient-to-br from-emerald-900/30 via-slate-900/35 to-black/30 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-foreground/30 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -707,7 +709,7 @@ export function FacilityDashboardContent({
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white border-b shadow-sm sticky top-0 z-30">
+        <header className="bg-card border-b border-border shadow-sm sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -720,17 +722,17 @@ export function FacilityDashboardContent({
                   }}
                   className="lg:hidden"
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-5 h-5" aria-hidden />
                 </Button>
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide sr-only">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide sr-only">
                     Energy Dashboard
                   </p>
-                  <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
+                  <h1 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
                     {facility?.name || "Facility Overview"}
                   </h1>
                   {facility && (
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {facility.city}, {facility.region}
                     </p>
                   )}
@@ -739,14 +741,14 @@ export function FacilityDashboardContent({
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
                   variant="outline"
-                  className="text-green-700 border-green-200"
+                  size="icon"
                   onClick={() => {
                     setMobileMenuOpen(false)
                     window.location.href = "/services/afya-solar"
                   }}
                   aria-label="Go to services home"
                 >
-                  <Home className="w-4 h-4" />
+                  <Home className="w-4 h-4" aria-hidden />
                 </Button>
               </div>
             </div>
@@ -754,7 +756,7 @@ export function FacilityDashboardContent({
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:px-6 lg:px-8 text-sm text-gray-900">
+        <main className="flex-1 overflow-y-auto p-4 sm:px-6 lg:px-8 text-sm text-foreground">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Section Content */}
             {currentActiveSection === 'overview' && (
@@ -762,293 +764,244 @@ export function FacilityDashboardContent({
                 {/* Unified Metrics Grid */}
                 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                   {/* Primary Performance Cards - Row 1 */}
-                  <Card className="relative overflow-hidden border border-green-100 bg-gradient-to-b from-emerald-50/60 via-white to-white hover:border-green-500/60 transition-all duration-300 hover:shadow-lg group rounded-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <Card className="relative overflow-hidden border border-primary/20 bg-primary/5 hover:border-primary/40 transition-shadow duration-300 hover:shadow-md group rounded-lg">
                     <CardHeader className="flex flex-col items-center pb-2 relative z-10">
-                      <div className="rounded-xl bg-green-500/10 p-1.5 group-hover:bg-green-500/20 transition-colors">
-                        <Gauge className="h-4 w-4 text-green-600" />
+                      <div className="rounded-lg bg-primary/10 p-1.5 group-hover:bg-primary/20 transition-colors">
+                        <Gauge className="h-5 w-5 text-primary" aria-hidden />
                       </div>
-                      <CardTitle className="text-[11px] font-semibold text-emerald-900 text-center mt-2 tracking-wide uppercase">
+                      <CardTitle className="text-[11px] font-semibold text-foreground text-center mt-2 tracking-wide uppercase">
                         Energy Efficiency
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="relative z-10 px-3 pb-3 pt-0 text-center space-y-2">
-                      <div className="text-2xl font-extrabold text-emerald-700">
+                      <div className="text-2xl font-extrabold text-primary">
                         {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-emerald-100" />
+                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-primary/15 motion-reduce:animate-none" />
                         ) : (
                           energyEfficiencyScore !== null && energyEfficiencyScore !== undefined ? `${energyEfficiencyScore}%` : "N/A"
                         )}
                       </div>
-                      <div className="flex items-center justify-center gap-1 text-[11px] text-emerald-700">
-                        <TrendingUp className="h-3 w-3" />
+                      <div className="flex items-center justify-center gap-1 text-[11px] text-primary">
+                        <TrendingUp className="h-3 w-3" aria-hidden />
                         <span>Assessment score</span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-emerald-100 overflow-hidden">
+                      <div className="h-1.5 w-full rounded-full bg-primary/15 overflow-hidden">
                         <div
-                          className={`h-full bg-emerald-500 transition-all ${assessmentSnapshotBusy ? "animate-pulse" : ""}`}
+                          className={`h-full bg-primary transition-all ${assessmentSnapshotBusy ? "animate-pulse motion-reduce:animate-none" : ""}`}
                           style={{ width: `${Math.min(energyEfficiencyScore ?? 0, 100)}%` }}
                         />
                       </div>
-                      {assessmentSnapshotBusy && <p className="text-[10px] text-emerald-600">Loading from database...</p>}
+                      {assessmentSnapshotBusy && <p className="text-[10px] text-primary">Loading from database...</p>}
                     </CardContent>
                   </Card>
 
-                  <Card className="relative overflow-hidden border border-blue-100 bg-gradient-to-b from-blue-50/60 via-white to-white hover:border-blue-500/60 transition-all duration-300 hover:shadow-lg group rounded-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <Card className="relative overflow-hidden border border-border bg-card hover:border-primary/30 transition-shadow duration-300 hover:shadow-md group rounded-lg">
                     <CardHeader className="flex flex-col items-center pb-2 relative z-10">
-                      <div className="rounded-xl bg-blue-500/10 p-1.5 group-hover:bg-blue-500/20 transition-colors">
-                        <Award className="h-4 w-4 text-blue-600" />
+                      <div className="rounded-lg bg-muted p-1.5 transition-colors">
+                        <Award className="h-5 w-5 text-muted-foreground" aria-hidden />
                       </div>
-                      <CardTitle className="text-[11px] font-semibold text-blue-900 text-center mt-2 tracking-wide uppercase">
+                      <CardTitle className="text-[11px] font-semibold text-foreground text-center mt-2 tracking-wide uppercase">
                         Carbon Credit
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="relative z-10 px-3 pb-3 pt-0 text-center space-y-2">
-                      <div className="text-2xl font-extrabold text-blue-700">
+                      <div className="text-2xl font-extrabold text-foreground">
                       {assessmentSnapshotBusy ? (
-                        <span className="inline-block h-7 w-16 animate-pulse rounded bg-blue-100" />
+                        <span className="inline-block h-7 w-16 animate-pulse rounded bg-muted motion-reduce:animate-none" />
                       ) : (
                         carbonCreditEarnedCalc
                       )}
                       </div>
-                      <div className="flex items-center justify-center gap-1 text-[11px] text-blue-700">
-                        <TrendingUp className="h-3 w-3" />
+                      <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                        <TrendingUp className="h-3 w-3" aria-hidden />
                         <span>Credits earned</span>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="relative overflow-hidden border border-purple-100 bg-gradient-to-b from-purple-50/60 via-white to-white hover:border-purple-500/60 transition-all duration-300 hover:shadow-lg group rounded-2xl">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <Card className="relative overflow-hidden border border-border bg-card hover:border-primary/30 transition-shadow duration-300 hover:shadow-md group rounded-lg">
                     <CardHeader className="flex flex-col items-center pb-2 relative z-10">
-                      <div className="rounded-xl bg-purple-500/10 p-1.5 group-hover:bg-purple-500/20 transition-colors">
-                        <CloudSun className="h-4 w-4 text-purple-600" />
+                      <div className="rounded-lg bg-muted p-1.5 transition-colors">
+                        <CloudSun className="h-5 w-5 text-muted-foreground" aria-hidden />
                       </div>
-                      <CardTitle className="text-[11px] font-semibold text-purple-900 text-center mt-2 tracking-wide uppercase">
+                      <CardTitle className="text-[11px] font-semibold text-foreground text-center mt-2 tracking-wide uppercase">
                         Climate Resilience
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="relative z-10 px-3 pb-3 pt-0 text-center space-y-2">
-                      <div className="text-2xl font-extrabold text-purple-700">
+                      <div className="text-2xl font-extrabold text-foreground">
                         {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-purple-100" />
+                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-muted motion-reduce:animate-none" />
                         ) : (
                           climateResilienceScore !== null && climateResilienceScore !== undefined ? `${climateResilienceScore}%` : "N/A"
                         )}
                       </div>
-                      <div className="flex items-center justify-center gap-1 text-[11px] text-purple-700">
-                        <TrendingUp className="h-3 w-3" />
+                      <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                        <TrendingUp className="h-3 w-3" aria-hidden />
                         <span>Resilience score</span>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-purple-100 overflow-hidden">
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                         <div
-                          className={`h-full bg-purple-500 transition-all ${assessmentSnapshotBusy ? "animate-pulse" : ""}`}
+                          className={`h-full bg-primary transition-all ${assessmentSnapshotBusy ? "animate-pulse motion-reduce:animate-none" : ""}`}
                           style={{ width: `${Math.min(climateResilienceScore ?? 0, 100)}%` }}
                         />
                       </div>
-                      {assessmentSnapshotBusy && <p className="text-[10px] text-purple-600">Loading from database...</p>}
+                      {assessmentSnapshotBusy && <p className="text-[10px] text-muted-foreground">Loading from database...</p>}
                     </CardContent>
                   </Card>
 
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <BarChart3 className="h-4 w-4 text-green-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Total Consumption
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-24 animate-pulse rounded bg-gray-100" />
-                        ) : displayTotalConsumption !== null ? (
-                          `${displayTotalConsumption.toFixed(1)} kWh/d`
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        {assessmentSnapshotBusy ? "Loading from database..." : "From your latest sizing assessment"}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Total Consumption"
+                    accent="primary"
+                    icon={<BarChart3 />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-24 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : displayTotalConsumption !== null ? (
+                        `${displayTotalConsumption.toFixed(1)} kWh/d`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta={assessmentSnapshotBusy ? "Loading from database..." : "From your latest sizing assessment"}
+                  />
 
                   {/* Energy assessment / cost calculation snapshot */}
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <Sparkles className="h-4 w-4 text-emerald-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        BMI Score
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-20 animate-pulse rounded bg-gray-100" />
-                        ) : persistedAssessmentScore !== null ? (
-                          `${persistedAssessmentScore}/40`
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">Operational efficiency (BMI)</p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="BMI Score"
+                    accent="primary"
+                    icon={<Sparkles />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-20 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : persistedAssessmentScore !== null ? (
+                        `${persistedAssessmentScore}/40`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta="Operational efficiency (BMI)"
+                  />
 
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <Sun className="h-4 w-4 text-orange-500" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Solar Array Size
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-24 animate-pulse rounded bg-gray-100" />
-                        ) : persistedSizingSummary?.solarArraySize !== null && persistedSizingSummary?.solarArraySize !== undefined ? (
-                          `${persistedSizingSummary.solarArraySize.toFixed(1)} kW`
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">From energy sizing</p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Solar Array Size"
+                    accent="solar"
+                    icon={<Sun />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-24 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : persistedSizingSummary?.solarArraySize !== null && persistedSizingSummary?.solarArraySize !== undefined ? (
+                        `${persistedSizingSummary.solarArraySize.toFixed(1)} kW`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta="From energy sizing"
+                  />
 
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <DollarSign className="h-4 w-4 text-emerald-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Annual Savings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-28 animate-pulse rounded bg-gray-100" />
-                        ) : persistedSizingSummary?.annualSavings !== null && persistedSizingSummary?.annualSavings !== undefined ? (
-                          formatCurrency(persistedSizingSummary.annualSavings)
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">Cost savings (modelled)</p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Annual Savings"
+                    accent="success"
+                    icon={<DollarSign />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-28 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : persistedSizingSummary?.annualSavings !== null && persistedSizingSummary?.annualSavings !== undefined ? (
+                        formatCurrency(persistedSizingSummary.annualSavings)
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta="Cost savings (modelled)"
+                  />
 
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <TrendingDown className="h-4 w-4 text-blue-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Cost Comparison
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-24 animate-pulse rounded bg-gray-100" />
-                        ) : monthlySavingsNetTzs !== null && monthlySavingsNetTzs !== undefined ? (
-                          formatCurrency(monthlySavingsNetTzs)
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">Estimated monthly savings</p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Cost Comparison"
+                    accent="primary"
+                    icon={<TrendingDown />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-24 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : monthlySavingsNetTzs !== null && monthlySavingsNetTzs !== undefined ? (
+                        formatCurrency(monthlySavingsNetTzs)
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta="Estimated monthly savings"
+                  />
 
                   {/* Assessment-backed overview metrics (no live telemetry dependency) */}
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <Zap className="h-4 w-4 text-green-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Assessed Power Need
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-20 animate-pulse rounded bg-gray-100" />
-                        ) : assessedPowerKw !== null ? (
-                          `${assessedPowerKw.toFixed(1)} kW`
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        {assessmentSnapshotBusy ? "Loading from database..." : "From sizing assessment"}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Assessed Power Need"
+                    accent="primary"
+                    icon={<Zap />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-20 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : assessedPowerKw !== null ? (
+                        `${assessedPowerKw.toFixed(1)} kW`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta={assessmentSnapshotBusy ? "Loading from database..." : "From sizing assessment"}
+                  />
 
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <Activity className="h-4 w-4 text-green-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Assessment Cycle
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-20 animate-pulse rounded bg-gray-100" />
-                        ) : hasAssessmentSnapshot ? (
-                          "Saved"
-                        ) : (
-                          "No data"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        {assessmentSnapshotBusy
-                          ? "Loading from database..."
-                          : hasAssessmentSnapshot
-                            ? "Auto-loaded from database"
-                            : "Complete assessment to populate"}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Assessment Cycle"
+                    accent="primary"
+                    icon={<Activity />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-20 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : hasAssessmentSnapshot ? (
+                        "Saved"
+                      ) : (
+                        "No data"
+                      )
+                    }
+                    meta={
+                      assessmentSnapshotBusy
+                        ? "Loading from database..."
+                        : hasAssessmentSnapshot
+                          ? "Auto-loaded from database"
+                          : "Complete assessment to populate"
+                    }
+                  />
 
-                  <Card className={`${panelCardClass} rounded-2xl bg-white/80`}>
-                    <CardHeader className="flex flex-col items-center pb-1">
-                      <BarChart3 className="h-4 w-4 text-green-600" />
-                      <CardTitle className="text-[11px] font-semibold text-gray-700 text-center mt-2 tracking-wide uppercase">
-                        Assessment Load
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 text-center">
-                      <div className="text-lg font-bold text-gray-900">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-6 w-24 animate-pulse rounded bg-gray-100" />
-                        ) : assessedDailyLoadKwh !== null ? (
-                          `${assessedDailyLoadKwh.toFixed(1)} kWh/d`
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        {assessmentSnapshotBusy ? "Loading from database..." : "From devices &amp; loads assessment"}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Assessment Load"
+                    accent="primary"
+                    icon={<BarChart3 />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-6 w-24 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : assessedDailyLoadKwh !== null ? (
+                        `${assessedDailyLoadKwh.toFixed(1)} kWh/d`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta={assessmentSnapshotBusy ? "Loading from database..." : "From devices & loads assessment"}
+                  />
                 </div>
 
                 {/* Energy & Cost Insights (assessment snapshot) */}
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-semibold text-gray-900">Energy &amp; Cost Insights</h3>
-                      <p className="text-xs text-gray-500">
+                      <h3 className="text-lg font-semibold text-foreground">Energy &amp; Cost Insights</h3>
+                      <p className="text-xs text-muted-foreground">
                         Load breakdown, energy mix, critical load view, cost composition, and a savings bridge—powered by your saved assessment snapshots.
                       </p>
                     </div>
                     {assessmentSnapshotBusy ? (
-                      <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                      <span className="text-xs text-primary bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                         Loading from database...
                       </span>
                     ) : (
-                      <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                      <span className="text-xs text-primary bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
                         DB snapshot loaded
                       </span>
                     )}
@@ -1059,7 +1012,7 @@ export function FacilityDashboardContent({
                       {Array.from({ length: 8 }).map((_, i) => (
                         <div
                           key={i}
-                          className={`h-64 rounded-xl border border-gray-100 bg-gray-50 animate-pulse ${i === 4 || i === 6 ? "lg:col-span-2" : ""}`}
+                          className={`h-64 rounded-lg border border-border bg-muted animate-pulse motion-reduce:animate-none ${i === 4 || i === 6 ? "lg:col-span-2" : ""}`}
                         />
                       ))}
                     </div>
@@ -1090,7 +1043,7 @@ export function FacilityDashboardContent({
               <Card className={panelCardClass}>
                 <CardHeader>
                   <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                    <Plug className="w-5 h-5 text-green-600" />
+                    <Plug className="w-5 h-5 text-primary" aria-hidden />
                     Devices
                   </CardTitle>
                   <CardDescription className={metaTextClass}>Manage your smart meters and energy monitors</CardDescription>
@@ -1101,23 +1054,23 @@ export function FacilityDashboardContent({
                       {devices.map((device) => (
                         <div
                           key={device.id}
-                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors gap-3"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg hover:bg-muted transition-colors gap-3"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-medium text-gray-900 truncate">{device.serialNumber}</h3>
+                              <h3 className="font-medium text-foreground truncate">{device.serialNumber}</h3>
                               <Badge variant="outline" className={`${subtleBadgeClass} capitalize flex-shrink-0`}>
                                 {device.type}
                               </Badge>
-                              <Badge variant={device.status === 'active' ? 'default' : 'secondary'} className={`flex-shrink-0 ${device.status === 'active' ? 'bg-green-600 text-white' : ''}`}>
+                              <Badge variant={device.status === 'active' ? 'success' : 'secondary'} className="flex-shrink-0">
                                 {device.status}
                               </Badge>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1 break-words">
+                            <p className="text-xs text-muted-foreground mt-1 break-words">
                               {device.sensorSize}A sensor â€¢ {device.ports} ports â€¢ {device.mode}
                             </p>
                             {device.lastUpdate && (
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 Last update: {new Date(device.lastUpdate).toLocaleString()}
                               </p>
                             )}
@@ -1126,10 +1079,10 @@ export function FacilityDashboardContent({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <Plug className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-4">No devices available</p>
-                    </div>
+                    <EmptyState
+                      icon={<Plug />}
+                      title="No devices available"
+                    />
                   )}
                 </CardContent>
               </Card>
@@ -1144,7 +1097,7 @@ export function FacilityDashboardContent({
                       <CardTitle className={metricTitleClass}>Grid Consumption</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-xl font-semibold text-gray-900">{metrics.gridConsumption.toFixed(2)} kWh</div>
+                      <div className="text-xl font-semibold text-foreground">{metrics.gridConsumption.toFixed(2)} kWh</div>
                       <p className={metaTextClass}>
                         From utility grid
                       </p>
@@ -1156,7 +1109,7 @@ export function FacilityDashboardContent({
                       <CardTitle className={metricTitleClass}>Average Power</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-xl font-semibold text-gray-900">{metrics.avgPower.toFixed(2)} W</div>
+                      <div className="text-xl font-semibold text-foreground">{metrics.avgPower.toFixed(2)} W</div>
                       <p className={metaTextClass}>
                         Average consumption
                       </p>
@@ -1168,7 +1121,7 @@ export function FacilityDashboardContent({
                       <CardTitle className={metricTitleClass}>Peak Power</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-xl font-semibold text-gray-900">{metrics.maxPower.toFixed(2)} W</div>
+                      <div className="text-xl font-semibold text-foreground">{metrics.maxPower.toFixed(2)} W</div>
                       <p className={metaTextClass}>
                         Maximum demand
                       </p>
@@ -1187,13 +1140,13 @@ export function FacilityDashboardContent({
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className={metaTextClass}>Solar Energy</span>
-                          <span className="text-sm font-semibold text-gray-900">
+                          <span className="text-sm font-semibold text-foreground">
                             {metrics.totalSolarGeneration.toFixed(2)} kWh ({metrics.solarPercentage.toFixed(1)}%)
                           </span>
                         </div>
-                        <div className="w-full bg-green-100 rounded-full h-3">
+                        <div className="w-full bg-primary/15 rounded-full h-3">
                           <div
-                            className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all"
+                            className="bg-primary h-3 rounded-full transition-all"
                             style={{ width: `${metrics.solarPercentage}%` }}
                           />
                         </div>
@@ -1201,13 +1154,13 @@ export function FacilityDashboardContent({
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className={metaTextClass}>Grid Energy</span>
-                          <span className="text-sm font-semibold text-orange-600">
+                          <span className="text-sm font-semibold text-warning-foreground">
                             {metrics.gridConsumption.toFixed(2)} kWh ({(100 - metrics.solarPercentage).toFixed(1)}%)
                           </span>
                         </div>
-                        <div className="w-full bg-green-100 rounded-full h-3">
+                        <div className="w-full bg-muted rounded-full h-3">
                           <div
-                            className="bg-gradient-to-r from-orange-500 to-red-600 h-3 rounded-full transition-all"
+                            className="bg-solar h-3 rounded-full transition-all"
                             style={{ width: `${100 - metrics.solarPercentage}%` }}
                           />
                         </div>
@@ -1228,38 +1181,38 @@ export function FacilityDashboardContent({
                     {energyData.map((data: { id: Key | null | undefined; power: any; voltage: any; current: any; solarGeneration: any; batteryLevel: any; timestamp: string | number | Date; energy: any; creditBalance: any; gridStatus: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | Promise<AwaitedReactNode> | null | undefined }) => (
                       <div
                         key={data.id}
-                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors gap-3"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg hover:bg-muted transition-colors gap-3"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <p className="font-medium text-gray-900">{Number(data.power).toFixed(2)} W</p>
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex-shrink-0">
+                            <p className="font-medium text-foreground">{Number(data.power).toFixed(2)} W</p>
+                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 flex-shrink-0">
                               {Number(data.voltage).toFixed(1)}V / {Number(data.current).toFixed(2)}A
                             </Badge>
                             {data.solarGeneration && Number(data.solarGeneration) > 0 && (
-                              <Badge className="bg-green-600 flex-shrink-0">
-                                <Sun className="w-3 h-3 mr-1" />
+                              <Badge variant="success" className="flex-shrink-0">
+                                <Sun className="w-3 h-3 mr-1" aria-hidden />
                                 Solar
                               </Badge>
                             )}
                             {data.batteryLevel && (
-                              <Badge variant={Number(data.batteryLevel) > 50 ? "default" : "destructive"} className={`flex-shrink-0 ${Number(data.batteryLevel) > 50 ? "bg-green-600" : ""}`}>
-                                <Battery className="w-3 h-3 mr-1" />
+                              <Badge variant={Number(data.batteryLevel) > 50 ? "success" : "destructive"} className="flex-shrink-0">
+                                <Battery className="w-3 h-3 mr-1" aria-hidden />
                                 {Number(data.batteryLevel).toFixed(0)}%
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-green-600">
+                          <p className="text-sm text-muted-foreground">
                             {new Date(data.timestamp).toLocaleString()}
                           </p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-green-500 flex-wrap">
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                             <span>Energy: {Number(data.energy).toFixed(2)} kWh</span>
                             <span>Credit: {formatCurrency(Number(data.creditBalance))}</span>
                             {data.solarGeneration && (
-                              <span className="text-green-600">Solar: {Number(data.solarGeneration).toFixed(2)} kWh</span>
+                              <span className="text-primary">Solar: {Number(data.solarGeneration).toFixed(2)} kWh</span>
                             )}
                             {data.gridStatus && (
-                              <span className={data.gridStatus === 'connected' ? 'text-green-600' : 'text-red-600'}>
+                              <span className={data.gridStatus === 'connected' ? 'text-primary' : 'text-destructive'}>
                                 Grid: {data.gridStatus}
                               </span>
                             )}
@@ -1269,11 +1222,11 @@ export function FacilityDashboardContent({
                     ))}
                   </div>
                 ) : (
-                      <div className="text-center py-8">
-                        <BarChart3 className="w-12 h-12 text-green-300 mx-auto mb-4" />
-                        <p className="text-green-600 mb-2">No energy data available yet</p>
-                        <p className="text-sm text-green-500">Connect a device to start tracking your solar energy usage</p>
-                      </div>
+                      <EmptyState
+                        icon={<BarChart3 />}
+                        title="No energy data available yet"
+                        description="Connect a device to start tracking your solar energy usage"
+                      />
                 )}
               </CardContent>
             </Card>
@@ -1293,14 +1246,14 @@ export function FacilityDashboardContent({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {afyaLinkUrl ? (
-                        <Button asChild className="bg-green-600 hover:bg-green-700">
+                        <Button asChild>
                           <a href={afyaLinkUrl} target="_blank" rel="noopener noreferrer">
                             Open AfyaLink assessments
                           </a>
                         </Button>
                       ) : (
-                        <p className="text-sm text-gray-600">
-                          Configure <code className="text-xs bg-gray-100 px-1 rounded">NEXT_PUBLIC_AFYALINK_ASSESSMENT_URL</code>{" "}
+                        <p className="text-sm text-muted-foreground">
+                          Configure <code className="text-xs bg-muted px-1 rounded">NEXT_PUBLIC_AFYALINK_ASSESSMENT_URL</code>{" "}
                           for a direct link to your AfyaLink workspace.
                         </p>
                       )}
@@ -1347,7 +1300,7 @@ export function FacilityDashboardContent({
                   <Card className={panelCardClass}>
                     <CardHeader>
                       <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                        <CloudSun className="w-5 h-5 text-green-600" />
+                        <CloudSun className="w-5 h-5 text-primary" aria-hidden />
                         Climate resilience assessments
                       </CardTitle>
                       <CardDescription className={metaTextClass}>
@@ -1357,14 +1310,14 @@ export function FacilityDashboardContent({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       {afyaLinkUrl ? (
-                        <Button asChild className="bg-green-600 hover:bg-green-700">
+                        <Button asChild>
                           <a href={afyaLinkUrl} target="_blank" rel="noopener noreferrer">
                             Open AfyaLink assessments
                           </a>
                         </Button>
                       ) : (
-                        <p className="text-sm text-gray-600">
-                          Configure <code className="text-xs bg-gray-100 px-1 rounded">NEXT_PUBLIC_AFYALINK_ASSESSMENT_URL</code>{" "}
+                        <p className="text-sm text-muted-foreground">
+                          Configure <code className="text-xs bg-muted px-1 rounded">NEXT_PUBLIC_AFYALINK_ASSESSMENT_URL</code>{" "}
                           for a direct link to your AfyaLink workspace.
                         </p>
                       )}
@@ -1374,7 +1327,7 @@ export function FacilityDashboardContent({
                   <Card className={panelCardClass}>
                     <CardHeader>
                       <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                        <CloudSun className="w-5 h-5 text-green-600" />
+                        <CloudSun className="w-5 h-5 text-primary" aria-hidden />
                         Climate resilience
                       </CardTitle>
                       <CardDescription className={metaTextClass}>
@@ -1451,10 +1404,10 @@ export function FacilityDashboardContent({
               <Card className={panelCardClass}>
                 <CardHeader>
                   <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                    <Bell className="w-5 h-5 text-green-600" />
+                    <Bell className="w-5 h-5 text-primary" aria-hidden />
                     Notifications
                     {facilityUnreadCount > 0 && (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 border border-green-100">
+                      <span className="ml-2 inline-flex items-center rounded-full bg-primary/5 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
                         {facilityUnreadCount} new
                       </span>
                     )}
@@ -1465,21 +1418,19 @@ export function FacilityDashboardContent({
                 </CardHeader>
                 <CardContent>
                   {facilityNotificationsLoading ? (
-                    <div className="flex items-center justify-center py-8 text-sm text-gray-500">
+                    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
                       Loading notifications...
                     </div>
                   ) : facilityNotifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-center text-sm text-gray-500">
-                      <CheckCircle className="w-6 h-6 text-green-500 mb-2" />
-                      <p>No recent Afya Solar notifications.</p>
-                      <p className="text-xs mt-1">
-                        Payment updates and service alerts will appear here.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon={<CheckCircle />}
+                      title="No recent Afya Solar notifications."
+                      description="Payment updates and service alerts will appear here."
+                    />
                   ) : (
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           Showing {facilityNotifications.length} recent notification
                           {facilityNotifications.length > 1 ? 's' : ''}
                         </span>
@@ -1520,40 +1471,40 @@ export function FacilityDashboardContent({
                           <div
                             key={notification.id}
                             className={cn(
-                              'p-3 rounded-lg border border-gray-100 bg-white flex items-start gap-3',
-                              !notification.isRead && 'border-green-200 bg-green-50/40',
+                              'p-3 rounded-lg border border-border bg-card flex items-start gap-3',
+                              !notification.isRead && 'border-primary/30 bg-primary/5',
                             )}
                           >
                             <div className="mt-0.5">
-                              <Bell className="w-4 h-4 text-green-600" />
+                              <Bell className="w-4 h-4 text-primary" aria-hidden />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
-                                  <p className="font-medium text-sm text-gray-900 truncate">
+                                  <p className="font-medium text-sm text-foreground truncate">
                                     {notification.title}
                                   </p>
                                   <span
                                     className={cn(
                                       'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border',
                                       notification.priority === 'urgent' &&
-                                        'bg-red-50 text-red-700 border-red-200',
+                                        'bg-destructive/10 text-destructive border-destructive/20',
                                       notification.priority === 'high' &&
-                                        'bg-orange-50 text-orange-700 border-orange-200',
+                                        'bg-warning/15 text-warning-foreground border-warning/30',
                                       notification.priority === 'normal' &&
-                                        'bg-blue-50 text-blue-700 border-blue-200',
+                                        'bg-primary/5 text-primary border-primary/20',
                                       notification.priority === 'low' &&
-                                        'bg-gray-50 text-gray-700 border-gray-200',
+                                        'bg-muted text-muted-foreground border-border',
                                     )}
                                   >
                                     {notification.priority.toUpperCase()}
                                   </span>
                                 </div>
-                                <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                                   {new Date(notification.createdAt).toLocaleString()}
                                 </span>
                               </div>
-                              <p className="text-xs text-gray-700 mt-1">
+                              <p className="text-xs text-muted-foreground mt-1">
                                 {notification.message}
                               </p>
                               <div className="mt-2 flex items-center justify-between gap-2">
@@ -1569,7 +1520,7 @@ export function FacilityDashboardContent({
                                     {notification.actionLabel || 'Open'}
                                   </Button>
                                 ) : (
-                                  <span className="text-[11px] text-gray-400">
+                                  <span className="text-[11px] text-muted-foreground">
                                     Type: {notification.type.replace(/_/g, ' ')}
                                   </span>
                                 )}
@@ -1577,7 +1528,7 @@ export function FacilityDashboardContent({
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-7 text-[11px] text-gray-500"
+                                    className="h-7 text-[11px] text-muted-foreground"
                                     onClick={async () => {
                                       try {
                                         const response = await fetch('/api/notifications', {
@@ -1641,18 +1592,18 @@ export function FacilityDashboardContent({
                     <CardTitle className={sectionTitleClass}>About Subscriptions</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3 text-sm text-gray-700">
+                    <div className="space-y-3 text-sm text-muted-foreground">
                       <p>
                         Subscribe to additional services to enhance your facility's operations. Each service can be subscribed to independently and can be cancelled at any time.
                       </p>
                       <div className="grid md:grid-cols-2 gap-4 pt-4">
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                          <p className="font-medium text-gray-900 mb-1">Flexible Plans</p>
-                          <p className="text-xs text-gray-600">Choose monthly or annual billing cycles</p>
+                        <div className="p-4 bg-muted rounded-lg border border-border">
+                          <p className="font-medium text-foreground mb-1">Flexible Plans</p>
+                          <p className="text-xs text-muted-foreground">Choose monthly or annual billing cycles</p>
                         </div>
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                          <p className="font-medium text-gray-900 mb-1">Easy Management</p>
-                          <p className="text-xs text-gray-600">Manage all subscriptions from one place</p>
+                        <div className="p-4 bg-muted rounded-lg border border-border">
+                          <p className="font-medium text-foreground mb-1">Easy Management</p>
+                          <p className="text-xs text-muted-foreground">Manage all subscriptions from one place</p>
                         </div>
                       </div>
                     </div>

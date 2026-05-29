@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { StatCard } from "@/components/ui/stat-card"
 import {
   Building2,
   MapPin,
@@ -105,36 +106,31 @@ export function FacilityDetailsDialog({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-                <Building2 className="w-6 h-6 text-green-600" />
+                <Building2 className="w-6 h-6 text-primary" aria-hidden />
                 {facility.name}
               </DialogTitle>
               <DialogDescription className="mt-2 flex items-center gap-4 text-sm">
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <MapPin className="w-4 h-4 text-muted-foreground" aria-hidden />
                   <span>{facility.city}, {facility.region}</span>
                 </span>
                 {facility.category && (
                   <>
-                    <span className="text-gray-300">•</span>
-                    <span className="text-gray-500">{facility.category}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">{facility.category}</span>
                   </>
                 )}
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge
-                variant={facility.status === 'active' ? 'default' : 'secondary'}
-                className={cn(
-                  "text-xs px-3 py-1",
-                  facility.status === 'active'
-                    ? 'bg-green-100 text-green-700 border-green-200'
-                    : 'bg-gray-100 text-gray-700 border-gray-200'
-                )}
+                variant={facility.status === 'active' ? 'success' : 'secondary'}
+                className="text-xs px-3 py-1 capitalize"
               >
                 {facility.status}
               </Badge>
               {isLowCredit && (
-                <Badge className="text-xs px-3 py-1 bg-yellow-100 text-yellow-700 border-yellow-200">
+                <Badge variant="warning" className="text-xs px-3 py-1">
                   Low Credit
                 </Badge>
               )}
@@ -145,63 +141,33 @@ export function FacilityDetailsDialog({
         <div className="space-y-6 mt-4">
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Credit Balance</p>
-                    <p className={cn(
-                      "text-xl font-bold",
-                      isLowCredit ? "text-yellow-600" : "text-gray-900"
-                    )}>
-                      {formatCurrency(credit)}
-                    </p>
-                  </div>
-                  <DollarSign className="w-8 h-8 text-green-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Devices</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {facility.activeDevices || 0}/{facility.deviceCount || 0}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Active</p>
-                  </div>
-                  <Plug className="w-8 h-8 text-blue-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Users</p>
-                    <p className="text-xl font-bold text-gray-900">{facility.userCount || 0}</p>
-                  </div>
-                  <Users className="w-8 h-8 text-purple-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 border-indigo-200">
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600 mb-1">Total Paid</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {formatCurrency(facility.totalPaidAmount || 0)}
-                    </p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-indigo-600 opacity-50" />
-                </div>
-              </CardContent>
-            </Card>
+            <StatCard
+              title="Credit Balance"
+              value={
+                <span className={cn(isLowCredit && "text-warning")}>{formatCurrency(credit)}</span>
+              }
+              icon={<DollarSign />}
+              accent={isLowCredit ? "warning" : "primary"}
+            />
+            <StatCard
+              title="Devices"
+              value={`${facility.activeDevices || 0}/${facility.deviceCount || 0}`}
+              icon={<Plug />}
+              meta="Active"
+              accent="primary"
+            />
+            <StatCard
+              title="Users"
+              value={facility.userCount || 0}
+              icon={<Users />}
+              accent="muted"
+            />
+            <StatCard
+              title="Total Paid"
+              value={formatCurrency(facility.totalPaidAmount || 0)}
+              icon={<TrendingUp />}
+              accent="success"
+            />
           </div>
 
           <Separator />
@@ -211,35 +177,35 @@ export function FacilityDetailsDialog({
             {/* Contact Information */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-green-600" />
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-primary" aria-hidden />
                   Contact Information
                 </h3>
                 <div className="space-y-3">
                   {facility.address && (
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Address</p>
-                        <p className="text-sm text-gray-900 mt-0.5">{facility.address}</p>
+                        <p className="text-xs text-muted-foreground">Address</p>
+                        <p className="text-sm text-foreground mt-0.5">{facility.address}</p>
                       </div>
                     </div>
                   )}
                   {facility.phone && (
                     <div className="flex items-center gap-3">
-                      <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Phone</p>
-                        <p className="text-sm text-gray-900 mt-0.5">{facility.phone}</p>
+                        <p className="text-xs text-muted-foreground">Phone</p>
+                        <p className="text-sm text-foreground mt-0.5">{facility.phone}</p>
                       </div>
                     </div>
                   )}
                   {facility.email && (
                     <div className="flex items-center gap-3">
-                      <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden />
                       <div>
-                        <p className="text-xs text-gray-500">Email</p>
-                        <p className="text-sm text-gray-900 mt-0.5">{facility.email}</p>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="text-sm text-foreground mt-0.5">{facility.email}</p>
                       </div>
                     </div>
                   )}
@@ -250,31 +216,31 @@ export function FacilityDetailsDialog({
             {/* System Information */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-green-600" />
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-primary" aria-hidden />
                   System Information
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Payment Model</span>
+                    <span className="text-xs text-muted-foreground">Payment Model</span>
                     <Badge variant="outline" className="text-xs">
                       {facility.paymentModel ? facility.paymentModel.toUpperCase() : 'N/A'}
                     </Badge>
                   </div>
                   {facility.systemSize && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">System Size</span>
-                      <span className="text-sm font-medium text-gray-900">{facility.systemSize}</span>
+                      <span className="text-xs text-muted-foreground">System Size</span>
+                      <span className="text-sm font-medium text-foreground">{facility.systemSize}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Monthly Consumption</span>
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-xs text-muted-foreground">Monthly Consumption</span>
+                    <span className="text-sm font-medium text-foreground">
                       {Number(facility.monthlyConsumption || 0).toFixed(2)} kWh
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Email Verified</span>
+                    <span className="text-xs text-muted-foreground">Email Verified</span>
                     <Badge
                       variant={facility.emailVerified ? "default" : "secondary"}
                       className="text-xs"
@@ -288,7 +254,7 @@ export function FacilityDetailsDialog({
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Terms Accepted</span>
+                    <span className="text-xs text-muted-foreground">Terms Accepted</span>
                     <Badge
                       variant={facility.acceptTerms ? "default" : "secondary"}
                       className="text-xs"
@@ -308,24 +274,24 @@ export function FacilityDetailsDialog({
             {/* Device Status */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Plug className="w-4 h-4 text-green-600" />
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Plug className="w-4 h-4 text-primary" aria-hidden />
                   Device Status
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Total Devices</span>
-                    <span className="text-sm font-semibold text-gray-900">{facility.deviceCount || 0}</span>
+                    <span className="text-xs text-muted-foreground">Total Devices</span>
+                    <span className="text-sm font-semibold text-foreground">{facility.deviceCount || 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Active</span>
-                    <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
+                    <span className="text-xs text-muted-foreground">Active</span>
+                    <Badge variant="success" className="text-xs">
                       {facility.activeDevices || 0}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Inactive</span>
-                    <Badge className="text-xs bg-gray-100 text-gray-700 border-gray-200">
+                    <span className="text-xs text-muted-foreground">Inactive</span>
+                    <Badge variant="secondary" className="text-xs">
                       {facility.inactiveDevices || 0}
                     </Badge>
                   </div>
@@ -336,37 +302,37 @@ export function FacilityDetailsDialog({
             {/* Payment Status */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-green-600" />
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" aria-hidden />
                   Payment Status
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Total Payments</span>
-                    <span className="text-sm font-semibold text-gray-900">{facility.totalPayments || 0}</span>
+                    <span className="text-xs text-muted-foreground">Total Payments</span>
+                    <span className="text-sm font-semibold text-foreground">{facility.totalPayments || 0}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Completed</span>
-                    <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
+                    <span className="text-xs text-muted-foreground">Completed</span>
+                    <Badge variant="success" className="text-xs">
                       {facility.completedPayments || 0}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Pending</span>
-                    <Badge className="text-xs bg-yellow-100 text-yellow-700 border-yellow-200">
+                    <span className="text-xs text-muted-foreground">Pending</span>
+                    <Badge variant="warning" className="text-xs">
                       {facility.pendingPayments || 0}
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Failed</span>
-                    <Badge className="text-xs bg-red-100 text-red-700 border-red-200">
+                    <span className="text-xs text-muted-foreground">Failed</span>
+                    <Badge variant="destructive" className="text-xs">
                       {facility.failedPayments || 0}
                     </Badge>
                   </div>
                   <Separator className="my-2" />
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-700">Total Amount Paid</span>
-                    <span className="text-sm font-bold text-green-600">
+                    <span className="text-xs font-semibold text-foreground">Total Amount Paid</span>
+                    <span className="text-sm font-bold text-primary">
                       {formatCurrency(facility.totalPaidAmount || 0)}
                     </span>
                   </div>
@@ -379,66 +345,66 @@ export function FacilityDetailsDialog({
               <>
                 <Card>
                   <CardContent className="pt-6">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <CalendarCheck className="w-4 h-4 text-green-600" />
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <CalendarCheck className="w-4 h-4 text-primary" aria-hidden />
                       Booking System
                     </h3>
                     <div className="space-y-3">
                       {facility.bookingSlug && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Booking Slug</span>
-                          <span className="text-xs font-mono font-medium text-gray-900">{facility.bookingSlug}</span>
+                          <span className="text-xs text-muted-foreground">Booking Slug</span>
+                          <span className="text-xs font-mono font-medium text-foreground">{facility.bookingSlug}</span>
                         </div>
                       )}
                       {facility.bookingTimezone && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Timezone</span>
-                          <span className="text-sm font-medium text-gray-900">{facility.bookingTimezone}</span>
+                          <span className="text-xs text-muted-foreground">Timezone</span>
+                          <span className="text-sm font-medium text-foreground">{facility.bookingTimezone}</span>
                         </div>
                       )}
                       {facility.bookingWhatsappNumber && (
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">WhatsApp</span>
-                          <span className="text-sm font-medium text-gray-900">{facility.bookingWhatsappNumber}</span>
+                          <span className="text-xs text-muted-foreground">WhatsApp</span>
+                          <span className="text-sm font-medium text-foreground">{facility.bookingWhatsappNumber}</span>
                         </div>
                       )}
                       <Separator className="my-2" />
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Departments</span>
+                        <span className="text-xs text-muted-foreground">Departments</span>
                         <div className="flex items-center gap-1">
-                          <Stethoscope className="w-3 h-3 text-purple-600" />
-                          <span className="text-sm font-semibold text-gray-900">{facility.departmentCount || 0}</span>
+                          <Stethoscope className="w-3 h-3 text-primary" aria-hidden />
+                          <span className="text-sm font-semibold text-foreground">{facility.departmentCount || 0}</span>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Doctors</span>
+                        <span className="text-xs text-muted-foreground">Doctors</span>
                         <div className="flex items-center gap-1">
-                          <UserCheck className="w-3 h-3 text-indigo-600" />
-                          <span className="text-sm font-semibold text-gray-900">{facility.doctorCount || 0}</span>
+                          <UserCheck className="w-3 h-3 text-primary" aria-hidden />
+                          <span className="text-sm font-semibold text-foreground">{facility.doctorCount || 0}</span>
                         </div>
                       </div>
                       {facility.totalAppointments > 0 && (
                         <>
                           <Separator className="my-2" />
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Total Appointments</span>
-                            <span className="text-sm font-semibold text-gray-900">{facility.totalAppointments}</span>
+                            <span className="text-xs text-muted-foreground">Total Appointments</span>
+                            <span className="text-sm font-semibold text-foreground">{facility.totalAppointments}</span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Pending</span>
-                            <Badge className="text-xs bg-yellow-100 text-yellow-700 border-yellow-200">
+                            <span className="text-xs text-muted-foreground">Pending</span>
+                            <Badge variant="warning" className="text-xs">
                               {facility.pendingAppointments}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Confirmed</span>
-                            <Badge className="text-xs bg-blue-100 text-blue-700 border-blue-200">
+                            <span className="text-xs text-muted-foreground">Confirmed</span>
+                            <Badge variant="secondary" className="text-xs">
                               {facility.confirmedAppointments}
                             </Badge>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">Completed</span>
-                            <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
+                            <span className="text-xs text-muted-foreground">Completed</span>
+                            <Badge variant="success" className="text-xs">
                               {facility.completedAppointments}
                             </Badge>
                           </div>
@@ -454,25 +420,25 @@ export function FacilityDetailsDialog({
             {(facility.referralCode || facility.referredBy) && (
               <Card>
                 <CardContent className="pt-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Gift className="w-4 h-4 text-green-600" />
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-primary" aria-hidden />
                     Referral Information
                   </h3>
                   <div className="space-y-3">
                     {facility.referralCode && (
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Referral Code</span>
-                        <span className="text-xs font-mono font-medium text-gray-900">{facility.referralCode}</span>
+                        <span className="text-xs text-muted-foreground">Referral Code</span>
+                        <span className="text-xs font-mono font-medium text-foreground">{facility.referralCode}</span>
                       </div>
                     )}
                     {facility.referredBy && (
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Referred By</span>
-                        <span className="text-xs text-gray-600">Facility ID</span>
+                        <span className="text-xs text-muted-foreground">Referred By</span>
+                        <span className="text-xs text-muted-foreground">Facility ID</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Benefit Applied</span>
+                      <span className="text-xs text-muted-foreground">Benefit Applied</span>
                       <Badge
                         variant={facility.referralBenefitApplied ? "default" : "secondary"}
                         className="text-xs"
@@ -488,27 +454,27 @@ export function FacilityDetailsDialog({
             {/* Account Information */}
             <Card>
               <CardContent className="pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-green-600" />
+                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" aria-hidden />
                   Account Information
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Created</span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">Created</span>
+                    <span className="text-xs text-muted-foreground">
                       {facility.createdAt ? new Date(facility.createdAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Last Updated</span>
-                    <span className="text-xs text-gray-600">
+                    <span className="text-xs text-muted-foreground">Last Updated</span>
+                    <span className="text-xs text-muted-foreground">
                       {facility.updatedAt ? new Date(facility.updatedAt).toLocaleDateString() : 'N/A'}
                     </span>
                   </div>
                   {facility.lastLoginAt && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Last Login</span>
-                      <span className="text-xs text-gray-600">
+                      <span className="text-xs text-muted-foreground">Last Login</span>
+                      <span className="text-xs text-muted-foreground">
                         {new Date(facility.lastLoginAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -523,13 +489,13 @@ export function FacilityDetailsDialog({
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-green-600" />
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" aria-hidden />
                     Location Map (Based on Coordinates)
                   </h3>
                 </div>
                 {showMap && getMapEmbedUrl() && (
-                  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+                  <div className="rounded-lg overflow-hidden border border-border shadow-sm">
                     <iframe
                       width="100%"
                       height="400"
@@ -540,17 +506,17 @@ export function FacilityDetailsDialog({
                       src={getMapEmbedUrl() || ''}
                       title={`Map showing exact location at coordinates ${facility.latitude?.toFixed(6)}, ${facility.longitude?.toFixed(6)}`}
                     />
-                    <div className="p-2 bg-gray-50 border-t border-gray-200 text-xs text-gray-600 text-center">
-                      <MapPin className="w-3 h-3 inline mr-1 text-red-600" />
+                    <div className="p-2 bg-muted border-t border-border text-xs text-muted-foreground text-center">
+                      <MapPin className="w-3 h-3 inline mr-1 text-destructive" aria-hidden />
                       <span className="font-medium">Pin marker shows exact coordinates:</span> {facility.latitude?.toFixed(6)}, {facility.longitude?.toFixed(6)}
                     </div>
                   </div>
                 )}
                 {!showMap && (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                    <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-1">Click "Show Map" to view location</p>
-                    <p className="text-xs text-gray-500">Location based on GPS coordinates: {facility.latitude?.toFixed(6)}, {facility.longitude?.toFixed(6)}</p>
+                  <div className="text-center py-8 bg-muted rounded-lg border border-border">
+                    <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-2" aria-hidden />
+                    <p className="text-sm text-muted-foreground mb-1">Click "Show Map" to view location</p>
+                    <p className="text-xs text-muted-foreground">Location based on GPS coordinates: {facility.latitude?.toFixed(6)}, {facility.longitude?.toFixed(6)}</p>
                   </div>
                 )}
               </CardContent>
@@ -559,22 +525,22 @@ export function FacilityDetailsDialog({
           
           {/* Message when coordinates are not available */}
           {!hasCoordinates && (
-            <Card className="border-yellow-200 bg-yellow-50">
+            <Card className="border-warning/30 bg-warning/10">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-warning flex-shrink-0" aria-hidden />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-yellow-900">GPS Coordinates Not Available</p>
-                    <p className="text-xs text-yellow-700 mt-1">
-                      Map cannot be displayed because GPS coordinates (latitude/longitude) are not set for this facility. 
+                    <p className="text-sm font-medium text-foreground">GPS Coordinates Not Available</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Map cannot be displayed because GPS coordinates (latitude/longitude) are not set for this facility.
                       The map pin can only be shown when exact coordinates are available.
                     </p>
                     {/* Debug info - show what values we received */}
-                    <div className="mt-2 p-2 bg-yellow-100 rounded text-xs font-mono text-yellow-800">
+                    <div className="mt-2 p-2 bg-warning/15 rounded text-xs font-mono text-foreground">
                       <p className="font-semibold mb-1">Debug Information:</p>
                       <p>Latitude = {facility.latitude === null ? 'NULL' : String(facility.latitude)} (type: {typeof facility.latitude})</p>
                       <p>Longitude = {facility.longitude === null ? 'NULL' : String(facility.longitude)} (type: {typeof facility.longitude})</p>
-                      <p className="mt-2 text-yellow-900 font-semibold">Note: Coordinates are NULL in the database. Please update the facility with GPS coordinates to enable map display.</p>
+                      <p className="mt-2 text-foreground font-semibold">Note: Coordinates are NULL in the database. Please update the facility with GPS coordinates to enable map display.</p>
                     </div>
                   </div>
                 </div>
@@ -597,13 +563,13 @@ export function FacilityDetailsDialog({
                   }
                 }}
               >
-                <MapPin className="w-4 h-4 mr-2" />
+                <MapPin className="w-4 h-4 mr-2" aria-hidden />
                 Open in Google Maps (Pin at Coordinates)
               </Button>
             ) : null}
             <Button variant="outline" asChild className={hasCoordinates ? "flex-1" : "w-full"}>
               <Link href={`/dashboard/admin/facilities/${facility.id}`}>
-                <Eye className="w-4 h-4 mr-2" />
+                <Eye className="w-4 h-4 mr-2" aria-hidden />
                 View Full Metrics
               </Link>
             </Button>

@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { StatCard } from "@/components/ui/stat-card"
+import { EmptyState } from "@/components/ui/empty-state"
 import { useFacility } from "@/hooks/use-facilities"
 import { useEnergyData } from "@/hooks/use-energy-data"
 import { useDevices } from "@/hooks/use-devices"
@@ -99,10 +101,10 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
 
   if (facilityLoading || energyLoading || devicesLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Loading facility metrics...</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground font-medium">Loading facility metrics...</p>
         </div>
       </div>
     )
@@ -110,14 +112,14 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
 
   if (!facility) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
-            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4 font-medium">Facility not found</p>
+            <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" aria-hidden />
+            <p className="text-muted-foreground mb-4 font-medium">Facility not found</p>
             <Button asChild>
               <Link href="/dashboard/admin">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-2" aria-hidden />
                 Back to Management Panel
               </Link>
             </Button>
@@ -131,40 +133,35 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
   const isLowCredit = creditBalance < 10000
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-start gap-4">
             <Button variant="ghost" asChild className="mt-1">
               <Link href="/dashboard/admin">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-2" aria-hidden />
                 Back
               </Link>
             </Button>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{facility.name}</h1>
-                <Badge 
-                  variant={facility.status === 'active' ? 'default' : 'secondary'}
-                  className={cn(
-                    "text-xs font-semibold",
-                    facility.status === 'active' 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : 'bg-gray-200 text-gray-700'
-                  )}
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{facility.name}</h1>
+                <Badge
+                  variant={facility.status === 'active' ? 'success' : 'secondary'}
+                  className="text-xs font-semibold capitalize"
                 >
                   {facility.status}
                 </Badge>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4" />
+                  <MapPin className="w-4 h-4" aria-hidden />
                   <span>{facility.city}, {facility.region}</span>
                 </div>
                 {facility.phone && (
                   <div className="flex items-center gap-1.5">
-                    <Phone className="w-4 h-4" />
+                    <Phone className="w-4 h-4" aria-hidden />
                     <span>{facility.phone}</span>
                   </div>
                 )}
@@ -174,48 +171,48 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
         </div>
 
         {/* Facility Information Card */}
-        <Card className="border-2 border-green-100 bg-gradient-to-br from-white to-green-50/30">
+        <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-green-600" />
+              <Building2 className="w-5 h-5 text-primary" aria-hidden />
               Facility Information
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Credit Balance</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Credit Balance</p>
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-green-600" />
+                  <DollarSign className="w-4 h-4 text-primary" aria-hidden />
                   <p className={cn(
                     "text-lg font-bold",
-                    isLowCredit ? "text-yellow-600" : "text-gray-900"
+                    isLowCredit ? "text-warning" : "text-foreground"
                   )}>
                     {formatCurrency(creditBalance)}
                   </p>
                 </div>
                 {isLowCredit && (
-                  <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                  <Badge variant="warning" className="text-xs">
                     Low Credit
                   </Badge>
                 )}
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Payment Model</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Payment Model</p>
                 <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-green-600" />
-                  <p className="text-lg font-semibold text-gray-900 capitalize">{facility.paymentModel || 'N/A'}</p>
+                  <CreditCard className="w-4 h-4 text-primary" aria-hidden />
+                  <p className="text-lg font-semibold text-foreground capitalize">{facility.paymentModel || 'N/A'}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Address</p>
-                <p className="text-sm text-gray-700 line-clamp-2">{facility.address || 'N/A'}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Address</p>
+                <p className="text-sm text-muted-foreground line-clamp-2">{facility.address || 'N/A'}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Devices</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Devices</p>
                 <div className="flex items-center gap-2">
-                  <Plug className="w-4 h-4 text-green-600" />
-                  <p className="text-lg font-semibold text-gray-900">{devices?.length || 0} Active</p>
+                  <Plug className="w-4 h-4 text-primary" aria-hidden />
+                  <p className="text-lg font-semibold text-foreground">{devices?.length || 0} Active</p>
                 </div>
               </div>
             </div>
@@ -223,10 +220,10 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
         </Card>
 
         {/* Time Range Selector */}
-        <Card className="bg-white shadow-sm">
+        <Card className="shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-700">Time Range</p>
+              <p className="text-sm font-medium text-foreground">Time Range</p>
               <div className="flex gap-2">
                 {(['today', 'week', 'month'] as const).map((range) => (
                   <Button
@@ -234,11 +231,6 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
                     variant={timeRange === range ? 'default' : 'outline'}
                     onClick={() => setTimeRange(range)}
                     size="sm"
-                    className={cn(
-                      timeRange === range 
-                        ? 'bg-green-600 hover:bg-green-700 text-white' 
-                        : 'hover:bg-gray-50'
-                    )}
                   >
                     {range === 'today' ? 'Today' : range === 'week' ? 'This Week' : 'This Month'}
                   </Button>
@@ -250,93 +242,72 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
 
         {/* Primary Metrics - Large Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-700">Total Consumption</CardTitle>
-              <div className="h-10 w-10 rounded-lg bg-green-600 flex items-center justify-center">
-                <Zap className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.totalConsumption.toFixed(2)}</div>
-              <p className="text-xs font-medium text-gray-600">kWh</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-yellow-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-700">Solar Generation</CardTitle>
-              <div className="h-10 w-10 rounded-lg bg-yellow-500 flex items-center justify-center">
-                <Sun className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{metrics.totalSolarGeneration.toFixed(2)}</div>
-              <p className="text-xs font-medium text-gray-600">
-                kWh • <span className="text-yellow-700 font-semibold">{metrics.solarPercentage.toFixed(1)}%</span> of total
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-700">Credit Balance</CardTitle>
-              <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{formatCurrency(creditBalance)}</div>
-              <p className="text-xs font-medium text-gray-600">Available balance</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-gray-700">Cost Savings</CardTitle>
-              <div className="h-10 w-10 rounded-lg bg-purple-600 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900 mb-1">{formatCurrency(metrics.costSavings)}</div>
-              <p className="text-xs font-medium text-gray-600">From solar generation</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Total Consumption"
+            value={metrics.totalConsumption.toFixed(2)}
+            icon={<Zap />}
+            meta="kWh"
+            accent="success"
+          />
+          <StatCard
+            title="Solar Generation"
+            value={metrics.totalSolarGeneration.toFixed(2)}
+            icon={<Sun />}
+            meta={
+              <>
+                kWh • <span className="font-semibold text-solar-foreground">{metrics.solarPercentage.toFixed(1)}%</span> of total
+              </>
+            }
+            accent="solar"
+          />
+          <StatCard
+            title="Credit Balance"
+            value={formatCurrency(creditBalance)}
+            icon={<DollarSign />}
+            meta="Available balance"
+            accent="primary"
+          />
+          <StatCard
+            title="Cost Savings"
+            value={formatCurrency(metrics.costSavings)}
+            icon={<TrendingUp />}
+            meta="From solar generation"
+            accent="muted"
+          />
         </div>
 
         {/* Secondary Metrics */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Average Power</CardTitle>
-              <BarChart3 className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Average Power</CardTitle>
+              <BarChart3 className="h-4 w-4 text-primary" aria-hidden />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.avgPower.toFixed(2)}</div>
-              <p className="text-xs text-gray-600 mt-1">Watts</p>
+              <div className="text-2xl font-bold text-foreground">{metrics.avgPower.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Watts</p>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Peak Power</CardTitle>
-              <Zap className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Peak Power</CardTitle>
+              <Zap className="h-4 w-4 text-primary" aria-hidden />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.maxPower.toFixed(2)}</div>
-              <p className="text-xs text-gray-600 mt-1">Watts</p>
+              <div className="text-2xl font-bold text-foreground">{metrics.maxPower.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground mt-1">Watts</p>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow">
+          <Card className="shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">Average Battery</CardTitle>
-              <Battery className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Average Battery</CardTitle>
+              <Battery className="h-4 w-4 text-primary" aria-hidden />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{metrics.avgBatteryLevel.toFixed(0)}%</div>
-              <p className="text-xs text-gray-600 mt-1">Battery level</p>
+              <div className="text-2xl font-bold text-foreground">{metrics.avgBatteryLevel.toFixed(0)}%</div>
+              <p className="text-xs text-muted-foreground mt-1">Battery level</p>
             </CardContent>
           </Card>
         </div>
@@ -347,7 +318,7 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Plug className="w-5 h-5 text-green-600" />
+                  <Plug className="w-5 h-5 text-primary" aria-hidden />
                   Devices
                 </CardTitle>
                 <CardDescription className="mt-1">Smart meters and energy monitors</CardDescription>
@@ -363,30 +334,25 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
                 {devices.map((device) => (
                   <div
                     key={device.id}
-                    className="flex items-center justify-between p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className={cn(
                         "h-10 w-10 rounded-lg flex items-center justify-center",
-                        device.status === 'active' 
-                          ? "bg-green-100 text-green-600" 
-                          : "bg-gray-100 text-gray-600"
+                        device.status === 'active'
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-muted-foreground"
                       )}>
-                        <Plug className="w-5 h-5" />
+                        <Plug className="w-5 h-5" aria-hidden />
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">{device.serialNumber}</p>
+                        <p className="font-semibold text-foreground">{device.serialNumber}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <p className="text-sm text-gray-600">{device.type}</p>
-                          <span className="text-gray-400">•</span>
-                          <Badge 
-                            variant="outline" 
-                            className={cn(
-                              "text-xs",
-                              device.status === 'active'
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-gray-50 text-gray-700 border-gray-200"
-                            )}
+                          <p className="text-sm text-muted-foreground">{device.type}</p>
+                          <span className="text-muted-foreground">•</span>
+                          <Badge
+                            variant={device.status === 'active' ? 'success' : 'secondary'}
+                            className="text-xs capitalize"
                           >
                             {device.status}
                           </Badge>
@@ -394,17 +360,17 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
                       </div>
                     </div>
                     {device.status === 'active' && (
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <CheckCircle2 className="w-5 h-5 text-primary" aria-hidden />
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <Plug className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">No devices found</p>
-                <p className="text-sm text-gray-500 mt-1">Devices will appear here once connected</p>
-              </div>
+              <EmptyState
+                icon={<Plug />}
+                title="No devices found"
+                description="Devices will appear here once connected"
+              />
             )}
           </CardContent>
         </Card>
@@ -415,7 +381,7 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-green-600" />
+                  <Activity className="w-5 h-5 text-primary" aria-hidden />
                   Recent Energy Data
                 </CardTitle>
                 <CardDescription className="mt-1">Latest energy consumption readings</CardDescription>
@@ -433,15 +399,15 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
                     {energyData.slice(0, 50).map((data) => (
                       <div
                         key={data.id}
-                        className="flex items-center justify-between p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                        className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                            <Zap className="w-5 h-5 text-green-600" />
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Zap className="w-5 h-5 text-primary" aria-hidden />
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">{Number(data.power).toFixed(2)} W</p>
-                            <p className="text-sm text-gray-600 mt-0.5">
+                            <p className="font-semibold text-foreground">{Number(data.power).toFixed(2)} W</p>
+                            <p className="text-sm text-muted-foreground mt-0.5">
                               {new Date(data.timestamp).toLocaleString()}
                             </p>
                           </div>
@@ -451,8 +417,8 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
                             {Number(data.energy).toFixed(2)} kWh
                           </Badge>
                           {data.solarGeneration && Number(data.solarGeneration) > 0 && (
-                            <div className="flex items-center gap-1 text-xs text-yellow-600">
-                              <Sun className="w-3 h-3" />
+                            <div className="flex items-center gap-1 text-xs text-solar-foreground">
+                              <Sun className="w-3 h-3" aria-hidden />
                               <span>{Number(data.solarGeneration).toFixed(2)} kWh</span>
                             </div>
                           )}
@@ -463,11 +429,11 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8">
-                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">No energy data available</p>
-                <p className="text-sm text-gray-500 mt-1">Energy readings will appear here once devices start reporting</p>
-              </div>
+              <EmptyState
+                icon={<Activity />}
+                title="No energy data available"
+                description="Energy readings will appear here once devices start reporting"
+              />
             )}
           </CardContent>
         </Card>
