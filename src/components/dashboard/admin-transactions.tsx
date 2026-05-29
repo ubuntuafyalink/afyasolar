@@ -39,6 +39,7 @@ import { formatCurrency } from "@/lib/utils"
 import { useAdminWithdrawals, useUpdateWithdrawal } from "@/hooks/use-admin-withdrawals"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 export function AdminTransactions() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -92,18 +93,18 @@ export function AdminTransactions() {
   }
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { label: string; className: string }> = {
-      pending: { label: "Pending", className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200" },
-      processing: { label: "Processing", className: "bg-blue-100 text-blue-800 hover:bg-blue-200" },
-      completed: { label: "Completed", className: "bg-green-100 text-green-800 hover:bg-green-200" },
-      rejected: { label: "Rejected", className: "bg-red-100 text-red-800 hover:bg-red-200" },
-      cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-800 hover:bg-gray-200" },
+    const variants: Record<string, { label: string; variant: "secondary" | "success" | "warning" | "destructive" }> = {
+      pending: { label: "Pending", variant: "warning" },
+      processing: { label: "Processing", variant: "secondary" },
+      completed: { label: "Completed", variant: "success" },
+      rejected: { label: "Rejected", variant: "destructive" },
+      cancelled: { label: "Cancelled", variant: "secondary" },
     }
 
     const variant = variants[status] || variants.pending
 
     return (
-      <Badge className={variant.className}>
+      <Badge variant={variant.variant}>
         {variant.label}
       </Badge>
     )
@@ -112,15 +113,15 @@ export function AdminTransactions() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" aria-hidden="true" />
       case "processing":
-        return <AlertCircle className="h-4 w-4" />
+        return <AlertCircle className="h-4 w-4" aria-hidden="true" />
       case "completed":
-        return <CheckCircle2 className="h-4 w-4" />
+        return <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
       case "rejected":
-        return <XCircle className="h-4 w-4" />
+        return <XCircle className="h-4 w-4" aria-hidden="true" />
       default:
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-4 w-4" aria-hidden="true" />
     }
   }
 
@@ -129,7 +130,7 @@ export function AdminTransactions() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Transaction Management</h2>
+          <h2 className="text-2xl font-semibold">Transaction Management</h2>
           <p className="text-muted-foreground">
             Manage technician withdrawal requests and transactions
           </p>
@@ -146,7 +147,7 @@ export function AdminTransactions() {
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" aria-hidden="true" />
               <Input
                 placeholder="Search by technician name, email, phone, or ID..."
                 value={searchQuery}
@@ -156,7 +157,7 @@ export function AdminTransactions() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -180,13 +181,10 @@ export function AdminTransactions() {
           </CardContent>
         </Card>
       ) : filteredWithdrawals.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground">
-              No transactions found
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<CreditCard aria-hidden="true" />}
+          title="No transactions found"
+        />
       ) : (
         <div className="space-y-4">
           {filteredWithdrawals.map((withdrawal) => (
@@ -194,7 +192,7 @@ export function AdminTransactions() {
               key={withdrawal.id}
               className={cn(
                 "hover:shadow-md transition-shadow",
-                withdrawal.status === "pending" && "border-yellow-300 border-2"
+                withdrawal.status === "pending" && "border-warning border-2"
               )}
             >
               <CardContent className="pt-6">
@@ -288,7 +286,7 @@ export function AdminTransactions() {
                       onClick={() => handleViewDetails(withdrawal)}
                       className="flex items-center gap-2"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-4 w-4" aria-hidden="true" />
                       View Details
                     </Button>
                     {withdrawal.status === "pending" && (
@@ -302,7 +300,7 @@ export function AdminTransactions() {
                         }}
                         className="flex items-center gap-2"
                       >
-                        <CheckCircle2 className="h-4 w-4" />
+                        <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                         Process
                       </Button>
                     )}
@@ -429,7 +427,7 @@ export function AdminTransactions() {
               {selectedWithdrawal.status === "pending" && (
                 <DialogFooter className="flex flex-col sm:flex-row gap-2">
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     onClick={() => {
                       setActionStatus("rejected")
                       handleUpdateStatus("rejected")
@@ -437,7 +435,7 @@ export function AdminTransactions() {
                     disabled={updateWithdrawal.isPending}
                     className="flex items-center gap-2"
                   >
-                    <XCircle className="h-4 w-4" />
+                    <XCircle className="h-4 w-4" aria-hidden="true" />
                     Reject
                   </Button>
                   <Button
@@ -449,7 +447,7 @@ export function AdminTransactions() {
                     disabled={updateWithdrawal.isPending}
                     className="flex items-center gap-2"
                   >
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-4 w-4" aria-hidden="true" />
                     Mark as Processing
                   </Button>
                   <Button
@@ -460,7 +458,7 @@ export function AdminTransactions() {
                     disabled={updateWithdrawal.isPending}
                     className="flex items-center gap-2"
                   >
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                     Confirm Withdrawal
                   </Button>
                 </DialogFooter>
@@ -469,7 +467,7 @@ export function AdminTransactions() {
               {selectedWithdrawal.status === "processing" && (
                 <DialogFooter>
                   <Button
-                    variant="outline"
+                    variant="destructive"
                     onClick={() => {
                       setActionStatus("rejected")
                       handleUpdateStatus("rejected")
@@ -477,7 +475,7 @@ export function AdminTransactions() {
                     disabled={updateWithdrawal.isPending}
                     className="flex items-center gap-2"
                   >
-                    <XCircle className="h-4 w-4" />
+                    <XCircle className="h-4 w-4" aria-hidden="true" />
                     Reject
                   </Button>
                   <Button
@@ -488,7 +486,7 @@ export function AdminTransactions() {
                     disabled={updateWithdrawal.isPending}
                     className="flex items-center gap-2"
                   >
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
                     Complete
                   </Button>
                 </DialogFooter>
