@@ -108,9 +108,15 @@ Branch + framer-motion + `facility-features.ts` flag + `facility-demo-data.ts`
 
 ## L. Cross-cutting
 - **L51** ~~Swahili default + EN toggle~~ — DESCOPED (English-only)
-- **L52** Offline + PWA polish for new sections
-- **L53** Accessibility WCAG 2.2 AA pass
-- **L54** Desktop-first responsive QA
+- **L52** Offline + PWA — satisfied by the existing PWA (`public/manifest.json` +
+  `public/sw.js`, wired in `app/layout.tsx`): new sections live on the already-
+  cached `/dashboard/facility` route, and Reports adds genuine IndexedDB offline
+  data entry. No service-worker changes (avoids touching existing behavior).
+- **L53** Accessibility WCAG 2.2 AA — explicit `FOCUS_RING` (`facility-ui.ts`)
+  on all custom interactive elements; ≥44px tap targets; aria labels/roles;
+  reduced-motion honored via `MotionConfig`.
+- **L54** Desktop-first responsive — new sections use desktop-first grids
+  (`lg:grid-cols-*`, stacked on mobile); the bottom nav is `<lg`-only.
 
 ---
 

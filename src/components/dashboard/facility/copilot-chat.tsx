@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { COPILOT_SUGGESTIONS, answerCopilot } from "@/lib/dashboard/facility-demo-data"
 
 type Message = { role: "user" | "assistant"; text: string }
@@ -90,7 +91,10 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
               key={s}
               type="button"
               onClick={() => send(s)}
-              className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted"
+              className={cn(
+                "rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted",
+                FOCUS_RING,
+              )}
             >
               {s}
             </button>
