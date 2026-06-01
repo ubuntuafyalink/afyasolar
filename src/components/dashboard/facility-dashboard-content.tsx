@@ -71,6 +71,9 @@ import { toast } from "sonner"
 import { ServiceAccessPaymentDialog } from "@/components/services/service-access-payment-dialog"
 import { PaygFinancingSection } from "@/components/payg-financing/payg-financing-section"
 import { BillsSubscriptionView } from "@/components/dashboard/bills-subscription-view"
+import dynamic from "next/dynamic"
+import { FACILITY_V2_ENABLED } from "@/lib/dashboard/facility-features"
+import { FacilityBottomNav } from "@/components/dashboard/facility/facility-bottom-nav"
 import {
   ResponsiveContainer,
   BarChart,
@@ -80,6 +83,13 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts"
+
+// Additive facility "v2" sections (CEO spec Parts 7–15), lazy-mounted so their
+// bundle loads only when the section is opened. Existing sections are unaffected.
+const TodaySection = dynamic(
+  () => import("@/components/dashboard/facility/today-section").then((m) => m.TodaySection),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1035,6 +1045,15 @@ export function FacilityDashboardContent({
               {/* Facility self-service widgets intentionally hidden for now */}
             </>)}
 
+            {FACILITY_V2_ENABLED && currentActiveSection === 'today' && (
+              <TodaySection
+                facilityId={facilityId}
+                facilityName={facility?.name ?? null}
+                batteryLevel={liveData?.batteryLevel}
+                onNavigate={setCurrentSection}
+              />
+            )}
+
             {currentActiveSection === 'package-selection' && (
               <div className="space-y-6">
                 {facilityId && <SolarPackagesSelection facilityId={facilityId} />}
@@ -1617,9 +1636,29 @@ export function FacilityDashboardContent({
             {currentActiveSection === 'carbon-credits' && (
               <FacilityCarbonCredits facilityId={facilityId || ''} />
             )}
+
+            {/* Spacer so content is not hidden behind the mobile bottom nav. */}
+            {FACILITY_V2_ENABLED && !adminMode && (
+              <div className="h-16 lg:hidden" aria-hidden />
+            )}
           </div>
         </main>
       </div>
+
+      {/* Optional mobile-only bottom navigation (desktop uses the sidebar). */}
+      {FACILITY_V2_ENABLED && !adminMode && (
+        <FacilityBottomNav
+          active={currentActiveSection}
+          onSelect={(section) => {
+            setCurrentSection(section)
+            setMobileMenuOpen(false)
+          }}
+          onHelp={() => {
+            setSidebarOpen(true)
+            setMobileMenuOpen(true)
+          }}
+        />
+      )}
     </div>
   )
 }
