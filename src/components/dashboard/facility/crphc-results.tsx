@@ -6,6 +6,7 @@ import { AlertTriangle, ShieldCheck } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import {
   CRPHC_NEW_DIMENSIONS,
   computeCrphcResult,
@@ -100,6 +101,7 @@ export function CrphcResults({ facilityId }: { facilityId?: string }) {
                       onClick={() => setNewScores((s) => ({ ...s, [d.code]: n }))}
                       className={cn(
                         "flex size-8 items-center justify-center rounded-md border text-sm font-medium transition-colors",
+                        FOCUS_RING,
                         newScores[d.code] === n
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border text-muted-foreground hover:bg-muted",

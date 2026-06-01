@@ -4,6 +4,7 @@ import { HelpCircle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { FACILITY_BOTTOM_NAV_ITEMS, type NavSection } from "@/lib/dashboard/facility-nav"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 
 /**
  * Spec 8.2 bottom navigation — an OPTIONAL mobile-only enhancement (`<lg` only;
@@ -42,6 +43,7 @@ export function FacilityBottomNav({
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
                   "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium transition-colors",
+                  FOCUS_RING,
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -55,7 +57,10 @@ export function FacilityBottomNav({
           <button
             type="button"
             onClick={onHelp}
-            className="flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className={cn(
+              "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 py-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground",
+              FOCUS_RING,
+            )}
           >
             <HelpCircle className="size-5" aria-hidden />
             <span>Help</span>

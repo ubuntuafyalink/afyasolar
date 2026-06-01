@@ -67,7 +67,7 @@ export function BillOcrCapture({ facilityId }: { facilityId?: string }) {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 text-muted-foreground hover:bg-muted"
+            className="flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-muted/30 text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Upload className="size-6" aria-hidden />
             <span className="text-sm">Tap to upload a photo</span>
