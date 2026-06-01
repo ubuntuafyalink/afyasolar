@@ -57,6 +57,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.33.0",
     "embla-carousel-react": "8.5.1",
+    "framer-motion": "^12.40.0",
     "geist": "latest",
     "html2canvas": "^1.4.1",
     "input-otp": "1.4.1",
