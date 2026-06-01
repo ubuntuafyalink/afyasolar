@@ -226,7 +226,7 @@ export default function ManagementPanelDashboard() {
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Installation sites – results and performance overview
+              Installation sites results and performance overview
             </p>
             {lastUpdated && (
               <p className="text-xs text-muted-foreground mt-1" title={lastUpdated}>
@@ -260,7 +260,7 @@ export default function ManagementPanelDashboard() {
         </div>
       </div>
 
-      {/* Stat cards – clickable, scroll to sites */}
+      {/* Stat cards clickable, scroll to sites */}
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
           <button
@@ -341,7 +341,7 @@ export default function ManagementPanelDashboard() {
         </div>
       )}
 
-      {/* Monthly trend chart – from DB */}
+      {/* Monthly trend chart from DB */}
       {trend.length > 0 && (
         <Card className="rounded-lg border-border shadow-sm overflow-hidden mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
           <CardHeader className="bg-muted/50 border-b border-border">
@@ -376,7 +376,7 @@ export default function ManagementPanelDashboard() {
         </Card>
       )}
 
-      {/* Performance overview card – clickable */}
+      {/* Performance overview card clickable */}
       {stats && (
         <button
           type="button"
@@ -410,13 +410,13 @@ export default function ManagementPanelDashboard() {
         </button>
       )}
 
-      {/* Installed sites – scroll target and facility cards */}
+      {/* Installed sites scroll target and facility cards */}
       <div ref={sitesSectionRef} className="scroll-mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
         <Card className="rounded-lg border-border shadow-sm overflow-hidden">
           <CardHeader className="bg-muted/50 border-b border-border">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Building2 className="w-5 h-5" aria-hidden />
-              Installed Sites – Before & After
+              Installed Sites Before & After
             </CardTitle>
             <CardDescription>Click a site card to view full details</CardDescription>
           </CardHeader>

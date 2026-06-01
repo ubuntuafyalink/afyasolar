@@ -400,7 +400,7 @@ export function UserManagement() {
                         </p>
                       )}
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Last login: {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : '—'} · Failed attempts: {user.failedLoginAttempts ?? 0}
+                        Last login: {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : ''} · Failed attempts: {user.failedLoginAttempts ?? 0}
                       </p>
                       {user.invitationSentAt && (
                         <p className="text-xs text-muted-foreground mt-0.5">

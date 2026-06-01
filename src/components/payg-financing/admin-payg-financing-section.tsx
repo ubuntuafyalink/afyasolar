@@ -84,9 +84,9 @@ function toNumber(v: string | number | null | undefined): number {
 }
 
 function formatDate(value: string | null | undefined): string {
-  if (!value) return "—"
+  if (!value) return ""
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return ""
   return d.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -95,7 +95,7 @@ function formatDate(value: string | null | undefined): string {
 }
 
 function shortId(id: string) {
-  return id ? `#${id.slice(0, 8).toUpperCase()}` : "—"
+  return id ? `#${id.slice(0, 8).toUpperCase()}` : ""
 }
 
 function StatusBadge({ status }: { status: ContractStatus | RepaymentStatus | string }) {
@@ -231,7 +231,7 @@ export function AdminPaygFinancingSection({ facilityId }: { facilityId?: string 
         />
         <KpiCard
           title="Next due"
-          value={(kpis?.nextDueAmount ?? 0) > 0 ? formatCurrency(kpis?.nextDueAmount ?? 0) : "—"}
+          value={(kpis?.nextDueAmount ?? 0) > 0 ? formatCurrency(kpis?.nextDueAmount ?? 0) : ""}
           subtitle={kpis?.nextDueDate ? formatDate(kpis.nextDueDate) : "No pending dues"}
           icon={Calendar}
         />

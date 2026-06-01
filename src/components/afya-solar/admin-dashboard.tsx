@@ -1160,7 +1160,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
               <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
-                    Design &amp; Finance Assessment –{" "}
+                    Design &amp; Finance Assessment {" "}
                     {selectedReport.facilityName || selectedReport.facilityId || "Facility"}
                   </DialogTitle>
                   <DialogDescription>
@@ -1196,7 +1196,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <span className="font-semibold">
                           {selectedReport.totalDailyEnergyKwh != null
                             ? `${Number(selectedReport.totalDailyEnergyKwh).toFixed(1)} kWh/day`
-                            : "—"}
+                            : ""}
                         </span>
                       </li>
                       <li>
@@ -1204,7 +1204,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <span className="font-semibold">
                           {selectedReport.criticalEnergyKwh != null
                             ? `${Number(selectedReport.criticalEnergyKwh).toFixed(1)} kWh/day`
-                            : "—"}
+                            : ""}
                         </span>
                       </li>
                       <li>
@@ -1212,7 +1212,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <span className="font-semibold">
                           {selectedReport.adjustedDailyEnergyKwh != null
                             ? `${Number(selectedReport.adjustedDailyEnergyKwh).toFixed(1)} kWh/day`
-                            : "—"}
+                            : ""}
                         </span>
                       </li>
                       <li>
@@ -1220,7 +1220,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <span className="font-semibold">
                           {selectedReport.meuTotalDailyLoadKwh != null
                             ? `${Number(selectedReport.meuTotalDailyLoadKwh).toFixed(1)} kWh/day`
-                            : "—"}
+                            : ""}
                         </span>
                       </li>
                     </ul>
@@ -1234,13 +1234,13 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.pvSizeKw != null
                             ? `${Number(selectedReport.pvSizeKw).toFixed(2)} kW`
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
                         <p className="text-gray-500">Panels (620 W)</p>
                         <p className="font-semibold">
-                          {selectedReport.numPanels != null ? selectedReport.numPanels : "—"}
+                          {selectedReport.numPanels != null ? selectedReport.numPanels : ""}
                         </p>
                       </div>
                       <div>
@@ -1248,7 +1248,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.batteryKwh != null
                             ? `${Number(selectedReport.batteryKwh).toFixed(1)} kWh`
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
@@ -1256,7 +1256,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.batteryAh != null
                             ? `${Number(selectedReport.batteryAh).toFixed(0)} Ah`
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
@@ -1264,7 +1264,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.inverterKw != null
                             ? `${Number(selectedReport.inverterKw).toFixed(1)} kW`
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
@@ -1272,7 +1272,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.mpptCurrentA != null
                             ? `${Number(selectedReport.mpptCurrentA).toFixed(0)} A`
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                     </div>
@@ -1286,7 +1286,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.baselineTotalMonthly != null
                             ? formatCurrency(selectedReport.baselineTotalMonthly)
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
@@ -1294,7 +1294,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.afterTotalMonthly != null
                             ? formatCurrency(selectedReport.afterTotalMonthly)
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
@@ -1302,7 +1302,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.baselineGridMonthly != null
                             ? formatCurrency(selectedReport.baselineGridMonthly)
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                       <div>
@@ -1310,7 +1310,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <p className="font-semibold">
                           {selectedReport.baselineDieselMonthly != null
                             ? formatCurrency(selectedReport.baselineDieselMonthly)
-                            : "—"}
+                            : ""}
                         </p>
                       </div>
                     </div>
@@ -1319,7 +1319,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                       <p className="font-semibold text-green-700">
                         {selectedReport.grossMonthlySavings != null
                           ? formatCurrency(selectedReport.grossMonthlySavings)
-                          : "—"}
+                          : ""}
                       </p>
                     </div>
                   </div>
@@ -1334,7 +1334,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.cashPriceTzs != null
                               ? formatCurrency(selectedReport.cashPriceTzs)
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                         <p>
@@ -1342,7 +1342,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.cashPaybackMonths != null
                               ? `${Number(selectedReport.cashPaybackMonths).toFixed(1)} months`
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                       </div>
@@ -1353,7 +1353,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.installmentUpfrontTzs != null
                               ? formatCurrency(selectedReport.installmentUpfrontTzs)
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                         <p>
@@ -1361,7 +1361,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.installmentTermMonths != null
                               ? `${selectedReport.installmentTermMonths} months`
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                         <p>
@@ -1369,7 +1369,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.installmentMonthlyTzs != null
                               ? formatCurrency(selectedReport.installmentMonthlyTzs)
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                         <p>
@@ -1377,7 +1377,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.installmentNetSavingsTzs != null
                               ? formatCurrency(selectedReport.installmentNetSavingsTzs)
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                       </div>
@@ -1388,7 +1388,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.eaasMonthlyTzs != null
                               ? formatCurrency(selectedReport.eaasMonthlyTzs)
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                         <p>
@@ -1396,7 +1396,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.eaasTermMonths != null
                               ? `${selectedReport.eaasTermMonths} months`
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                         <p>
@@ -1404,7 +1404,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold">
                             {selectedReport.eaasNetSavingsTzs != null
                               ? formatCurrency(selectedReport.eaasNetSavingsTzs)
-                              : "—"}
+                              : ""}
                           </span>
                         </p>
                       </div>
@@ -1463,13 +1463,13 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                         <div>
                           <span className="block text-[11px] text-gray-500">PV Size</span>
                           <span className="font-semibold">
-                            {report.pvSizeKw != null ? Number(report.pvSizeKw).toFixed(1) : "—"} kW
+                            {report.pvSizeKw != null ? Number(report.pvSizeKw).toFixed(1) : ""} kW
                           </span>
                         </div>
                         <div>
                           <span className="block text-[11px] text-gray-500">Battery</span>
                           <span className="font-semibold">
-                            {report.batteryKwh != null ? Number(report.batteryKwh).toFixed(1) : "—"} kWh
+                            {report.batteryKwh != null ? Number(report.batteryKwh).toFixed(1) : ""} kWh
                           </span>
                         </div>
                         <div>
@@ -1477,7 +1477,7 @@ export default function AfyaSolarAdminDashboard({ initialTab = 'services' }: { i
                           <span className="font-semibold text-green-700">
                             {report.grossMonthlySavings != null
                               ? formatCurrency(report.grossMonthlySavings)
-                              : "—"}
+                              : ""}
                           </span>
                         </div>
                       </div>

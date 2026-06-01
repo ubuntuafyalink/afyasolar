@@ -90,7 +90,7 @@ export default function PrivacyPolicyPage() {
 
         <h2 className="text-lg font-bold text-gray-900 mb-2">6. Data Security</h2>
         <p className="text-sm text-gray-700 mb-6">
-          We use reasonable technical and organizational safeguards (encryption, secure servers, access controls) to protect your data. However, no system is 100% secure — so we encourage you to protect your login credentials.
+          We use reasonable technical and organizational safeguards (encryption, secure servers, access controls) to protect your data. However, no system is 100% secure so we encourage you to protect your login credentials.
         </p>
 
         <h2 className="text-lg font-bold text-gray-900 mb-2">7. Children's Privacy</h2>

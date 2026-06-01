@@ -10,9 +10,8 @@ import { StatCard } from "@/components/ui/stat-card"
 import { EmptyState } from "@/components/ui/empty-state"
 import { ChartSkeleton } from "@/components/ui/skeleton"
 import { 
-  Zap, 
-  DollarSign, 
-  TrendingUp, 
+  Zap,
+  DollarSign,
   Plug,
   Sun,
   Battery,
@@ -64,7 +63,7 @@ import { useSubscribe, useSubscriptions } from "@/hooks/use-subscriptions"
 import { formatCurrency } from "@/lib/utils"
 import type { Facility, LiveEnergyData } from "@/types"
 import { cn } from "@/lib/utils"
-import { getFacilityNavItems, getAfyaLinkAssessmentUrl, type NavSection } from "@/lib/dashboard/facility-nav"
+import { getFacilityNavGroups, getAfyaLinkAssessmentUrl, type NavSection } from "@/lib/dashboard/facility-nav"
 import { mapPlanTypeToPaymentPlan } from "@/lib/dashboard/afya-solar-plan-type"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
@@ -74,6 +73,11 @@ import { BillsSubscriptionView } from "@/components/dashboard/bills-subscription
 import dynamic from "next/dynamic"
 import { FACILITY_V2_ENABLED } from "@/lib/dashboard/facility-features"
 import { FacilityBottomNav } from "@/components/dashboard/facility/facility-bottom-nav"
+import { FacilityToolbar } from "@/components/dashboard/facility/facility-toolbar"
+import { useFacilityPreferences } from "@/components/dashboard/facility/facility-preferences-provider"
+import { OfflineBanner } from "@/components/dashboard/facility/offline-banner"
+import { SkipToContent } from "@/components/dashboard/facility/skip-to-content"
+import { PwaRegister } from "@/components/dashboard/facility/pwa-register"
 import {
   ResponsiveContainer,
   BarChart,
@@ -84,11 +88,50 @@ import {
   CartesianGrid,
 } from "recharts"
 
-// Additive facility "v2" sections (CEO spec Parts 7–15), lazy-mounted so their
+// Additive facility "v2" sections (CEO spec Parts 715), lazy-mounted so their
 // bundle loads only when the section is opened. Existing sections are unaffected.
 const TodaySection = dynamic(
   () => import("@/components/dashboard/facility/today-section").then((m) => m.TodaySection),
   { loading: () => <ChartSkeleton />, ssr: false },
+)
+const ChildServicesSection = dynamic(
+  () =>
+    import("@/components/dashboard/facility/child-services-section").then(
+      (m) => m.ChildServicesSection,
+    ),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
+const RcsExplainerSection = dynamic(
+  () =>
+    import("@/components/dashboard/facility/rcs-explainer-section").then(
+      (m) => m.RcsExplainerSection,
+    ),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
+const ClimateOutlookSection = dynamic(
+  () =>
+    import("@/components/dashboard/facility/climate-outlook-section").then(
+      (m) => m.ClimateOutlookSection,
+    ),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
+const NotificationsCenter = dynamic(
+  () =>
+    import("@/components/dashboard/facility/notifications-center").then(
+      (m) => m.NotificationsCenter,
+    ),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
+const HelpMethodologySection = dynamic(
+  () =>
+    import("@/components/dashboard/facility/help-methodology-section").then(
+      (m) => m.HelpMethodologySection,
+    ),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
+const FacilityTour = dynamic(
+  () => import("@/components/dashboard/facility/facility-tour").then((m) => m.FacilityTour),
+  { ssr: false },
 )
 const FridgeSection = dynamic(
   () => import("@/components/dashboard/facility/fridge-section").then((m) => m.FridgeSection),
@@ -115,10 +158,6 @@ const ClimateResilienceEnhancements = dynamic(
 )
 const FinancingEnhancements = dynamic(
   () => import("@/components/dashboard/facility/financing-enhancements").then((m) => m.FinancingEnhancements),
-  { loading: () => <ChartSkeleton />, ssr: false },
-)
-const AlertsPanel = dynamic(
-  () => import("@/components/dashboard/facility/alerts-panel").then((m) => m.AlertsPanel),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
 const AssistantSection = dynamic(
@@ -193,12 +232,12 @@ export function FacilityDashboardContent({
 
   const openAfyaSolarPaymentDialog = () => {
     if (!afyaSolarSubscriber) {
-      toast.error("No active Afya Solar package found for payments.")
+      toast.error(t("shell.noPackagePayments"))
       return
     }
 
     if (!afyaSolarSubscriber.packageId || !afyaSolarSubscriber.packageName) {
-      toast.error("Your package details are missing. Please contact support.")
+      toast.error(t("shell.packageMissing"))
       return
     }
 
@@ -220,6 +259,7 @@ export function FacilityDashboardContent({
 
 
   // Use admin-provided section or fall back to internal state
+  const { t } = useFacilityPreferences()
   const [internalActiveSection, setInternalActiveSection] = useState<NavSection>('overview')
   const currentActiveSection = adminMode ? (activeSection || internalActiveSection) : internalActiveSection
   const setCurrentSection = adminMode && onSectionChange ? onSectionChange : setInternalActiveSection
@@ -373,7 +413,7 @@ export function FacilityDashboardContent({
 
   const subscribedServices = useMemo(() => [] as { label: string; href: string; icon: typeof CreditCard }[], [])
 
-  const sidebarNavItems = useMemo(() => getFacilityNavItems({ adminMode }), [adminMode])
+  const sidebarNavGroups = useMemo(() => getFacilityNavGroups({ adminMode }), [adminMode])
 
   const { data: overviewCarbonCredits = [] } = useQuery({
     queryKey: ["overview-carbon-credits", facilityId],
@@ -594,6 +634,9 @@ export function FacilityDashboardContent({
 
   return (
     <div className="h-screen bg-muted/30 flex overflow-hidden">
+      {FACILITY_V2_ENABLED && !adminMode && <SkipToContent />}
+      {FACILITY_V2_ENABLED && !adminMode && <FacilityTour />}
+      {FACILITY_V2_ENABLED && !adminMode && <PwaRegister />}
       <aside
         className={cn(
           "bg-card border-r border-border shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
@@ -643,35 +686,59 @@ export function FacilityDashboardContent({
           </Button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {sidebarNavItems
-            .filter((item) => item.id !== 'devices' && item.id !== 'energy')
-            .map((item) => {
-            const Icon = item.icon
-            const isActive = currentActiveSection === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setCurrentSection(item.id)
-                  setMobileMenuOpen(false)
-                }}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                  isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
-                {sidebarOpen && <span>{item.label}</span>}
-              </button>
-            )
-          })}
+        {/* Navigation grouped by related sections */}
+        <nav className="flex-1 p-3 overflow-y-auto">
+          {sidebarNavGroups.map((group, groupIndex) => (
+            <div
+              key={group.id}
+              role="group"
+              aria-label={t(`navGroup.${group.id}`)}
+              className="space-y-1"
+            >
+              {sidebarOpen ? (
+                <p
+                  className={cn(
+                    "px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+                    groupIndex === 0 ? "pt-1" : "pt-4",
+                  )}
+                >
+                  {t(`navGroup.${group.id}`)}
+                </p>
+              ) : (
+                groupIndex > 0 && <div className="mx-2 my-2 border-t border-border/60" aria-hidden />
+              )}
+              {group.items.map((item) => {
+                const Icon = item.icon
+                const isActive = currentActiveSection === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setCurrentSection(item.id)
+                      setMobileMenuOpen(false)
+                    }}
+                    title={t(`nav.${item.id}`)}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      !sidebarOpen && "justify-center",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
+                    {sidebarOpen && <span>{t(`nav.${item.id}`)}</span>}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
           {subscribedServices.length > 0 && (
             <div className="pt-4 border-t border-border mt-4 space-y-1">
               {sidebarOpen && (
                 <p className="px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Subscribed Services
+                  {t("shell.subscribedServices")}
                 </p>
               )}
               {subscribedServices.map((service) => {
@@ -709,7 +776,7 @@ export function FacilityDashboardContent({
                       className={cn("w-full justify-center text-xs", sidebarOpen && "justify-start")}
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
-                      {sidebarOpen && <span>Request Feature</span>}
+                      {sidebarOpen && <span>{t("shell.requestFeature")}</span>}
                     </Button>
                   }
                 />
@@ -720,7 +787,7 @@ export function FacilityDashboardContent({
                       className={cn("w-full justify-center text-xs", sidebarOpen && "justify-start")}
                     >
                       <Gift className="w-4 h-4 mr-2" />
-                      {sidebarOpen && <span>Referral Program</span>}
+                      {sidebarOpen && <span>{t("shell.referralProgram")}</span>}
                     </Button>
                   }
                 />
@@ -735,7 +802,7 @@ export function FacilityDashboardContent({
               }}
             >
               <Settings className="w-4 h-4 mr-2" />
-              {sidebarOpen && <span>Settings</span>}
+              {sidebarOpen && <span>{t("nav.settings")}</span>}
             </Button>
             {!adminMode && (
               <LogoutButton
@@ -758,6 +825,8 @@ export function FacilityDashboardContent({
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Offline banner (facility v2): reassures the user the dashboard still works on saved data. */}
+        {FACILITY_V2_ENABLED && !adminMode && <OfflineBanner />}
         {/* Top Header */}
         <header className="bg-card border-b border-border shadow-sm sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -771,15 +840,16 @@ export function FacilityDashboardContent({
                     setMobileMenuOpen(true)
                   }}
                   className="lg:hidden"
+                  aria-label={t("shell.openMenu")}
                 >
                   <Menu className="w-5 h-5" aria-hidden />
                 </Button>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground uppercase tracking-wide sr-only">
-                    Energy Dashboard
+                    {t("shell.energyDashboard")}
                   </p>
                   <h1 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
-                    {facility?.name || "Facility Overview"}
+                    {facility?.name || t("shell.facilityOverview")}
                   </h1>
                   {facility && (
                     <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -789,6 +859,7 @@ export function FacilityDashboardContent({
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
+                {FACILITY_V2_ENABLED && !adminMode && <FacilityToolbar />}
                 <Button
                   variant="outline"
                   size="icon"
@@ -796,7 +867,7 @@ export function FacilityDashboardContent({
                     setMobileMenuOpen(false)
                     window.location.href = "/services/afya-solar"
                   }}
-                  aria-label="Go to services home"
+                  aria-label={t("shell.servicesHome")}
                 >
                   <Home className="w-4 h-4" aria-hidden />
                 </Button>
@@ -806,99 +877,73 @@ export function FacilityDashboardContent({
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:px-6 lg:px-8 text-sm text-foreground">
+        <main id="facility-main" className="flex-1 overflow-y-auto p-4 sm:px-6 lg:px-8 text-sm text-foreground">
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Section Content */}
             {currentActiveSection === 'overview' && (
               <>
-                {/* Unified Metrics Grid */}
-                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                  {/* Primary Performance Cards - Row 1 */}
-                  <Card className="relative overflow-hidden border border-primary/20 bg-primary/5 hover:border-primary/40 transition-shadow duration-300 hover:shadow-md group rounded-lg">
-                    <CardHeader className="flex flex-col items-center pb-2 relative z-10">
-                      <div className="rounded-lg bg-primary/10 p-1.5 group-hover:bg-primary/20 transition-colors">
-                        <Gauge className="h-5 w-5 text-primary" aria-hidden />
-                      </div>
-                      <CardTitle className="text-[11px] font-semibold text-foreground text-center mt-2 tracking-wide uppercase">
-                        Energy Efficiency
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative z-10 px-3 pb-3 pt-0 text-center space-y-2">
-                      <div className="text-2xl font-extrabold text-primary">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-primary/15 motion-reduce:animate-none" />
-                        ) : (
-                          energyEfficiencyScore !== null && energyEfficiencyScore !== undefined ? `${energyEfficiencyScore}%` : "N/A"
-                        )}
-                      </div>
-                      <div className="flex items-center justify-center gap-1 text-[11px] text-primary">
-                        <TrendingUp className="h-3 w-3" aria-hidden />
-                        <span>Assessment score</span>
-                      </div>
-                      <div className="h-1.5 w-full rounded-full bg-primary/15 overflow-hidden">
-                        <div
-                          className={`h-full bg-primary transition-all ${assessmentSnapshotBusy ? "animate-pulse motion-reduce:animate-none" : ""}`}
-                          style={{ width: `${Math.min(energyEfficiencyScore ?? 0, 100)}%` }}
-                        />
-                      </div>
-                      {assessmentSnapshotBusy && <p className="text-[10px] text-primary">Loading from database...</p>}
-                    </CardContent>
-                  </Card>
+                {/* Today at a glance fridge, power and pending tasks */}
+                {FACILITY_V2_ENABLED && !adminMode && (
+                  <TodaySection
+                    facilityId={facilityId}
+                    facilityName={facility?.name ?? null}
+                    batteryLevel={liveData?.batteryLevel}
+                    onNavigate={setCurrentSection}
+                  />
+                )}
 
-                  <Card className="relative overflow-hidden border border-border bg-card hover:border-primary/30 transition-shadow duration-300 hover:shadow-md group rounded-lg">
-                    <CardHeader className="flex flex-col items-center pb-2 relative z-10">
-                      <div className="rounded-lg bg-muted p-1.5 transition-colors">
-                        <Award className="h-5 w-5 text-muted-foreground" aria-hidden />
-                      </div>
-                      <CardTitle className="text-[11px] font-semibold text-foreground text-center mt-2 tracking-wide uppercase">
-                        Carbon Credit
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative z-10 px-3 pb-3 pt-0 text-center space-y-2">
-                      <div className="text-2xl font-extrabold text-foreground">
-                      {assessmentSnapshotBusy ? (
+                {/* Key metrics */}
+                <div>
+                  <h3 className="mb-3 text-lg font-semibold text-foreground">{t("shell.keyMetrics")}</h3>
+                  {/* Unified Metrics Grid */}
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                  <StatCard
+                    title="Energy Efficiency"
+                    accent="primary"
+                    icon={<Gauge />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-7 w-16 animate-pulse rounded bg-primary/15 motion-reduce:animate-none" />
+                      ) : energyEfficiencyScore !== null && energyEfficiencyScore !== undefined ? (
+                        `${energyEfficiencyScore}%`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta="Assessment score"
+                    progress={assessmentSnapshotBusy ? undefined : energyEfficiencyScore ?? 0}
+                  />
+
+                  <StatCard
+                    title="Carbon Credit"
+                    accent="success"
+                    icon={<Award />}
+                    value={
+                      assessmentSnapshotBusy ? (
                         <span className="inline-block h-7 w-16 animate-pulse rounded bg-muted motion-reduce:animate-none" />
                       ) : (
                         carbonCreditEarnedCalc
-                      )}
-                      </div>
-                      <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                        <TrendingUp className="h-3 w-3" aria-hidden />
-                        <span>Credits earned</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      )
+                    }
+                    meta="Credits earned"
+                  />
 
-                  <Card className="relative overflow-hidden border border-border bg-card hover:border-primary/30 transition-shadow duration-300 hover:shadow-md group rounded-lg">
-                    <CardHeader className="flex flex-col items-center pb-2 relative z-10">
-                      <div className="rounded-lg bg-muted p-1.5 transition-colors">
-                        <CloudSun className="h-5 w-5 text-muted-foreground" aria-hidden />
-                      </div>
-                      <CardTitle className="text-[11px] font-semibold text-foreground text-center mt-2 tracking-wide uppercase">
-                        Climate Resilience
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="relative z-10 px-3 pb-3 pt-0 text-center space-y-2">
-                      <div className="text-2xl font-extrabold text-foreground">
-                        {assessmentSnapshotBusy ? (
-                          <span className="inline-block h-7 w-16 animate-pulse rounded bg-muted motion-reduce:animate-none" />
-                        ) : (
-                          climateResilienceScore !== null && climateResilienceScore !== undefined ? `${climateResilienceScore}%` : "N/A"
-                        )}
-                      </div>
-                      <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                        <TrendingUp className="h-3 w-3" aria-hidden />
-                        <span>Resilience score</span>
-                      </div>
-                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                          className={`h-full bg-primary transition-all ${assessmentSnapshotBusy ? "animate-pulse motion-reduce:animate-none" : ""}`}
-                          style={{ width: `${Math.min(climateResilienceScore ?? 0, 100)}%` }}
-                        />
-                      </div>
-                      {assessmentSnapshotBusy && <p className="text-[10px] text-muted-foreground">Loading from database...</p>}
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Climate Resilience"
+                    accent="primary"
+                    icon={<CloudSun />}
+                    value={
+                      assessmentSnapshotBusy ? (
+                        <span className="inline-block h-7 w-16 animate-pulse rounded bg-muted motion-reduce:animate-none" />
+                      ) : climateResilienceScore !== null && climateResilienceScore !== undefined ? (
+                        `${climateResilienceScore}%`
+                      ) : (
+                        "N/A"
+                      )
+                    }
+                    meta="Resilience score"
+                    progress={assessmentSnapshotBusy ? undefined : climateResilienceScore ?? 0}
+                  />
 
                   <StatCard
                     title="Total Consumption"
@@ -1035,6 +1080,7 @@ export function FacilityDashboardContent({
                     }
                     meta={assessmentSnapshotBusy ? "Loading from database..." : "From devices & loads assessment"}
                   />
+                  </div>
                 </div>
 
                 {/* Energy & Cost Insights (assessment snapshot) */}
@@ -1043,7 +1089,7 @@ export function FacilityDashboardContent({
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">Energy &amp; Cost Insights</h3>
                       <p className="text-xs text-muted-foreground">
-                        Load breakdown, energy mix, critical load view, cost composition, and a savings bridge—powered by your saved assessment snapshots.
+                        Load breakdown, energy mix, critical load view, cost composition, and a savings bridgepowered by your saved assessment snapshots.
                       </p>
                     </div>
                     {assessmentSnapshotBusy ? (
@@ -1084,12 +1130,24 @@ export function FacilityDashboardContent({
               {/* Facility self-service widgets intentionally hidden for now */}
             </>)}
 
-            {FACILITY_V2_ENABLED && currentActiveSection === 'today' && (
-              <TodaySection
+            {FACILITY_V2_ENABLED && currentActiveSection === 'child-services' && (
+              <ChildServicesSection facilityId={facilityId} onNavigate={setCurrentSection} />
+            )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'rcs' && (
+              <RcsExplainerSection
                 facilityId={facilityId}
                 facilityName={facility?.name ?? null}
-                batteryLevel={liveData?.batteryLevel}
+                region={facility?.region ?? null}
                 onNavigate={setCurrentSection}
+              />
+            )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'climate-outlook' && (
+              <ClimateOutlookSection
+                facilityId={facilityId}
+                facilityName={facility?.name ?? null}
+                region={facility?.region ?? null}
               />
             )}
 
@@ -1113,6 +1171,10 @@ export function FacilityDashboardContent({
               <ChannelsSection facilityId={facilityId} facilityName={facility?.name ?? null} />
             )}
 
+            {FACILITY_V2_ENABLED && currentActiveSection === 'help' && (
+              <HelpMethodologySection />
+            )}
+
             {currentActiveSection === 'package-selection' && (
               <div className="space-y-6">
                 {facilityId && <SolarPackagesSelection facilityId={facilityId} />}
@@ -1124,9 +1186,9 @@ export function FacilityDashboardContent({
                 <CardHeader>
                   <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
                     <Plug className="w-5 h-5 text-primary" aria-hidden />
-                    Devices
+                    {t("shell.devices")}
                   </CardTitle>
-                  <CardDescription className={metaTextClass}>Manage your smart meters and energy monitors</CardDescription>
+                  <CardDescription className={metaTextClass}>{t("shell.devicesDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {devices && devices.length > 0 ? (
@@ -1161,7 +1223,7 @@ export function FacilityDashboardContent({
                   ) : (
                     <EmptyState
                       icon={<Plug />}
-                      title="No devices available"
+                      title={t("shell.noDevices")}
                     />
                   )}
                 </CardContent>
@@ -1503,7 +1565,7 @@ export function FacilityDashboardContent({
                 <CardHeader>
                   <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
                     <Bell className="w-5 h-5 text-primary" aria-hidden />
-                    Notifications
+                    {t("shell.notificationsTitle")}
                     {facilityUnreadCount > 0 && (
                       <span className="ml-2 inline-flex items-center rounded-full bg-primary/5 px-2 py-0.5 text-xs font-medium text-primary border border-primary/20">
                         {facilityUnreadCount} new
@@ -1511,7 +1573,7 @@ export function FacilityDashboardContent({
                     )}
                   </CardTitle>
                   <CardDescription className={metaTextClass}>
-                    Stay updated with Afya Solar service activity, payments, and important alerts.
+                    {t("shell.notificationsDesc")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1522,7 +1584,7 @@ export function FacilityDashboardContent({
                   ) : facilityNotifications.length === 0 ? (
                     <EmptyState
                       icon={<CheckCircle />}
-                      title="No recent Afya Solar notifications."
+                      title={t("shell.noNotifications")}
                       description="Payment updates and service alerts will appear here."
                     />
                   ) : (
@@ -1548,7 +1610,7 @@ export function FacilityDashboardContent({
                                   prev.map((n) => ({ ...n, isRead: true })),
                                 )
                                 setFacilityUnreadCount(0)
-                                toast.success('Notifications cleared', {
+                                toast.success(t('shell.notificationsCleared'), {
                                   description:
                                     'All notifications have been marked as read.',
                                   duration: 2500,
@@ -1556,11 +1618,11 @@ export function FacilityDashboardContent({
                               }
                             } catch (error) {
                               console.error('Error marking notifications as read:', error)
-                              toast.error('Failed to mark notifications as read.')
+                              toast.error(t('shell.markReadFailed'))
                             }
                           }}
                         >
-                          Mark all as read
+                          {t("shell.markAllRead")}
                         </Button>
                       </div>
 
@@ -1669,7 +1731,7 @@ export function FacilityDashboardContent({
             {/* Additive (CEO spec Part 11.3 & 15): climate/outage alerts and the
                 daily 06:30 status push preview, below the notifications center. */}
             {FACILITY_V2_ENABLED && !adminMode && currentActiveSection === 'notifications' && (
-              <AlertsPanel facilityId={facilityId} facilityName={facility?.name ?? null} />
+              <NotificationsCenter facilityId={facilityId} />
             )}
 
             {/* Report page intentionally removed */}
@@ -1682,8 +1744,8 @@ export function FacilityDashboardContent({
               <div className="space-y-6">
                 {/* Subscription Services Header */}
                 <div className="mb-6">
-                  <h2 className={sectionTitleClass}>Available Services</h2>
-                  <p className={metaTextClass}>Subscribe to additional services to enhance your facility management</p>
+                  <h2 className={sectionTitleClass}>{t("shell.availableServices")}</h2>
+                  <p className={metaTextClass}>{t("shell.subscribeDesc")}</p>
                 </div>
 
                 {/* Services Grid */}
@@ -1697,9 +1759,7 @@ export function FacilityDashboardContent({
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 text-sm text-muted-foreground">
-                      <p>
-                        Subscribe to additional services to enhance your facility's operations. Each service can be subscribed to independently and can be cancelled at any time.
-                      </p>
+                      <p>{t("shell.subscribeDesc")}</p>
                       <div className="grid md:grid-cols-2 gap-4 pt-4">
                         <div className="p-4 bg-muted rounded-lg border border-border">
                           <p className="font-medium text-foreground mb-1">Flexible Plans</p>

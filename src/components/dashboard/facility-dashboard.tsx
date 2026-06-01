@@ -5,6 +5,7 @@ import { useFacility } from "@/hooks/use-facilities"
 import { useLiveEnergyData } from "@/hooks/use-energy-data"
 import { DashboardSkeleton } from "@/components/ui/skeleton"
 import { FacilityDashboardContent } from "./facility-dashboard-content"
+import { FacilityPreferencesProvider } from "./facility/facility-preferences-provider"
 
 interface FacilityDashboardProps {
   facilityId?: string
@@ -22,6 +23,10 @@ export function FacilityDashboard({ facilityId }: FacilityDashboardProps) {
     )
   }
 
-  return <FacilityDashboardContent facility={facility} liveData={liveData} />
+  return (
+    <FacilityPreferencesProvider>
+      <FacilityDashboardContent facility={facility} liveData={liveData} />
+    </FacilityPreferencesProvider>
+  )
 }
 

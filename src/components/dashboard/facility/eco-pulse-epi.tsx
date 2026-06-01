@@ -19,12 +19,12 @@ const BAND_STYLE: Record<string, string> = {
  * observed to expected consumption (climate-adjusted). >1.3 flags significant
  * inefficiency; <0.8 may indicate under-reporting.
  *
- * [data] — fed by the local demo module. TODO: wire the real Eco-Pulse model
+ * [data] fed by the local demo module. TODO: wire the real Eco-Pulse model
  * (MLR + GAM stack) per spec Part 9.6.
  */
 export function EcoPulseEpi({ facilityId }: { facilityId?: string }) {
   const epi = getEcoPulseEpi(facilityId)
-  // Position on a 0.5–1.6 scale for the marker.
+  // Position on a 0.51.6 scale for the marker.
   const pct = Math.max(0, Math.min(100, ((epi.epi - 0.5) / (1.6 - 0.5)) * 100))
 
   return (

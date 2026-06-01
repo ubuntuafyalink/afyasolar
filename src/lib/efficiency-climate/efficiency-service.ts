@@ -224,7 +224,7 @@ export async function buildEfficiencyPerformancePayload(
   if (underperformingDays >= Math.ceil(days * 0.25)) {
     alerts.push({
       level: "critical",
-      message: `${underperformingDays} of ${days} days flagged as underperforming — schedule a technical review.`,
+      message: `${underperformingDays} of ${days} days flagged as underperforming schedule a technical review.`,
     })
   }
 

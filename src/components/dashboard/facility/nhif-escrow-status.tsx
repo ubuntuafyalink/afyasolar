@@ -19,7 +19,7 @@ const STATUS_META: Record<NhifEscrow["status"], { label: string; className: stri
  * payouts is routed into a protected escrow up to the monthly fee, with the
  * surplus forwarded to the clinic.
  *
- * [data] — fed by the local demo module. TODO: wire the real escrow ledger
+ * [data] fed by the local demo module. TODO: wire the real escrow ledger
  * (receivables_assignments / escrow_* tables) per spec 13.6.4.
  */
 export function NhifEscrowStatus({ facilityId }: { facilityId?: string }) {

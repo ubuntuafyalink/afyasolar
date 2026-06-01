@@ -225,7 +225,7 @@ export function ManagementPanelEnergyEfficiency() {
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Gauge className="w-4 h-4" aria-hidden />
                 Average efficiency score
-                <span title="0–100 score for energy use after solar; higher is better." className="text-muted-foreground cursor-help">
+                <span title="0100 score for energy use after solar; higher is better." className="text-muted-foreground cursor-help">
                   <HelpCircle className="w-3.5 h-3.5" aria-hidden />
                 </span>
               </CardTitle>
@@ -342,7 +342,7 @@ export function ManagementPanelEnergyEfficiency() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Gauge className="w-5 h-5" aria-hidden />
-                  Energy efficiency – {selectedFacility.name}
+                  Energy efficiency {selectedFacility.name}
                 </DialogTitle>
                 <DialogDescription>
                   {selectedFacility.location}, {selectedFacility.region} · {selectedFacility.facilityType}

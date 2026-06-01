@@ -18,7 +18,7 @@ function greeting(): string {
 
 /**
  * Spec 8.2 "Today surface": the facility home page. Three glanceable cards
- * answer — are the vaccines safe right now, how much power today, is there
+ * answer are the vaccines safe right now, how much power today, is there
  * anything I need to do. When the fridge is in danger the layout reorganizes so
  * the fridge card takes the full hero position.
  *
@@ -46,7 +46,7 @@ export function TodaySection({
             {facilityName ? `, ${facilityName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Here&apos;s today at a glance — fridge, power and anything that needs you.
+            Here&apos;s today at a glance fridge, power and anything that needs you.
           </p>
         </div>
 

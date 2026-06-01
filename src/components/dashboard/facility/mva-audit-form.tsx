@@ -24,7 +24,7 @@ const ENERGY_SOURCES = ["Grid", "Diesel", "Solar", "None"]
 /**
  * Spec 7.1: the fifteen-parameter Minimum Viable Audit (Tier 1). Captures the
  * inputs that carry ~95% of the diagnostic value. This form computes/persists
- * nothing over the network — it gathers values locally and (in a later
+ * nothing over the network it gathers values locally and (in a later
  * increment) feeds the three-output report. Parameters 14 & 15 are auto-computed.
  */
 export function MvaAuditForm({ onComplete }: { onComplete?: () => void }) {
@@ -40,7 +40,7 @@ export function MvaAuditForm({ onComplete }: { onComplete?: () => void }) {
       className="space-y-5"
       onSubmit={(e) => {
         e.preventDefault()
-        // Local only — no network write.
+        // Local only no network write.
         toast.success("Audit inputs saved on this device.")
         onComplete?.()
       }}
@@ -65,10 +65,10 @@ export function MvaAuditForm({ onComplete }: { onComplete?: () => void }) {
           </Select>
         </Field>
 
-        <Field id="rooms" label="Number of rooms (1–50)">
+        <Field id="rooms" label="Number of rooms (150)">
           <Input id="rooms" type="number" min={1} max={50} inputMode="numeric" />
         </Field>
-        <Field id="staff" label="Number of staff (1–500)">
+        <Field id="staff" label="Number of staff (1500)">
           <Input id="staff" type="number" min={1} max={500} inputMode="numeric" />
         </Field>
         <Field id="patients" label="Patients per month">
@@ -144,11 +144,11 @@ export function MvaAuditForm({ onComplete }: { onComplete?: () => void }) {
       <div className="grid gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 sm:grid-cols-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Sparkles className="size-4 text-primary" aria-hidden />
-          Generator runtime ratio — <span className="font-medium text-foreground">auto-computed</span>
+          Generator runtime ratio <span className="font-medium text-foreground">auto-computed</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Sparkles className="size-4 text-primary" aria-hidden />
-          Climate exposure — <span className="font-medium text-foreground">auto from NASA POWER</span>
+          Climate exposure <span className="font-medium text-foreground">auto from NASA POWER</span>
         </div>
       </div>
 

@@ -6,7 +6,7 @@ import { NhifEscrowStatus } from "./nhif-escrow-status"
 
 /**
  * Spec Part 13 (H35, H39, H40): additive financing views for the existing Bills
- * & Payment section — the Energy-as-a-Service contract, the Revenue-Linked
+ * & Payment section the Energy-as-a-Service contract, the Revenue-Linked
  * Smart-Splitter, and the NHIF Receivables Escrow status. Mounted below the
  * existing bills/payment content; nothing existing is changed.
  */

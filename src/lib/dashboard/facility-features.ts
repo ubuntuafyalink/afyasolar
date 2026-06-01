@@ -1,5 +1,5 @@
 /**
- * Feature flags for the additive facility "v2" experience (CEO spec Parts 7–15).
+ * Feature flags for the additive facility "v2" experience (CEO spec Parts 715).
  *
  * The new facility sections (Today, Fridge, Power, Reports, Assistant, Channels)
  * and enhancements are gated here so a half-finished backlog never degrades the

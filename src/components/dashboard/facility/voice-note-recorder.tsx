@@ -14,7 +14,7 @@ function formatSeconds(s: number): string {
 
 /**
  * Spec 8.2 "Ripoti": voice-note recorder for the "Floods or any problem" field.
- * Records locally via MediaRecorder and plays back — nothing is uploaded.
+ * Records locally via MediaRecorder and plays back nothing is uploaded.
  * Falls back gracefully where MediaRecorder is unavailable.
  */
 export function VoiceNoteRecorder({
@@ -87,7 +87,7 @@ export function VoiceNoteRecorder({
   if (!supported) {
     return (
       <p className="text-xs text-muted-foreground">
-        Voice recording isn&apos;t available on this device — please type the problem above.
+        Voice recording isn&apos;t available on this device please type the problem above.
       </p>
     )
   }
