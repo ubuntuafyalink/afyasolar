@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/ui/empty-state"
 import { cn } from "@/lib/utils"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { getPendingTasks, type FacilityTaskKind } from "@/lib/dashboard/facility-demo-data"
 import type { NavSection } from "@/lib/dashboard/facility-nav"
 
@@ -68,6 +69,7 @@ export function PendingTasksCard({
                     onClick={() => task.target && onOpenTask?.(task.target as NavSection)}
                     className={cn(
                       "flex w-full items-start gap-3 rounded-lg border border-border p-3 text-left transition-colors",
+                      FOCUS_RING,
                       actionable ? "hover:bg-muted" : "cursor-default",
                     )}
                   >

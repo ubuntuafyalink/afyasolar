@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { getResiHealthCvi } from "@/lib/dashboard/facility-demo-data"
 
 const HAZARD_META: { key: keyof ReturnType<typeof getResiHealthCvi>["byHazard"]; label: string; icon: LucideIcon }[] = [
@@ -50,6 +51,7 @@ export function CviPanel({ facilityId }: { facilityId?: string }) {
               onClick={() => setYear(y)}
               className={cn(
                 "rounded-md border px-3 py-1 text-sm font-medium transition-colors",
+                FOCUS_RING,
                 year === y
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border text-muted-foreground hover:bg-muted",
