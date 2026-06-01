@@ -113,3 +113,95 @@ export function getPendingTasks(facilityId?: string): FacilityTask[] {
   const count = Math.floor(rand(seed, 4) * (all.length + 1)) // 0..3
   return all.slice(0, count)
 }
+
+// ---------------------------------------------------------------------------
+// Group B — Cold chain "Fridge"
+// ---------------------------------------------------------------------------
+
+export type FridgeTempPoint = { time: string; tempC: number }
+
+/** 24 hourly interior-temperature readings, mostly within the 2–8°C safe band. */
+export function getFridge24hTemps(facilityId?: string): FridgeTempPoint[] {
+  const seed = seedFor(facilityId, "fridge-24h")
+  const danger = getFridgeStatus(facilityId).status === "danger"
+  const out: FridgeTempPoint[] = []
+  for (let h = 24; h >= 0; h--) {
+    const t = new Date(Date.now() - h * 3_600_000)
+    const base = 4.8 + Math.sin((h / 24) * Math.PI * 2) * 1.1
+    const noise = (rand(seed, h * 13) - 0.5) * 1.4
+    const excursion =
+      rand(seed, h * 7) < (danger ? 0.12 : 0.05) ? 3.5 + rand(seed, h) * 3 : 0
+    const temp = Math.round((base + noise + excursion) * 10) / 10
+    out.push({
+      time: `${String(t.getHours()).padStart(2, "0")}:00`,
+      tempC: Math.max(0.5, temp),
+    })
+  }
+  return out
+}
+
+export type FridgeEventType = "door" | "excursion" | "manual" | "maintenance"
+
+export type FridgeEvent = {
+  id: string
+  type: FridgeEventType
+  title: string
+  detail: string
+  atIso: string
+}
+
+/** Recent cold-chain events: door openings, excursions, manual readings, maintenance. */
+export function getFridgeEvents(facilityId?: string): FridgeEvent[] {
+  const seed = seedFor(facilityId, "fridge-events")
+  const templates: { type: FridgeEventType; title: string; detail: string }[] = [
+    { type: "door", title: "Door opened", detail: "Fridge door open for 45 seconds." },
+    {
+      type: "manual",
+      title: "Manual reading recorded",
+      detail: "Champion logged 4.6°C from the logger display.",
+    },
+    {
+      type: "excursion",
+      title: "Temperature excursion",
+      detail: "Interior reached 9.2°C for 12 minutes.",
+    },
+    {
+      type: "maintenance",
+      title: "Maintenance visit",
+      detail: "Technician checked the compressor and door seal.",
+    },
+    { type: "door", title: "Door opened", detail: "Fridge door open for 1 min 10 sec." },
+    {
+      type: "manual",
+      title: "Manual reading recorded",
+      detail: "Champion logged 3.9°C from the logger display.",
+    },
+  ]
+  return templates.map((tpl, i) => {
+    const minsAgo = Math.floor(rand(seed, i * 9 + 1) * 60) + i * 95 + 10
+    return { id: `fridge-evt-${i}`, ...tpl, atIso: new Date(Date.now() - minsAgo * 60_000).toISOString() }
+  })
+}
+
+export type ColdChainPrediction = {
+  atRisk: boolean
+  etaDaysMin: number
+  etaDaysMax: number
+  confidencePct: number
+  signal: string
+}
+
+/** Predictive cold-chain failure outlook (spec 11.3 "Predict": 2–4 weeks ahead). */
+export function getColdChainPrediction(facilityId?: string): ColdChainPrediction {
+  const seed = seedFor(facilityId, "coldchain-prediction")
+  const atRisk = rand(seed, 3) < 0.5
+  return {
+    atRisk,
+    etaDaysMin: 14,
+    etaDaysMax: 28,
+    confidencePct: Math.round(62 + rand(seed, 8) * 28),
+    signal: atRisk
+      ? "Compressor run-time is trending up and overnight recovery is slowing — patterns that precede gas-absorption fridge failure."
+      : "Temperature recovery and compressor cycles are within the normal band for this unit.",
+  }
+}
