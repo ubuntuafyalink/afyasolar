@@ -94,6 +94,10 @@ const FridgeSection = dynamic(
   () => import("@/components/dashboard/facility/fridge-section").then((m) => m.FridgeSection),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const PowerSection = dynamic(
+  () => import("@/components/dashboard/facility/power-section").then((m) => m.PowerSection),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1060,6 +1064,10 @@ export function FacilityDashboardContent({
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'fridge' && (
               <FridgeSection facilityId={facilityId} />
+            )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'power' && (
+              <PowerSection facilityId={facilityId} batteryLevel={liveData?.batteryLevel} />
             )}
 
             {currentActiveSection === 'package-selection' && (
