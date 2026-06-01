@@ -804,6 +804,17 @@ function formatTsh(n: number): string {
   return `TSh ${Math.round(n).toLocaleString("en-US")}`
 }
 
+// ---------------------------------------------------------------------------
+// Group K — Channels (spec Part 15)
+// ---------------------------------------------------------------------------
+
+/** One-message SMS status summary (spec 15.5: `STATUS` keyword). */
+export function getSmsStatus(facilityId?: string): string {
+  const f = getFridgeStatus(facilityId)
+  const p = getPowerToday(facilityId)
+  return `AFYASOLAR: Fridge ${f.status === "safe" ? "SAFE" : "DANGER"} ${f.tempC.toFixed(1)}C. Power ~${p.expectedHours}h, batt ${p.batterySocPct}%. Reply HELP for options.`
+}
+
 export type WhatIfScenario = "add-fridge" | "add-battery" | "late-rains" | "led-retrofit"
 
 export type WhatIfResult = {
