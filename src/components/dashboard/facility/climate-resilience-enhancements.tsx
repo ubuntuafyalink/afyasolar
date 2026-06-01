@@ -3,6 +3,7 @@
 import { CrphcResults } from "./crphc-results"
 import { HazardScorePanel } from "./hazard-score-panel"
 import { CviPanel } from "./cvi-panel"
+import { AdaptationPlan } from "./adaptation-plan"
 
 /**
  * Spec Part 10 (CRiPHC v2.0): additive enhancements to the existing Climate
@@ -18,6 +19,7 @@ export function ClimateResilienceEnhancements({ facilityId }: { facilityId?: str
         <HazardScorePanel facilityId={facilityId} />
         <CviPanel facilityId={facilityId} />
       </div>
+      <AdaptationPlan facilityId={facilityId} />
     </div>
   )
 }
