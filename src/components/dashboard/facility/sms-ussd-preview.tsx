@@ -22,7 +22,7 @@ const USSD_MENU = [
 /**
  * Spec 15.5: the SMS and USSD fallback, for when WhatsApp is unavailable.
  *
- * [data] — preview of the keyword/menu surface. TODO: wire the real
+ * [data] preview of the keyword/menu surface. TODO: wire the real
  * Africa's Talking SMS/USSD integration per spec Part 15. Nothing is sent here.
  */
 export function SmsUssdPreview({ facilityId }: { facilityId?: string }) {

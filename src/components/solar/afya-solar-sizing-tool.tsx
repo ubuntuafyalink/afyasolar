@@ -163,7 +163,7 @@ interface AfyaSolarSizingToolProps {
   facilityName?: string
   /** When set with facilityId, sizing + MEU snapshots are saved to the assessment cycle (server). */
   assessmentCycleId?: string
-  /** Server JSON.blob `sizing_data` — hydrates devices/context when loaded (survives reload). */
+  /** Server JSON.blob `sizing_data` hydrates devices/context when loaded (survives reload). */
   persistedSizingData?: unknown | null
   readOnly?: boolean
 }
@@ -218,7 +218,7 @@ export function AfyaSolarSizingTool({
     dbHydratedRef.current = false
   }, [assessmentCycleId])
 
-  // Hydrate from persisted assessment cycle (database) — wins over sessionStorage
+  // Hydrate from persisted assessment cycle (database) wins over sessionStorage
   useEffect(() => {
     if (!persistedSizingData || typeof persistedSizingData !== "object") return
     if (dbHydratedRef.current) return
@@ -260,7 +260,7 @@ export function AfyaSolarSizingTool({
     }
   }, [persistedSizingData])
 
-  // Hydrate state from sessionStorage (per-tab, temporary) on first mount — skipped if DB snapshot applied
+  // Hydrate state from sessionStorage (per-tab, temporary) on first mount skipped if DB snapshot applied
   useEffect(() => {
     if (typeof window === "undefined") return
     if (dbHydratedRef.current) return
@@ -470,7 +470,7 @@ export function AfyaSolarSizingTool({
     const maxKw = sorted[sorted.length - 1]?.kw ?? 0
 
     // If none of the existing packages can meet the required kW, do not
-    // pretend the largest package is enough – be honest and return no match.
+    // pretend the largest package is enough be honest and return no match.
     if (!firstEnough && requiredKw > maxKw) {
       return { recommended: null, requiredKw, maxKw }
     }
@@ -1245,7 +1245,7 @@ export function AfyaSolarSizingTool({
                               <span className="font-medium">
                                 {d.name}
                               </span>{" "}
-                              – {d.dailyKwh.toFixed(1)} kWh/day (
+ {d.dailyKwh.toFixed(1)} kWh/day (
                               {d.shareOfTotal.toFixed(0)}% of total)
                             </li>
                           ))}
@@ -1264,7 +1264,7 @@ export function AfyaSolarSizingTool({
                               <span className="font-medium">
                                 {d.name}
                               </span>{" "}
-                              – {d.dailyKwh.toFixed(1)} kWh/day
+ {d.dailyKwh.toFixed(1)} kWh/day
                               {d.hoursPerDay != null ? ` @ ${d.hoursPerDay}h` : ""}
                             </li>
                           ))}
@@ -1753,7 +1753,7 @@ export function AfyaSolarSizingTool({
                           cursorY += lineHeight
                         }
                         doc.text(
-                          "Service: Afya Solar – clean, reliable power and financing for healthcare facilities.",
+                          "Service: Afya Solar clean, reliable power and financing for healthcare facilities.",
                           marginX,
                           cursorY
                         )
@@ -1772,7 +1772,7 @@ export function AfyaSolarSizingTool({
                                 meuSummary.topDevices
                                   .map(
                                     (d) =>
-                                      `${d.name} – ${d.dailyKwh.toFixed(1)} kWh/day (${d.shareOfTotal.toFixed(
+                                      `${d.name} ${d.dailyKwh.toFixed(1)} kWh/day (${d.shareOfTotal.toFixed(
                                         0
                                       )}% of total)`
                                   )
@@ -1786,7 +1786,7 @@ export function AfyaSolarSizingTool({
                                   .slice(0, 3)
                                   .map(
                                     (d) =>
-                                      `${d.name} – ${d.dailyKwh.toFixed(1)} kWh/day (${d.shareOfTotal.toFixed(
+                                      `${d.name} ${d.dailyKwh.toFixed(1)} kWh/day (${d.shareOfTotal.toFixed(
                                         0
                                       )}% of total)`
                                   )
@@ -1810,7 +1810,7 @@ export function AfyaSolarSizingTool({
                                   .filter((d) => d.wattage > 0 && d.quantity > 0 && d.hoursPerDay > 0)
                                   .map((d) => {
                                     const dailyKwh = (d.wattage * d.quantity * d.hoursPerDay) / 1000
-                                    return `${d.deviceName || "Device"} – ${d.wattage} W × ${
+                                    return `${d.deviceName || "Device"} ${d.wattage} W × ${
                                       d.quantity
                                     } @ ${d.hoursPerDay} h/day ≈ ${dailyKwh.toFixed(2)} kWh/day`
                                   })

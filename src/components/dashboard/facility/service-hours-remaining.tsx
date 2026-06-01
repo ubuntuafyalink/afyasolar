@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { getServiceHoursRemaining } from "@/lib/dashboard/facility-demo-data"
 
 /**
- * Spec 8.2 "Umeme detail": service-hours-remaining estimate —
+ * Spec 8.2 "Umeme detail": service-hours-remaining estimate 
  * "At current usage, your facility can deliver critical services until 06:47 tomorrow."
  */
 export function ServiceHoursRemaining({

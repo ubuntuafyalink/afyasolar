@@ -104,7 +104,7 @@ export function FacilityIntelligenceAdminReview({ facilityId }: { facilityId: st
                   <SelectContent>
                     {cycles.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
-                        {c.startedAt ? new Date(c.startedAt).toLocaleString() : c.id.slice(0, 8)} — {c.status ?? "—"} (
+                        {c.startedAt ? new Date(c.startedAt).toLocaleString() : c.id.slice(0, 8)} {c.status ?? ""} (
                         {c.version ?? "?"})
                       </SelectItem>
                     ))}
@@ -123,12 +123,12 @@ export function FacilityIntelligenceAdminReview({ facilityId }: { facilityId: st
               </TabsList>
               <TabsContent value="energy" className="mt-3">
                 <div className="max-h-[min(420px,55vh)] overflow-auto rounded-md border bg-muted/30 p-3">
-                  <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all font-mono">{energyJson || "—"}</pre>
+                  <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all font-mono">{energyJson || ""}</pre>
                 </div>
               </TabsContent>
               <TabsContent value="climate" className="mt-3">
                 <div className="max-h-[min(420px,55vh)] overflow-auto rounded-md border bg-muted/30 p-3">
-                  <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all font-mono">{climateJson || "—"}</pre>
+                  <pre className="text-[11px] leading-relaxed whitespace-pre-wrap break-all font-mono">{climateJson || ""}</pre>
                 </div>
               </TabsContent>
             </Tabs>

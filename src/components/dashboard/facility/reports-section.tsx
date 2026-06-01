@@ -34,7 +34,7 @@ export function ReportsSection({ facilityId }: { facilityId?: string }) {
           <div>
             <h2 className="text-xl font-semibold text-foreground">Daily report</h2>
             <p className="text-sm text-muted-foreground">
-              A quick daily summary. Works offline — it saves on your phone and syncs later.
+              A quick daily summary. Works offline it saves on your phone and syncs later.
             </p>
           </div>
           <Badge
@@ -58,7 +58,7 @@ export function ReportsSection({ facilityId }: { facilityId?: string }) {
                   toast.success(
                     online
                       ? "Report saved and syncing."
-                      : "Report saved offline — it will sync when you're back online.",
+                      : "Report saved offline it will sync when you're back online.",
                   )
                 }}
               />

@@ -24,7 +24,7 @@ function scoreColor(score: number): string {
  * Spec 10.3: quantitative hazard exposure scores derived from the long-term
  * climate record, triangulated against the Champion's qualitative assessment.
  *
- * [data] — fed by the local demo module. TODO: wire NASA POWER + ERA5 + IPCC AR6
+ * [data] fed by the local demo module. TODO: wire NASA POWER + ERA5 + IPCC AR6
  * projections per spec Parts 5 & 10.3.
  */
 export function HazardScorePanel({ facilityId }: { facilityId?: string }) {

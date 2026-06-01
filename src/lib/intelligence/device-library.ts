@@ -1,4 +1,4 @@
-/** Medical / facility device templates for Afya Solar Intelligence — typical wattage bands (user-editable after add). */
+/** Medical / facility device templates for Afya Solar Intelligence typical wattage bands (user-editable after add). */
 
 export type DeviceCategoryId =
   | "lighting"
@@ -68,12 +68,12 @@ export const DEVICE_TEMPLATES: DeviceTemplate[] = [
 export const DEVICE_BUNDLES: { id: string; label: string; templateIds: string[] }[] = [
   {
     id: "dispensary-basic",
-    label: "Dispensary — basic",
+    label: "Dispensary basic",
     templateIds: ["led-tube", "vaccine-fridge", "pc-workstation", "router-ups", "water-pump"],
   },
   {
     id: "health-center-core",
-    label: "Health center — core clinical",
+    label: "Health center core clinical",
     templateIds: ["led-tube", "vaccine-fridge", "blood-fridge", "ultrasound", "oxygen-conc", "autoclave", "water-pump", "pc-workstation"],
   },
   {

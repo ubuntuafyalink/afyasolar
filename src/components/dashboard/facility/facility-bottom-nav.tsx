@@ -5,9 +5,10 @@ import { HelpCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FACILITY_BOTTOM_NAV_ITEMS, type NavSection } from "@/lib/dashboard/facility-nav"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
+import { useT } from "@/components/dashboard/facility/facility-preferences-provider"
 
 /**
- * Spec 8.2 bottom navigation — an OPTIONAL mobile-only enhancement (`<lg` only;
+ * Spec 8.2 bottom navigation an OPTIONAL mobile-only enhancement (`<lg` only;
  * the sidebar stays the primary, desktop-first navigation). Exactly five tabs:
  * Today, Fridge, Power, Reports, and a help button. Tap targets are ≥44px.
  */
@@ -23,9 +24,10 @@ export function FacilityBottomNav({
   onHelp: () => void
   className?: string
 }) {
+  const t = useT()
   return (
     <nav
-      aria-label="Facility quick navigation"
+      aria-label={t("shell.quickNav")}
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur lg:hidden",
         className,
@@ -48,7 +50,7 @@ export function FacilityBottomNav({
                 )}
               >
                 <Icon className="size-5" aria-hidden />
-                <span>{item.label}</span>
+                <span>{t(`nav.${item.id}`)}</span>
               </button>
             </li>
           )
@@ -63,7 +65,7 @@ export function FacilityBottomNav({
             )}
           >
             <HelpCircle className="size-5" aria-hidden />
-            <span>Help</span>
+            <span>{t("nav.help")}</span>
           </button>
         </li>
       </ul>

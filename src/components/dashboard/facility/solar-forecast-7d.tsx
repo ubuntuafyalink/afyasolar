@@ -17,7 +17,7 @@ const SKY_COLOR = {
 /**
  * Spec C16 / 11.3 "Forecast": 7-day solar generation forecast.
  *
- * [data] — fed by the local demo module. TODO: wire the real forecast
+ * [data] fed by the local demo module. TODO: wire the real forecast
  * (NASA POWER + pvlib generation model) per spec Parts 5 & 9.
  */
 export function SolarForecast7d({ facilityId }: { facilityId?: string }) {

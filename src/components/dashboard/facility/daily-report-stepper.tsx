@@ -43,7 +43,7 @@ type NumericKey = (typeof NUMERIC_FIELDS)[number]["key"]
 
 /**
  * Spec 8.2 "Ripoti": the daily report, one field at a time, each step filling
- * the screen. Four required fields — patients, children vaccinated, deliveries,
+ * the screen. Four required fields patients, children vaccinated, deliveries,
  * and a problem note (text + optional voice). Voice input is offered on numeric
  * fields where the browser supports it. Submitting hands the draft to the parent
  * (which persists it offline); nothing is sent over the network here.

@@ -163,7 +163,7 @@ export function buildClimateTabModel(input: { climateApi: ClimateApiShape; repor
     responses.length > 0 ? Math.min(100, Math.round((evidence.length / responses.length) * 100)) : 0
 
   const top = topRisks[0] as Record<string, unknown> | undefined
-  const topRiskTitle = top && typeof top.title === "string" ? top.title : "—"
+  const topRiskTitle = top && typeof top.title === "string" ? top.title : ""
   const topRiskSeverity = num(top?.severity)
 
   const avgRiskSeverity =

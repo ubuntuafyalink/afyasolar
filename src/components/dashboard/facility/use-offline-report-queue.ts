@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
  * IndexedDB instantly so they survive outages, then "synced" in the background.
  *
  * The IndexedDB persistence is REAL and local-only. The sync to the API + DHIS2
- * queue is SIMULATED here (a local status transition) — no network write is
+ * queue is SIMULATED here (a local status transition) no network write is
  * performed. TODO: wire the real submit + DHIS2 sync queue per spec Part 7/8.
  */
 const DB_NAME = "afyasolar-facility"
@@ -114,7 +114,7 @@ export function useOfflineReportQueue(facilityId?: string) {
         try {
           await put(report)
         } catch {
-          // IndexedDB unavailable — keep it in memory so the user still sees it.
+          // IndexedDB unavailable keep it in memory so the user still sees it.
         }
       }
       setReports((prev) => [report, ...prev])

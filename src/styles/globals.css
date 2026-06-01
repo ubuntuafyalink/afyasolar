@@ -190,3 +190,58 @@
   }
 }
 
+/*
+ * Facility accessibility modes (additive). Toggled by the facility preferences
+ * provider, which adds these classes to <html>. Scoped to opt-in classes so the
+ * rest of the app is unaffected when they are off.
+ */
+
+/* Larger text: scale the root font so rem-based sizing grows uniformly. */
+.a11y-large-text {
+  font-size: 1.15rem;
+}
+
+/*
+ * High contrast: deepen text/borders and lift muted text to meet WCAG AA in
+ * bright outdoor / low-quality-screen rural conditions. Tokens are overridden
+ * at :root so both light surfaces and shadcn components inherit them.
+ */
+.a11y-high-contrast {
+  --foreground: oklch(0.12 0.02 150);
+  --muted-foreground: oklch(0.30 0.02 150);
+  --border: oklch(0.55 0.02 150);
+  --input: oklch(0.45 0.02 150);
+  --ring: oklch(0.45 0.17 145);
+  --card-foreground: oklch(0.12 0.02 150);
+  --popover-foreground: oklch(0.12 0.02 150);
+  --primary: oklch(0.45 0.17 145);
+  --destructive: oklch(0.45 0.24 25);
+  --warning: oklch(0.62 0.16 75);
+  --warning-foreground: oklch(0.12 0.02 150);
+}
+
+.a11y-high-contrast * {
+  border-color: var(--border);
+}
+
+/* Dyslexia-friendly: swap the sans stack for Atkinson Hyperlegible. */
+.a11y-dyslexia-friendly {
+  --font-sans: var(--font-atkinson), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/*
+ * Colour-blind-safe: shift status hues toward a deuteranopia-friendly
+ * blue/orange/red set so success/warning/destructive stay distinguishable.
+ * Status indicators always pair colour with an icon + text, so this is a
+ * secondary aid rather than the sole signal.
+ */
+.a11y-colorblind {
+  --success: oklch(0.55 0.13 230);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.72 0.17 65);
+  --warning-foreground: oklch(0.20 0.02 150);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+}
+
+

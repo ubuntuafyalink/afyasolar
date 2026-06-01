@@ -25,10 +25,10 @@ function cviColor(v: number): string {
 }
 
 /**
- * Spec 10.5: the Resi-Health Grid Climate Vulnerability Index (0–100), stratified
+ * Spec 10.5: the Resi-Health Grid Climate Vulnerability Index (0100), stratified
  * by hazard and projected to 2030 / 2050.
  *
- * [data] — fed by the local demo module. TODO: wire the real Resi-Health Grid
+ * [data] fed by the local demo module. TODO: wire the real Resi-Health Grid
  * (NASA POWER, ERA5, CHIRPS, flood layers, Bayesian model) per spec Part 10.5.
  */
 export function CviPanel({ facilityId }: { facilityId?: string }) {

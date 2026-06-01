@@ -1,6 +1,6 @@
 /**
  * Deterministic demo/sample data for the additive facility "v2" sections
- * (CEO spec Parts 7–15). Mirrors the pattern in
+ * (CEO spec Parts 715). Mirrors the pattern in
  * `src/lib/efficiency-climate/simulation.ts`: every value is derived from the
  * facilityId via a stable hash so demos are reproducible and never random.
  *
@@ -10,7 +10,7 @@
  */
 import { hashSeed } from "@/lib/efficiency-climate/simulation"
 
-export const DEMO_DATA_NOTE = "Demo data — sample values, not yet wired to a live source."
+export const DEMO_DATA_NOTE = "Demo data sample values, not yet wired to a live source."
 
 /** Stable sin-based pseudo-random in [0, 1) from a seed + salt. */
 function rand(seed: number, salt: number): number {
@@ -24,7 +24,7 @@ function seedFor(facilityId: string | undefined, feature: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Group A — Today home
+// Group A Today home
 // ---------------------------------------------------------------------------
 
 export type FridgeStatus = {
@@ -61,7 +61,7 @@ export function getPowerToday(facilityId?: string): PowerToday {
   const seed = seedFor(facilityId, "power-today")
   const skyRoll = rand(seed, 2)
   const expectedSolar = skyRoll > 0.66 ? "sunny" : skyRoll > 0.33 ? "partly" : "cloudy"
-  const expectedHours = Math.round((skyRoll * 6 + 14) * 10) / 10 // ~14–20h
+  const expectedHours = Math.round((skyRoll * 6 + 14) * 10) / 10 // ~1420h
   const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
   return { expectedHours, batterySocPct, expectedSolar }
 }
@@ -115,12 +115,12 @@ export function getPendingTasks(facilityId?: string): FacilityTask[] {
 }
 
 // ---------------------------------------------------------------------------
-// Group B — Cold chain "Fridge"
+// Group B Cold chain "Fridge"
 // ---------------------------------------------------------------------------
 
 export type FridgeTempPoint = { time: string; tempC: number }
 
-/** 24 hourly interior-temperature readings, mostly within the 2–8°C safe band. */
+/** 24 hourly interior-temperature readings, mostly within the 28°C safe band. */
 export function getFridge24hTemps(facilityId?: string): FridgeTempPoint[] {
   const seed = seedFor(facilityId, "fridge-24h")
   const danger = getFridgeStatus(facilityId).status === "danger"
@@ -191,7 +191,7 @@ export type ColdChainPrediction = {
   signal: string
 }
 
-/** Predictive cold-chain failure outlook (spec 11.3 "Predict": 2–4 weeks ahead). */
+/** Predictive cold-chain failure outlook (spec 11.3 "Predict": 24 weeks ahead). */
 export function getColdChainPrediction(facilityId?: string): ColdChainPrediction {
   const seed = seedFor(facilityId, "coldchain-prediction")
   const atRisk = rand(seed, 3) < 0.5
@@ -201,13 +201,13 @@ export function getColdChainPrediction(facilityId?: string): ColdChainPrediction
     etaDaysMax: 28,
     confidencePct: Math.round(62 + rand(seed, 8) * 28),
     signal: atRisk
-      ? "Compressor run-time is trending up and overnight recovery is slowing — patterns that precede gas-absorption fridge failure."
+      ? "Compressor run-time is trending up and overnight recovery is slowing patterns that precede gas-absorption fridge failure."
       : "Temperature recovery and compressor cycles are within the normal band for this unit.",
   }
 }
 
 // ---------------------------------------------------------------------------
-// Group C — Power "Umeme"
+// Group C Power "Umeme"
 // ---------------------------------------------------------------------------
 
 export type PowerSource = "solar" | "grid" | "battery"
@@ -252,6 +252,39 @@ export function getPowerSnapshot(facilityId?: string, batterySocOverride?: numbe
       ? Math.round(batterySocOverride)
       : getPowerToday(facilityId).batterySocPct
   return { activeSource, solarKw, gridKw, batteryKw, loadKw, batterySocPct }
+}
+
+/**
+ * Tick-perturbed power snapshot for the simulated live telemetry feed. Adds a
+ * small, deterministic-per-(facility,tick) jitter on top of getPowerSnapshot so
+ * the readout "ticks" like a real meter without any network. No new randomness
+ * semantics same seeded rand(), salted by the tick.
+ */
+export function getLivePowerSnapshot(
+  facilityId: string | undefined,
+  tick: number,
+  batterySocOverride?: number,
+): PowerSnapshot {
+  const base = getPowerSnapshot(facilityId, batterySocOverride)
+  const seed = seedFor(facilityId, "live-power")
+  const j = (salt: number, amp: number) => (rand(seed, tick * 7 + salt) - 0.5) * 2 * amp
+  const kw = (v: number) => Math.max(0, Math.round(v * 100) / 100)
+  return {
+    ...base,
+    solarKw: base.solarKw > 0 ? kw(base.solarKw + j(1, 0.3)) : 0,
+    gridKw: base.gridKw > 0 ? kw(base.gridKw + j(2, 0.2)) : 0,
+    batteryKw: Math.round((base.batteryKw + j(3, 0.2)) * 100) / 100,
+    loadKw: kw(base.loadKw + j(4, 0.25)),
+    batterySocPct: Math.max(0, Math.min(100, Math.round(base.batterySocPct + j(5, 1.2)))),
+  }
+}
+
+/** Tick-perturbed current fridge interior temperature for the live readout. */
+export function getLiveFridgeTempC(facilityId: string | undefined, tick: number): number {
+  const base = getFridgeStatus(facilityId).tempC
+  const seed = seedFor(facilityId, "live-fridge")
+  const j = (rand(seed, tick * 5 + 1) - 0.5) * 0.6
+  return Math.round((base + j) * 10) / 10
 }
 
 export type PowerBySourcePoint = { time: string; solar: number; grid: number; battery: number }
@@ -355,23 +388,23 @@ export function get7daySolarForecast(facilityId?: string): SolarDayForecast[] {
 }
 
 // ---------------------------------------------------------------------------
-// Group E — Energy efficiency & audit (spec Part 7)
+// Group E Energy efficiency & audit (spec Part 7)
 // ---------------------------------------------------------------------------
 
 export type AuditWasteItem = { label: string; monthlyTsh: number }
 
 export type AuditOutputs = {
-  // Output 1 — waste eliminated
+  // Output 1 waste eliminated
   totalMonthlySpendTsh: number
   spendBySource: { source: string; monthlyTsh: number }[]
   wasteItems: AuditWasteItem[]
   wasteTotalTsh: number
-  // Output 2 — monthly cash saved
+  // Output 2 monthly cash saved
   currentMonthlySpendTsh: number
   eaasFeeTsh: number
   monthlySavingTsh: number
   cumulative7yrSavingTsh: number
-  // Output 3 — cost per service-hour
+  // Output 3 cost per service-hour
   costPerServiceHourBeforeTsh: number
   costPerServiceHourAfterTsh: number
 }
@@ -435,7 +468,7 @@ export function getEcoPulseEpi(facilityId?: string): EcoPulseEpi {
     band === "expected"
       ? "Energy use is in line with similar facilities."
       : band === "check-data"
-        ? "Energy use looks unusually low — readings may be under-reported."
+        ? "Energy use looks unusually low readings may be under-reported."
         : "Energy use is higher than similar facilities."
   return {
     epi,
@@ -449,14 +482,14 @@ export function getEcoPulseEpi(facilityId?: string): EcoPulseEpi {
 }
 
 // ---------------------------------------------------------------------------
-// Group F — Climate resilience (CRiPHC v2.0, spec Part 10)
+// Group F Climate resilience (CRiPHC v2.0, spec Part 10)
 // ---------------------------------------------------------------------------
 
 export type CrphcDimension = {
   code: string
   label: string
   weight: number
-  /** 0–100 dimension score. */
+  /** 0100 dimension score. */
   score: number
   /** True for the two v2 dimensions added in CRiPHC v2.0 (Workforce, WASH). */
   isNew?: boolean
@@ -478,12 +511,20 @@ export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
     ["EDC", "Efficiency & Demand Control", 0.1],
     ["RRC", "Readiness & Response", 0.1],
   ]
-  return defs.map(([code, label, weight], i) => ({
-    code,
-    label,
-    weight,
-    score: Math.round(40 + rand(seed, i * 7) * 55),
-  }))
+  // Per-facility resilience bias: a well-run facility tends to score higher
+  // across all dimensions (and vice-versa). This correlated shift spreads
+  // facilities realistically across the resilience tiers instead of clustering
+  // them all in the middle, which matters for the portfolio view.
+  const bias = (rand(seed, 101) - 0.5) * 70
+  return defs.map(([code, label, weight], i) => {
+    const raw = 30 + rand(seed, i * 7) * 55 + bias
+    return {
+      code,
+      label,
+      weight,
+      score: Math.max(5, Math.min(98, Math.round(raw))),
+    }
+  })
 }
 
 /** The two new CRiPHC v2.0 dimensions (Workforce, WASH), at default weights. */
@@ -527,7 +568,7 @@ export function getHazardScores(facilityId?: string): HazardScore[] {
 export type CviByHazard = { flood: number; drought: number; heat: number; storm: number }
 export type ResiHealthCvi = { composite: number; byHazard: CviByHazard }
 
-/** Resi-Health Grid Climate Vulnerability Index, 0–100, by hazard and year (spec 10.5). */
+/** Resi-Health Grid Climate Vulnerability Index, 0100, by hazard and year (spec 10.5). */
 export function getResiHealthCvi(facilityId?: string, year: 2030 | 2050 = 2030): ResiHealthCvi {
   const seed = seedFor(facilityId, "cvi")
   const bump = year === 2050 ? 12 : 0
@@ -543,8 +584,52 @@ export function getResiHealthCvi(facilityId?: string, year: 2030 | 2050 = 2030):
   return { composite, byHazard }
 }
 
+export type HazardTrendPoint = {
+  year: number
+  heat: number
+  flood: number
+  storm: number
+  drought: number
+}
+
+/**
+ * Multi-decade hazard trend (as if derived from NASA POWER / ERA5 reanalysis).
+ * Each hazard rises from a historical baseline toward today's getHazardScores
+ * value, with mild seeded noise. Simulated for the Climate Outlook chart.
+ */
+export function getHazardTrend(facilityId?: string): HazardTrendPoint[] {
+  const seed = seedFor(facilityId, "hazard-trend")
+  const current = getHazardScores(facilityId)
+  const end = {
+    heat: current[0]?.score ?? 60,
+    flood: current[1]?.score ?? 50,
+    storm: current[2]?.score ?? 45,
+    drought: current[3]?.score ?? 40,
+  }
+  const startYear = 1985
+  const endYear = 2025
+  const step = 5
+  const points: HazardTrendPoint[] = []
+  for (let year = startYear; year <= endYear; year += step) {
+    const p = (year - startYear) / (endYear - startYear) // 0..1
+    const at = (hazard: keyof typeof end, salt: number) => {
+      const base = end[hazard] * 0.55 // historical baseline ~55% of today
+      const value = base + (end[hazard] - base) * p + (rand(seed, salt + year) - 0.5) * 6
+      return Math.max(0, Math.min(100, Math.round(value)))
+    }
+    points.push({
+      year,
+      heat: at("heat", 1),
+      flood: at("flood", 2),
+      storm: at("storm", 3),
+      drought: at("drought", 4),
+    })
+  }
+  return points
+}
+
 // ---------------------------------------------------------------------------
-// Group H — Financing & payments (spec Part 13)
+// Group H Financing & payments (spec Part 13)
 // ---------------------------------------------------------------------------
 
 export type EaasContract = {
@@ -560,7 +645,7 @@ export type EaasContract = {
   assetTransferYear: number
 }
 
-/** Energy-as-a-Service contract figures (spec 13.2–13.4). */
+/** Energy-as-a-Service contract figures (spec 13.213.4). */
 export function getEaasContract(facilityId?: string): EaasContract {
   const seed = seedFor(facilityId, "eaas")
   const systemCapexTsh = Math.round((30_000_000 + rand(seed, 1) * 15_000_000) / 100_000) * 100_000
@@ -599,7 +684,7 @@ export type SmartSplitter = {
 /** Revenue-Linked Smart-Splitter Gateway state (spec 13.5). */
 export function getSmartSplitter(facilityId?: string): SmartSplitter {
   const seed = seedFor(facilityId, "smart-splitter")
-  const alphaPct = 3 + Math.round(rand(seed, 1) * 2) // 3–5%
+  const alphaPct = 3 + Math.round(rand(seed, 1) * 2) // 35%
   const monthlyCapTsh = getEaasContract(facilityId).monthlyFeeTsh
   const recentDays: SmartSplitterDay[] = []
   let cumulative = 0
@@ -641,7 +726,7 @@ export type NhifEscrow = {
 export function getNhifEscrow(facilityId?: string): NhifEscrow {
   const seed = seedFor(facilityId, "nhif-escrow")
   const monthlyFeeTsh = getEaasContract(facilityId).monthlyFeeTsh
-  const assignedPct = 15 + Math.round(rand(seed, 1) * 10) // 15–25%
+  const assignedPct = 15 + Math.round(rand(seed, 1) * 10) // 1525%
   const inflows: EscrowInflow[] = []
   let retained = 0
   let forwarded = 0
@@ -671,7 +756,7 @@ export function getNhifEscrow(facilityId?: string): NhifEscrow {
 }
 
 // ---------------------------------------------------------------------------
-// Group I — Alerts & notifications (spec Part 11.3 / 15)
+// Group I Alerts & notifications (spec Part 11.3 / 15)
 // ---------------------------------------------------------------------------
 
 export type AlertKind = "heatwave" | "flood" | "outage" | "disease"
@@ -704,9 +789,9 @@ export function getFacilityAlerts(facilityId?: string): FacilityAlert[] {
       ...heat,
       title: heat.active ? "Heatwave expected this week" : "No heat alerts",
       detail: heat.active
-        ? "Daytime highs near 37°C for 3 days. Your fridge and battery will work harder — check ventilation and keep doors closed."
+        ? "Daytime highs near 37°C for 3 days. Your fridge and battery will work harder check ventilation and keep doors closed."
         : "Temperatures are within the normal range for the week ahead.",
-      leadTime: heat.active ? "3 days ahead" : "—",
+      leadTime: heat.active ? "3 days ahead" : "",
     },
     {
       kind: "flood",
@@ -715,7 +800,7 @@ export function getFacilityAlerts(facilityId?: string): FacilityAlert[] {
       detail: flood.active
         ? "Heavy rainfall forecast in your area. Protect ground-level equipment and confirm a dry store for vaccines."
         : "No significant rainfall or flood risk forecast.",
-      leadTime: flood.active ? "48 hours ahead" : "—",
+      leadTime: flood.active ? "48 hours ahead" : "",
     },
     {
       kind: "outage",
@@ -724,7 +809,7 @@ export function getFacilityAlerts(facilityId?: string): FacilityAlert[] {
       detail: outage.active
         ? "Grid instability likely this evening. Ensure the battery is charged and the generator has fuel."
         : "No elevated outage probability detected for today.",
-      leadTime: outage.active ? "This evening" : "—",
+      leadTime: outage.active ? "This evening" : "",
     },
     {
       kind: "disease",
@@ -733,14 +818,14 @@ export function getFacilityAlerts(facilityId?: string): FacilityAlert[] {
       detail: disease.active
         ? "Standing water after recent rain raises malaria and cholera risk. Prepare supplies and watch for a rise in cases."
         : "No climate-linked disease signals in your area right now.",
-      leadTime: disease.active ? "1–2 weeks" : "—",
+      leadTime: disease.active ? "12 weeks" : "",
     },
   ]
 }
 
 export type DailyPush = { time: string; greeting: string; lines: string[] }
 
-/** The 6:30am WhatsApp+SMS status push, composed for preview (spec 15.3) — surface only. */
+/** The 6:30am WhatsApp+SMS status push, composed for preview (spec 15.3) surface only. */
 export function getDailyPushPreview(facilityId?: string, facilityName?: string | null): DailyPush {
   const fridge = getFridgeStatus(facilityId)
   const power = getPowerToday(facilityId)
@@ -760,7 +845,7 @@ export function getDailyPushPreview(facilityId?: string, facilityName?: string |
 }
 
 // ---------------------------------------------------------------------------
-// Group J — AI co-pilot & forecasts (spec Part 11.3)
+// Group J AI co-pilot & forecasts (spec Part 11.3)
 // ---------------------------------------------------------------------------
 
 export const COPILOT_SUGGESTIONS = [
@@ -781,7 +866,7 @@ export function answerCopilot(question: string, facilityId?: string): string {
   if (q.includes("vaccine") || q.includes("fridge") || q.includes("cold")) {
     const f = getFridgeStatus(facilityId)
     return f.status === "safe"
-      ? `Your vaccine fridge is SAFE at ${f.tempC.toFixed(1)}°C, within the 2–8°C band. Keep the door closed and log a manual reading if the display looks off.`
+      ? `Your vaccine fridge is SAFE at ${f.tempC.toFixed(1)}°C, within the 28°C band. Keep the door closed and log a manual reading if the display looks off.`
       : `Your fridge is in DANGER at ${f.tempC.toFixed(1)}°C. Move vaccines to a backup cold box, check power and the door seal, and open the troubleshooting flow on the Fridge page.`
   }
   if (q.includes("power") || q.includes("battery") || q.includes("electric")) {
@@ -790,7 +875,7 @@ export function answerCopilot(question: string, facilityId?: string): string {
   }
   if (q.includes("save") || q.includes("cost") || q.includes("bill") || q.includes("money")) {
     const c = getEaasContract(facilityId)
-    return `Under an Energy-as-a-Service plan your monthly fee would be about ${formatTsh(c.monthlyFeeTsh)} versus roughly ${formatTsh(c.currentSpendTsh)} today — a saving of about ${formatTsh(c.monthlySavingTsh)} every month, breaking even in ${c.breakEvenMonths} months.`
+    return `Under an Energy-as-a-Service plan your monthly fee would be about ${formatTsh(c.monthlyFeeTsh)} versus roughly ${formatTsh(c.currentSpendTsh)} today a saving of about ${formatTsh(c.monthlySavingTsh)} every month, breaking even in ${c.breakEvenMonths} months.`
   }
   if (q.includes("solar") || q.includes("sun")) {
     const days = get7daySolarForecast(facilityId)
@@ -805,7 +890,7 @@ function formatTsh(n: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Group K — Channels (spec Part 15)
+// Group K Channels (spec Part 15)
 // ---------------------------------------------------------------------------
 
 /** One-message SMS status summary (spec 15.5: `STATUS` keyword). */
@@ -858,4 +943,383 @@ export function getWhatIfResult(scenario: WhatIfScenario, facilityId?: string): 
         note: "An LED retrofit cuts lighting load, extends battery autonomy and lowers your monthly energy bill.",
       }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Group F Child Services at Risk
+//
+// The platform's headline promise: "identify which child-services are about to
+// fail." This consolidates per-service resilience for the five child-critical
+// services into a single status board, with an about-to-fail prediction window
+// and the CRiPHC dimension each maps to. Narrative strings are bilingual so the
+// Swahili UI shows localised drivers/signals, not just translated chrome.
+// ---------------------------------------------------------------------------
+
+/** Stable keys for the five child-critical services. */
+export type ChildServiceKey =
+  | "cold-chain"
+  | "maternity"
+  | "neonatal"
+  | "diagnostics"
+  | "water-pumping"
+
+export type ChildServiceStatus = "ok" | "at-risk" | "failing"
+
+/** A short bilingual string (English + Swahili) used for dynamic narrative. */
+export type Bilingual = { en: string; sw: string }
+
+export type ChildServicePrediction = {
+  etaDaysMin: number
+  etaDaysMax: number
+  confidencePct: number
+  signal: Bilingual
+}
+
+export type ChildServiceRisk = {
+  key: ChildServiceKey
+  status: ChildServiceStatus
+  /** 0100 resilience headroom (higher = more protected). */
+  headroomPct: number
+  /** What this service depends on to keep running. */
+  dependsOn: Bilingual
+  /** Why it is at risk / failing (12 drivers). Empty when protected. */
+  drivers: Bilingual[]
+  /** About-to-fail window; null when the service is protected. */
+  prediction: ChildServicePrediction | null
+  /** CRiPHC dimension this service maps to (HES/CSF/ECPQ/EDC/RRC). */
+  linkedDimension: string
+}
+
+const CHILD_SERVICE_DEFS: {
+  key: ChildServiceKey
+  dependsOn: Bilingual
+  linkedDimension: string
+  drivers: Bilingual[]
+  signal: Bilingual
+}[] = [
+  {
+    key: "cold-chain",
+    linkedDimension: "ECPQ",
+    dependsOn: {
+      en: "Continuous power to the vaccine fridge",
+      sw: "Umeme wa kuendelea kwa friji ya chanjo",
+    },
+    drivers: [
+      {
+        en: "Compressor run-time rising and slower temperature recovery after outages",
+        sw: "Muda wa kufanya kazi wa kompresa unaongezeka na kupoa kunachelewa baada ya kukatika kwa umeme",
+      },
+      {
+        en: "Battery autonomy below the cold-chain reserve on cloudy days",
+        sw: "Uwezo wa betri uko chini ya akiba ya mnyororo baridi siku za mawingu",
+      },
+    ],
+    signal: {
+      en: "Fridge temperature trending toward the unsafe band",
+      sw: "Joto la friji linaelekea kwenye kiwango kisicho salama",
+    },
+  },
+  {
+    key: "maternity",
+    linkedDimension: "CSF",
+    dependsOn: {
+      en: "Lighting and power in the delivery room",
+      sw: "Mwanga na umeme katika chumba cha kujifungua",
+    },
+    drivers: [
+      {
+        en: "Delivery room is not on a protected (battery-backed) circuit",
+        sw: "Chumba cha kujifungua hakiko kwenye mzunguko uliolindwa (wenye betri)",
+      },
+    ],
+    signal: {
+      en: "Night deliveries depend on torchlight during outages",
+      sw: "Kujifungua usiku kunategemea tochi wakati wa kukatika kwa umeme",
+    },
+  },
+  {
+    key: "neonatal",
+    linkedDimension: "CSF",
+    dependsOn: {
+      en: "Stable power for warmers and oxygen concentrators",
+      sw: "Umeme thabiti kwa vifaa vya kupasha joto na oksijeni",
+    },
+    drivers: [
+      {
+        en: "Oxygen concentrator shares an unprotected circuit",
+        sw: "Kifaa cha oksijeni kinashiriki mzunguko usiolindwa",
+      },
+      {
+        en: "No tested backup for newborn warmers",
+        sw: "Hakuna mbadala uliojaribiwa kwa vifaa vya kupasha joto watoto wachanga",
+      },
+    ],
+    signal: {
+      en: "Warmer and oxygen loads exceed remaining battery reserve",
+      sw: "Mahitaji ya joto na oksijeni yanazidi akiba ya betri iliyobaki",
+    },
+  },
+  {
+    key: "diagnostics",
+    linkedDimension: "EDC",
+    dependsOn: {
+      en: "Power to the microscope, analyser and records",
+      sw: "Umeme kwa darubini, kifaa cha uchunguzi na kumbukumbu",
+    },
+    drivers: [
+      {
+        en: "Diagnostics pause during midday outages",
+        sw: "Uchunguzi husimama wakati wa kukatika kwa umeme mchana",
+      },
+    ],
+    signal: {
+      en: "Lab workload clusters in the lowest-power window",
+      sw: "Kazi za maabara zinajikusanya katika kipindi cha umeme mdogo zaidi",
+    },
+  },
+  {
+    key: "water-pumping",
+    linkedDimension: "HES",
+    dependsOn: {
+      en: "Pump power and a filled storage tank",
+      sw: "Umeme wa pampu na tanki la kuhifadhi lililojaa",
+    },
+    drivers: [
+      {
+        en: "Pump draws heavily; storage runs low before solar peak",
+        sw: "Pampu hutumia umeme mwingi; hifadhi hupungua kabla ya kilele cha jua",
+      },
+    ],
+    signal: {
+      en: "Tank level falls below the daily clinical minimum",
+      sw: "Kiwango cha tanki hushuka chini ya kiwango cha chini cha kila siku cha kliniki",
+    },
+  },
+]
+
+function statusFromHeadroom(headroom: number): ChildServiceStatus {
+  if (headroom < 35) return "failing"
+  if (headroom < 60) return "at-risk"
+  return "ok"
+}
+
+/**
+ * Per-facility status board for the five child-critical services. Deterministic
+ * from the facilityId so demos are stable. Each at-risk/failing service gets an
+ * about-to-fail prediction window; protected services get none.
+ */
+export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] {
+  const seed = seedFor(facilityId, "child-services")
+  return CHILD_SERVICE_DEFS.map((def, i) => {
+    const headroomPct = Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
+    const status = statusFromHeadroom(headroomPct)
+    const prediction: ChildServicePrediction | null =
+      status === "ok"
+        ? null
+        : (() => {
+            // Tighter, sooner window for "failing" than "at-risk".
+            const base = status === "failing" ? 3 : 12
+            const spread = status === "failing" ? 7 : 16
+            const etaDaysMin = base + Math.floor(rand(seed, i * 6 + 2) * 4)
+            const etaDaysMax = etaDaysMin + 3 + Math.floor(rand(seed, i * 6 + 3) * spread)
+            const confidencePct = Math.round(
+              (status === "failing" ? 72 : 58) + rand(seed, i * 6 + 4) * 18,
+            )
+            return { etaDaysMin, etaDaysMax, confidencePct, signal: def.signal }
+          })()
+    return {
+      key: def.key,
+      status,
+      headroomPct,
+      dependsOn: def.dependsOn,
+      drivers: status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1),
+      prediction,
+      linkedDimension: def.linkedDimension,
+    }
+  })
+}
+
+export type ChildServicesSummary = { failing: number; atRisk: number; ok: number }
+
+/** Roll-up counts for the board header. */
+export function getChildServicesSummary(facilityId?: string): ChildServicesSummary {
+  const out: ChildServicesSummary = { failing: 0, atRisk: 0, ok: 0 }
+  for (const s of getChildServicesAtRisk(facilityId)) {
+    if (s.status === "failing") out.failing += 1
+    else if (s.status === "at-risk") out.atRisk += 1
+    else out.ok += 1
+  }
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// Group G RCS explainability ("Why this score")
+//
+// Read-only breakdown of how the Resilience Capacity Score is built. Reuses the
+// exact CRiPHC math (getCrphcBaseDimensions + CRPHC_NEW_DIMENSIONS @60 +
+// computeCrphcResult) so the RCS here equals the interactive CRiPHC widget's
+// default. Adds per-dimension contribution / recoverable points and bilingual
+// plain-language "what it measures" + "what would improve it" copy. Supports the
+// application's "explainable, auditable" claim.
+// ---------------------------------------------------------------------------
+
+export type RcsDimensionInsight = {
+  code: string
+  label: string
+  weight: number
+  /** 0100 dimension score. */
+  score: number
+  /** Points this dimension contributes to the RCS = round(score × weight). */
+  contribution: number
+  /** Most points this dimension could contribute = round(100 × weight). */
+  maxContribution: number
+  /** Recoverable points if lifted to 100 = round((100 − score) × weight). */
+  gapPoints: number
+  /** True for the two CRiPHC v2.0 dimensions (Workforce, WASH). */
+  isNew?: boolean
+  whatItMeasures: Bilingual
+  howToImprove: Bilingual
+}
+
+export type RcsExplainer = {
+  rcs: number
+  tier: string
+  dimensions: RcsDimensionInsight[]
+}
+
+/** Static, bilingual plain-language copy per CRiPHC dimension code. */
+const RCS_DIMENSION_COPY: Record<
+  string,
+  { whatItMeasures: Bilingual; howToImprove: Bilingual }
+> = {
+  HES: {
+    whatItMeasures: {
+      en: "How exposed this facility is to climate hazards heat, flooding, storms and drought.",
+      sw: "Kiwango cha facility hii kukabiliwa na hatari za hali ya hewa joto, mafuriko, dhoruba na ukame.",
+    },
+    howToImprove: {
+      en: "Site protection (drainage, shading, flood barriers) and siting decisions informed by hazard data.",
+      sw: "Ulinzi wa eneo (mifereji, vivuli, vizuizi vya mafuriko) na maamuzi ya eneo yanayotokana na data ya hatari.",
+    },
+  },
+  CSF: {
+    whatItMeasures: {
+      en: "How fragile the critical child services are if power or equipment fails (cold-chain, maternity, theatre, lab).",
+      sw: "Udhaifu wa huduma muhimu za watoto iwapo umeme au vifaa vitashindwa (mnyororo baridi, uzazi, chumba cha upasuaji, maabara).",
+    },
+    howToImprove: {
+      en: "Put critical loads on protected, battery-backed circuits and add tested backups.",
+      sw: "Weka mizigo muhimu kwenye mizunguko iliyolindwa yenye betri na ongeza mbadala uliojaribiwa.",
+    },
+  },
+  ECPQ: {
+    whatItMeasures: {
+      en: "Energy continuity and power quality how reliably clean power reaches equipment.",
+      sw: "Mwendelezo wa nishati na ubora wa umeme jinsi umeme safi unavyofika kwenye vifaa kwa uhakika.",
+    },
+    howToImprove: {
+      en: "Right-size solar and storage, stabilise voltage, and cut generator dependency.",
+      sw: "Panga ukubwa sahihi wa sola na hifadhi, imarisha volteji, na punguza utegemezi wa jenereta.",
+    },
+  },
+  EDC: {
+    whatItMeasures: {
+      en: "Efficiency and demand control how much energy is wasted and how well peak demand is managed.",
+      sw: "Ufanisi na udhibiti wa mahitaji kiasi cha nishati kinachopotea na jinsi mahitaji ya kilele yanavyodhibitiwa.",
+    },
+    howToImprove: {
+      en: "LED retrofits, efficient appliances, and load scheduling away from low-power windows.",
+      sw: "Badilisha taa kuwa LED, vifaa vyenye ufanisi, na panga matumizi mbali na vipindi vya umeme mdogo.",
+    },
+  },
+  RRC: {
+    whatItMeasures: {
+      en: "Readiness and response plans, procedures and staff preparedness for outages and shocks.",
+      sw: "Utayari na mwitikio mipango, taratibu na utayari wa wafanyakazi kwa kukatika kwa umeme na misukosuko.",
+    },
+    howToImprove: {
+      en: "Document and drill emergency procedures; keep backup cold boxes and fuel ready.",
+      sw: "Andika na fanya mazoezi ya taratibu za dharura; weka tayari masanduku baridi ya akiba na mafuta.",
+    },
+  },
+  W: {
+    whatItMeasures: {
+      en: "Workforce capacity staffing levels and skills to operate and maintain the system.",
+      sw: "Uwezo wa wafanyakazi idadi ya wafanyakazi na ujuzi wa kuendesha na kutunza mfumo.",
+    },
+    howToImprove: {
+      en: "Train an on-site energy champion and schedule routine maintenance support.",
+      sw: "Funza balozi wa nishati wa eneo na panga msaada wa matengenezo wa mara kwa mara.",
+    },
+  },
+  WW: {
+    whatItMeasures: {
+      en: "Water, sanitation, hygiene and waste services that also depend on reliable power and water.",
+      sw: "Maji, usafi wa mazingira, usafi na taka huduma zinazotegemea pia umeme na maji ya uhakika.",
+    },
+    howToImprove: {
+      en: "Protect the water pump circuit, maintain storage, and ensure safe waste handling.",
+      sw: "Linda mzunguko wa pampu ya maji, tunza hifadhi, na hakikisha utunzaji salama wa taka.",
+    },
+  },
+}
+
+/**
+ * RCS explainability model: the seven CRiPHC dimensions with their contribution
+ * to the score, recoverable points, and plain-language copy. The two v2.0
+ * dimensions use the same default (60) as the interactive widget so the RCS
+ * headline matches across the dashboard.
+ */
+export function getRcsExplainer(facilityId?: string): RcsExplainer {
+  const base = getCrphcBaseDimensions(facilityId)
+  const dims: CrphcDimension[] = [
+    ...base,
+    ...CRPHC_NEW_DIMENSIONS.map((d) => ({ ...d, score: 60, isNew: true })),
+  ]
+  const { rcs, tier } = computeCrphcResult(dims)
+  const dimensions: RcsDimensionInsight[] = dims.map((d) => {
+    const copy = RCS_DIMENSION_COPY[d.code] ?? {
+      whatItMeasures: { en: d.label, sw: d.label },
+      howToImprove: { en: "", sw: "" },
+    }
+    return {
+      code: d.code,
+      label: d.label,
+      weight: d.weight,
+      score: d.score,
+      contribution: Math.round(d.score * d.weight),
+      maxContribution: Math.round(100 * d.weight),
+      gapPoints: Math.round((100 - d.score) * d.weight),
+      isNew: d.isNew,
+      whatItMeasures: copy.whatItMeasures,
+      howToImprove: copy.howToImprove,
+    }
+  })
+  return { rcs, tier, dimensions }
+}
+
+export type RcsTrendPoint = { label: string; rcs: number }
+
+/**
+ * Quarterly RCS history ending at the facility's current score, trending up from
+ * a lower baseline with mild seeded noise. Simulated for the RCS trend chart.
+ */
+export function getRcsTrend(facilityId?: string): RcsTrendPoint[] {
+  const seed = seedFor(facilityId, "rcs-trend")
+  const current = getRcsExplainer(facilityId).rcs
+  const now = new Date()
+  const n = 6
+  const baseline = Math.max(0, current - 12)
+  const points: RcsTrendPoint[] = []
+  for (let i = n - 1; i >= 0; i--) {
+    const progress = (n - 1 - i) / (n - 1) // 0 (oldest) .. 1 (newest)
+    const value =
+      i === 0
+        ? current
+        : Math.max(0, Math.min(100, Math.round(baseline + (current - baseline) * progress + (rand(seed, i) - 0.5) * 4)))
+    const d = new Date(now.getFullYear(), now.getMonth() - i * 3, 1)
+    const quarter = Math.floor(d.getMonth() / 3) + 1
+    points.push({ label: `Q${quarter} ${d.getFullYear()}`, rcs: value })
+  }
+  return points
 }

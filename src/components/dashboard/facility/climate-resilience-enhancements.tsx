@@ -7,7 +7,7 @@ import { AdaptationPlan } from "./adaptation-plan"
 
 /**
  * Spec Part 10 (CRiPHC v2.0): additive enhancements to the existing Climate
- * Resilience section — the 7-dimension RCS results, the quantitative hazard
+ * Resilience section the 7-dimension RCS results, the quantitative hazard
  * exposure score, and the Resi-Health Grid Climate Vulnerability Index. Mounted
  * BELOW the existing climate assessment; nothing existing is changed.
  */

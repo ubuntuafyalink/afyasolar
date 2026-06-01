@@ -9,7 +9,7 @@ function linkWidth(kw: number): number {
 }
 
 /**
- * Spec 8.2 "Umeme detail": a Sankey-style power-flow diagram — solar production,
+ * Spec 8.2 "Umeme detail": a Sankey-style power-flow diagram solar production,
  * facility consumption, battery State of Charge and grid status. Hand-drawn SVG
  * (token-styled) so it stays light and fully controllable for the 4-node case.
  */

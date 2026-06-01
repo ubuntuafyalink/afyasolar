@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       "You are an energy efficiency expert helping health facilities in East Africa improve solar and electricity usage. " +
       "Based on the notes provided, suggest concrete, practical improvements grouped by: Behavioral, Operational, and Technical. " +
       "Write the response as plain text using numbered lists only, without any markdown formatting and without using asterisk (*) characters. " +
-      "Keep the answer concise (3–6 items per group) and avoid hallucinating data not mentioned in the notes."
+      "Keep the answer concise (36 items per group) and avoid hallucinating data not mentioned in the notes."
 
     const response = await fetch(GROQ_API_URL, {
       method: "POST",

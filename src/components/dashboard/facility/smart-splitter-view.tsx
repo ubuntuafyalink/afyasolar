@@ -13,7 +13,7 @@ import { getSmartSplitter } from "@/lib/dashboard/facility-demo-data"
  * to the clinic's daily digital revenue: a small percentage is routed on each
  * payment until the monthly cap is reached, then 100% stays with the clinic.
  *
- * [data] — fed by the local demo module. TODO: wire the real Tigo Lipa gateway +
+ * [data] fed by the local demo module. TODO: wire the real Tigo Lipa gateway +
  * contract ledger per spec 13.5.
  */
 export function SmartSplitterView({ facilityId }: { facilityId?: string }) {
@@ -30,7 +30,7 @@ export function SmartSplitterView({ facilityId }: { facilityId?: string }) {
           <DemoDataBadge />
         </div>
         <p className="text-xs text-muted-foreground">
-          {s.alphaPct}% of daily digital revenue goes to your solar fee, up to a monthly cap — then it stops.
+          {s.alphaPct}% of daily digital revenue goes to your solar fee, up to a monthly cap then it stops.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

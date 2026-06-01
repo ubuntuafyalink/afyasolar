@@ -183,7 +183,7 @@ export function ManagementPanelPaymentHistory() {
               </table>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Summary: Total collected this period — TZS {totalAmount.toLocaleString()}
+              Summary: Total collected this period TZS {totalAmount.toLocaleString()}
             </p>
           </>
         )}

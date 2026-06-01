@@ -73,7 +73,7 @@ const NODES: Record<string, Node> = {
     id: "escalate",
     title: "Request a technician",
     resolution:
-      "The basics look fine, so the unit may need a technician. Log the issue from Reports or call support, and move vaccines to a backup cold box if the temperature stays out of the 2–8°C band.",
+      "The basics look fine, so the unit may need a technician. Log the issue from Reports or call support, and move vaccines to a backup cold box if the temperature stays out of the 28°C band.",
   },
 }
 

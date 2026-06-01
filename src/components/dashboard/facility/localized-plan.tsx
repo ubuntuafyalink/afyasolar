@@ -12,7 +12,7 @@ const HORIZONS: { key: EcmHorizon; label: string; blurb: string }[] = [
 ]
 
 /**
- * Spec 10 / G33: a localized adaptation plan — the recommended measures grouped
+ * Spec 10 / G33: a localized adaptation plan the recommended measures grouped
  * by horizon/budget, with running totals, so a manager can sequence the work to
  * their facility's cash flow.
  */

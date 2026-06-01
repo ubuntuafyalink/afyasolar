@@ -24,7 +24,7 @@ function timeAgo(iso: string): string {
   return hrs < 24 ? `${hrs} h ago` : `${Math.round(hrs / 24)} d ago`
 }
 
-/** Spec 8.2 "Friji detail": events list — door openings, excursions, manual readings, maintenance. */
+/** Spec 8.2 "Friji detail": events list door openings, excursions, manual readings, maintenance. */
 export function FridgeEventsList({ facilityId }: { facilityId?: string }) {
   const events = [...getFridgeEvents(facilityId)].sort(
     (a, b) => new Date(b.atIso).getTime() - new Date(a.atIso).getTime(),

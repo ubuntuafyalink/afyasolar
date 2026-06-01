@@ -9,7 +9,7 @@ import { EcoPulseEpi } from "./eco-pulse-epi"
 
 /**
  * Spec Part 7 & 9.6: additive enhancements to the existing Energy Efficiency
- * section — the 15-parameter Minimum Viable Audit, its three-output report,
+ * section the 15-parameter Minimum Viable Audit, its three-output report,
  * bill/receipt OCR, and the Eco-Pulse performance index. Mounted BELOW the
  * existing efficiency content; nothing existing is changed.
  */

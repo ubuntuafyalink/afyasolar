@@ -10,7 +10,7 @@ const SOLAR_LABEL = { sunny: "Sunny", partly: "Partly cloudy", cloudy: "Cloudy" 
 const SOLAR_ICON = { sunny: Sun, partly: CloudSun, cloudy: Cloud } as const
 
 /**
- * Spec 8.2 "card two": today's power forecast. Three lines — expected hours of
+ * Spec 8.2 "card two": today's power forecast. Three lines expected hours of
  * power (from the 7-day forecast + solar profile), current battery State of
  * Charge, and expected solar (sunny / partly / cloudy).
  *

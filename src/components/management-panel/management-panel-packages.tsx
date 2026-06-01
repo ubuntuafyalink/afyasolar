@@ -163,7 +163,7 @@ export function ManagementPanelPackages() {
                   </Badge>
                 </div>
                 <CardDescription>
-                  {pkg.code} · {pkg.ratedKw} kW · {pkg.suitableFor || '—'}
+                  {pkg.code} · {pkg.ratedKw} kW · {pkg.suitableFor || ''}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -187,7 +187,7 @@ export function ManagementPanelPackages() {
                                 `TZS ${Number(plan.pricing.defaultMonthlyAmount).toLocaleString()}/mo`}
                               {plan.planTypeCode === 'EAAS' && plan.pricing?.eaasMonthlyFee != null &&
                                 `TZS ${Number(plan.pricing.eaasMonthlyFee).toLocaleString()}/mo`}
-                              {!plan.pricing && '—'}
+                              {!plan.pricing && ''}
                             </span>
                           </div>
                           <DollarSign className="h-4 w-4 text-primary shrink-0" aria-hidden />

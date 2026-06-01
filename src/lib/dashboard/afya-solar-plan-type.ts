@@ -12,9 +12,9 @@ export function mapPlanTypeToPaymentPlan(
 
 export function formatAfyaSolarPlanTypeLabel(planType?: string | null): string {
   const v = (planType || "").toUpperCase().trim()
-  if (!v) return "—"
+  if (!v) return ""
   if (v === "CASH") return "CASH"
   if (v === "INSTALLMENT") return "INSTALLMENT"
   if (v === "PAAS" || v === "EAAS") return "PAAS / EAAS"
-  return planType || "—"
+  return planType || ""
 }

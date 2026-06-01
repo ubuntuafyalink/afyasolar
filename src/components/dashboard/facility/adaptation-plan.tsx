@@ -5,24 +5,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AdaptationRecsList } from "./adaptation-recs-list"
 import { LocalizedPlan } from "./localized-plan"
 import { EcmCatalogue } from "./ecm-catalogue"
+import { AdaptationTracker } from "./adaptation-tracker"
+import { useFacilityPreferences } from "./facility-preferences-provider"
 
 /**
- * Spec Part 10.4 & 9.5 (G31–G33): the adaptation plan — ranked recommendations
+ * Spec Part 10.4 & 9.5 (G31G33): the adaptation plan ranked recommendations
  * with expected resilience gain and cost, a localized plan grouped by horizon,
  * and the ECM catalogue. Additive, mounted within the Climate Resilience section.
  */
 export function AdaptationPlan({ facilityId }: { facilityId?: string }) {
+  const { t } = useFacilityPreferences()
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Adaptation plan &amp; recommendations</CardTitle>
+        <CardTitle>{t("plan.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="recommended">
           <TabsList className="flex h-auto flex-wrap justify-start">
-            <TabsTrigger value="recommended">Recommended</TabsTrigger>
-            <TabsTrigger value="plan">Plan by horizon</TabsTrigger>
-            <TabsTrigger value="catalogue">ECM catalogue</TabsTrigger>
+            <TabsTrigger value="recommended">{t("plan.tab.recommended")}</TabsTrigger>
+            <TabsTrigger value="plan">{t("plan.tab.byHorizon")}</TabsTrigger>
+            <TabsTrigger value="catalogue">{t("plan.tab.catalogue")}</TabsTrigger>
+            <TabsTrigger value="myplan">{t("plan.tab.myPlan")}</TabsTrigger>
           </TabsList>
           <TabsContent value="recommended" className="pt-4">
             <AdaptationRecsList />
@@ -32,6 +36,9 @@ export function AdaptationPlan({ facilityId }: { facilityId?: string }) {
           </TabsContent>
           <TabsContent value="catalogue" className="pt-4">
             <EcmCatalogue />
+          </TabsContent>
+          <TabsContent value="myplan" className="pt-4">
+            <AdaptationTracker />
           </TabsContent>
         </Tabs>
       </CardContent>

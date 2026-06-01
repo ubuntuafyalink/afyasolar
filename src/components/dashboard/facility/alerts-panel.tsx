@@ -7,8 +7,8 @@ import { AlertCard } from "./alerts/alert-card"
 import { DailyPushPreview } from "./alerts/daily-push-preview"
 
 /**
- * Spec 11.3 / 15 (I42–I46): additive alerts surface for the existing
- * Notifications section — heatwave, flood, outage-probability and climate-disease
+ * Spec 11.3 / 15 (I42I46): additive alerts surface for the existing
+ * Notifications section heatwave, flood, outage-probability and climate-disease
  * alerts, plus a preview of the daily 06:30 status push. All [data] (demo).
  */
 export function AlertsPanel({

@@ -17,7 +17,7 @@ type Message = { role: "user" | "assistant"; text: string }
  * Spec 11.3: the GenAI co-pilot chat surface (English). Answers are canned and
  * grounded in the demo data.
  *
- * [data] — TODO: wire the real co-pilot (Whisper transcription + GenAI) per
+ * [data] TODO: wire the real co-pilot (Whisper transcription + GenAI) per
  * spec Part 11 & 15.4. Nothing is sent over the network here.
  */
 export function CopilotChat({ facilityId }: { facilityId?: string }) {

@@ -8,10 +8,10 @@ import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { getDailyPushPreview } from "@/lib/dashboard/facility-demo-data"
 
 /**
- * Spec 15.3: the daily 06:30 status push (WhatsApp + SMS). Surface only — this
+ * Spec 15.3: the daily 06:30 status push (WhatsApp + SMS). Surface only this
  * previews the message the facility would receive; nothing is sent from here.
  *
- * [data] — composed from the local demo module. TODO: wire the real BullMQ push
+ * [data] composed from the local demo module. TODO: wire the real BullMQ push
  * job + WhatsApp Cloud API per spec Part 15.
  */
 export function DailyPushPreview({

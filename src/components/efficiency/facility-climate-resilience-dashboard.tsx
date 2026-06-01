@@ -130,7 +130,7 @@ export function FacilityClimateResilienceDashboard({ facilityId }: FacilityClima
       <div className="flex flex-wrap justify-between gap-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CloudSun className="h-4 w-4" />
-          Hazard exposure (0–100, higher = more risk). Resilience score reflects mitigations.
+          Hazard exposure (0100, higher = more risk). Resilience score reflects mitigations.
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => load()} disabled={loading}>
           <RefreshCw className={cn("h-4 w-4 mr-1", loading && "animate-spin")} />

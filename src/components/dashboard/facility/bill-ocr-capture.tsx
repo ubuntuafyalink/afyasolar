@@ -15,7 +15,7 @@ type Extracted = { kwh: number; amountTsh: number }
  * Spec 7.1 / 9.2: bill & receipt photo OCR. The user uploads a photo of a
  * TANESCO bill or fuel receipt; OCR extracts kWh and TSh.
  *
- * [data] — the OCR is STUBBED (returns demo figures). TODO: wire real OCR
+ * [data] the OCR is STUBBED (returns demo figures). TODO: wire real OCR
  * (Cloudinary) per spec. Nothing is uploaded to a server here.
  */
 export function BillOcrCapture({ facilityId }: { facilityId?: string }) {

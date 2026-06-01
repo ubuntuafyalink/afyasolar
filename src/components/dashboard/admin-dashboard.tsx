@@ -65,6 +65,13 @@ import {
   Trash2,
   SlidersHorizontal,
 } from "lucide-react"
+// Resilience Intelligence (additive, simulated data) — consolidated into hubs
+import { FacilityPreferencesProvider } from "@/components/dashboard/facility/facility-preferences-provider"
+import { FacilityToolbar } from "@/components/dashboard/facility/facility-toolbar"
+import { AdminIntelPortfolioHub } from "@/components/admin/intelligence/admin-intel-portfolio-hub"
+import { AdminIntelRiskHub } from "@/components/admin/intelligence/admin-intel-risk-hub"
+import { AdminIntelAdaptationHub } from "@/components/admin/intelligence/admin-intel-adaptation-hub"
+import { AdminIntelMethodologyHub } from "@/components/admin/intelligence/admin-intel-methodology-hub"
 import { useDeviceRequests, useUpdateDeviceRequest } from "@/hooks/use-device-requests"
 import { LogoutButton } from "@/components/logout-button"
 import { UserManagement } from "@/components/dashboard/user-management"
@@ -152,13 +159,18 @@ type SectionId =
   | 'bulk-sms'
   | 'internal-tools'
   | 'notifications'
+  // Resilience Intelligence (additive, simulated data) — consolidated hubs
+  | 'intel-portfolio'
+  | 'intel-risk'
+  | 'intel-adaptation'
+  | 'intel-methodology'
 
 type AdminDashboardProps = {
   initialSection?: SectionId
 }
 
 // Grouped navigation structure
-type NavGroup = 'general' | 'afya-solar'
+type NavGroup = 'general' | 'afya-solar' | 'intelligence'
 
 const navGroups: Record<
   NavGroup,
@@ -200,10 +212,23 @@ const navGroups: Record<
       { id: 'solar-carbon-credits', label: 'Carbon Credits', icon: Leaf },
     ],
   },
+  'intelligence': {
+    label: 'Resilience Intelligence',
+    icon: BarChart3,
+    items: [
+      { id: 'intel-portfolio', label: 'Portfolio', icon: BarChart3 },
+      { id: 'intel-risk', label: 'Risk & Readiness', icon: AlertTriangle },
+      { id: 'intel-adaptation', label: 'Adaptation & Impact', icon: TrendingUp },
+      { id: 'intel-methodology', label: 'Funding & Methodology', icon: FileText },
+    ],
+  },
 }
 
 // Helper to determine which group a section belongs to
 const getSectionGroup = (section: SectionId): NavGroup => {
+  if (section.startsWith('intel-')) {
+    return 'intelligence'
+  }
   if (
     [
       'afya-solar-dashboard',
@@ -230,7 +255,6 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
   const { data: deviceRequests } = useDeviceRequests()
   const updateDeviceRequest = useUpdateDeviceRequest()
   const [activeSection, setActiveSection] = useState<SectionId>(initialSection)
-  const [openGroups, setOpenGroups] = useState<Set<NavGroup>>(new Set(['general']))
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [deviceStatusFilter, setDeviceStatusFilter] = useState<string>('all')
@@ -347,22 +371,30 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
     setSidebarOpen(isDesktop)
   }, [])
 
-  // Auto-open the group containing the active section
-  useEffect(() => {
-    const activeGroup = getSectionGroup(activeSection)
-    setOpenGroups(new Set([activeGroup]))
-  }, [activeSection])
+  // The active workspace is derived from the active section.
+  const activeWorkspace = getSectionGroup(activeSection)
 
-  const toggleGroup = (group: NavGroup) => {
-    setOpenGroups((prev) => {
-      if (prev.has(group)) {
-        const newSet = new Set(prev)
-        newSet.delete(group)
-        return newSet
-      } else {
-        return new Set([group])
-      }
-    })
+  // Navigate to a section, honouring the route-based + popup special cases.
+  const goToSection = (id: SectionId) => {
+    if (id === 'overview') {
+      router.push('/dashboard/admin/overview')
+      return
+    }
+    if (id === 'facilities') {
+      router.push('/dashboard/admin/facilities')
+      return
+    }
+    if (id === 'users') {
+      router.push('/dashboard/admin/users')
+      return
+    }
+    if (id === 'notifications') {
+      setShowNotificationPopup(true)
+      setMobileMenuOpen(false)
+      return
+    }
+    setActiveSection(id)
+    setMobileMenuOpen(false)
   }
 
   const handleToggleBookingFacility = (facilityId: string, enabled: boolean) => {
@@ -414,6 +446,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
   }
 
   return (
+    <FacilityPreferencesProvider>
     <div className="h-screen bg-muted/40 flex overflow-hidden">
       {/* Sidebar */}
       <aside
@@ -454,100 +487,75 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
           {/* Navigation */}
           <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-            {Object.entries(navGroups).map(([groupKey, group]) => {
-              const GroupIcon = group.icon
-              const isOpen = openGroups.has(groupKey as NavGroup)
-              const hasActiveItem = group.items.some((item) => item.id === activeSection)
-              
-              return (
-                <div key={groupKey} className="space-y-1">
+            {/* Workspace switcher — pick one area; the list below shows only that area */}
+            <div className="space-y-1">
+              {(Object.keys(navGroups) as NavGroup[]).map((groupKey) => {
+                const group = navGroups[groupKey]
+                const GroupIcon = group.icon
+                const isActiveWs = activeWorkspace === groupKey
+                return (
                   <button
-                    onClick={() => toggleGroup(groupKey as NavGroup)}
+                    key={groupKey}
+                    onClick={() => goToSection(group.items[0].id)}
+                    aria-current={isActiveWs ? "page" : undefined}
+                    title={group.label}
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-lg transition-colors",
-                      hasActiveItem
+                      isActiveWs
                         ? "bg-primary/10 text-primary border border-primary/20"
                         : "text-muted-foreground hover:bg-muted"
                     )}
                   >
                     <GroupIcon className="w-4 h-4 flex-shrink-0" />
-                    {sidebarOpen && (
-                      <>
-                        <span className="flex-1 text-left">{group.label}</span>
-                        <ChevronDown
-                          className={cn(
-                            "h-4 w-4 transition-transform flex-shrink-0",
-                            isOpen ? "rotate-180" : ""
-                          )}
-                        />
-                      </>
+                    {sidebarOpen && <span className="flex-1 text-left">{group.label}</span>}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="my-2 border-t border-border" />
+
+            {/* Items for the active workspace only */}
+            <div className="space-y-1">
+              {navGroups[activeWorkspace].items.map((item) => {
+                const ItemIcon = item.icon
+                const isActive = activeSection === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      if (item.id === 'service-visibility') {
+                        setActiveSection('service-visibility')
+                        setMobileMenuOpen(false)
+                        return
+                      }
+                      goToSection(item.id)
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : item.id === 'notifications'
+                          ? "text-destructive hover:bg-destructive/10 border border-destructive/20"
+                          : "text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    <ItemIcon className={cn("w-4 h-4 flex-shrink-0", item.id === 'notifications' && !isActive && "text-destructive")} />
+                    {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+                    {item.id === 'transactions' && pendingWithdrawalsCount > 0 && (
+                      <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
+                        {pendingWithdrawalsCount}
+                      </Badge>
+                    )}
+                    {item.id === 'notifications' && unreadNotificationCount > 0 && (
+                      <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
+                        {unreadNotificationCount}
+                      </Badge>
                     )}
                   </button>
-                  {isOpen && (
-                    <div className={cn("space-y-1", sidebarOpen ? "pl-6" : "pl-0")}>
-                      {group.items.map((item) => {
-                        const ItemIcon = item.icon
-                        const isActive = activeSection === item.id
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              if (item.id === 'service-visibility') {
-                                setActiveSection('service-visibility')
-                                setMobileMenuOpen(false)
-                                return
-                              }
-                              if (item.id === 'overview') {
-                                router.push('/dashboard/admin/overview')
-                                return
-                              }
-                              if (item.id === 'facilities') {
-                                router.push('/dashboard/admin/facilities')
-                                return
-                              }
-                              if (item.id === 'users') {
-                                router.push('/dashboard/admin/users')
-                                return
-                              }
-                              if (item.id === 'notifications') {
-                                setShowNotificationPopup(true)
-                                setMobileMenuOpen(false)
-                                return
-                              }
-                              setActiveSection(item.id)
-                              setMobileMenuOpen(false)
-                            }}
-                            className={cn(
-                              "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                              isActive
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : item.id === 'notifications'
-                                ? "text-destructive hover:bg-destructive/10 border border-destructive/20"
-                                : "text-muted-foreground hover:bg-muted"
-                            )}
-                          >
-                            <ItemIcon className={cn("w-4 h-4 flex-shrink-0", item.id === 'notifications' && !isActive && "text-destructive")} />
-                            {sidebarOpen && (
-                              <span className="flex-1 text-left">{item.label}</span>
-                            )}
-                            {item.id === 'transactions' && pendingWithdrawalsCount > 0 && (
-                              <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                                {pendingWithdrawalsCount}
-                              </Badge>
-                            )}
-                            {item.id === 'notifications' && unreadNotificationCount > 0 && (
-                              <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                                {unreadNotificationCount}
-                              </Badge>
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </nav>
 
           {/* Sidebar Footer */}
@@ -602,6 +610,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <FacilityToolbar />
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -743,7 +752,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                                   <div className="text-sm font-medium text-foreground truncate">{row.facilityName}</div>
                                   <div className="text-[11px] text-muted-foreground truncate">
                                     {row.city ? `${row.city}, ` : ""}{row.region || ""} · Last login:{" "}
-                                    {row.lastLoginAt ? format(new Date(row.lastLoginAt), "PPp") : "—"}
+                                    {row.lastLoginAt ? format(new Date(row.lastLoginAt), "PPp") : ""}
                                   </div>
                                 </div>
                                 <Badge variant="secondary">
@@ -772,7 +781,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                                 <div className="min-w-0">
                                   <div className="text-sm font-medium text-foreground truncate">{row.name || row.email}</div>
                                   <div className="text-[11px] text-muted-foreground truncate">
-                                    {row.email} · {row.role} · Last login: {row.lastLoginAt ? format(new Date(row.lastLoginAt), "PPp") : "—"}
+                                    {row.email} · {row.role} · Last login: {row.lastLoginAt ? format(new Date(row.lastLoginAt), "PPp") : ""}
                                   </div>
                                 </div>
                                 <Badge variant="success">
@@ -809,8 +818,8 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                               <div className="min-w-0">
                                 <div className="text-sm font-medium text-foreground truncate">{row.facilityName}</div>
                                 <div className="text-[11px] text-muted-foreground truncate">
-                                  {row.city ? `${row.city}, ` : ""}{row.region || ""} · Plan: {row.planType || "—"} · Billing: {row.billingCycle || "—"} · Expires:{" "}
-                                  {row.expiryDate ? format(new Date(row.expiryDate), "PP") : "—"}
+                                  {row.city ? `${row.city}, ` : ""}{row.region || ""} · Plan: {row.planType || ""} · Billing: {row.billingCycle || ""} · Expires:{" "}
+                                  {row.expiryDate ? format(new Date(row.expiryDate), "PP") : ""}
                                 </div>
                               </div>
                               <Badge variant="success">Active</Badge>
@@ -1269,6 +1278,12 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
               </Card>
             )}
 
+            {/* Resilience Intelligence hubs (additive, simulated data) */}
+            {activeSection === 'intel-portfolio' && <AdminIntelPortfolioHub />}
+            {activeSection === 'intel-risk' && <AdminIntelRiskHub />}
+            {activeSection === 'intel-adaptation' && <AdminIntelAdaptationHub />}
+            {activeSection === 'intel-methodology' && <AdminIntelMethodologyHub />}
+
           </div>
         </main>
       </div>
@@ -1283,5 +1298,6 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
         }}
       />
     </div>
+    </FacilityPreferencesProvider>
   )
 }
