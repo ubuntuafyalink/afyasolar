@@ -117,6 +117,10 @@ const FinancingEnhancements = dynamic(
   () => import("@/components/dashboard/facility/financing-enhancements").then((m) => m.FinancingEnhancements),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const AlertsPanel = dynamic(
+  () => import("@/components/dashboard/facility/alerts-panel").then((m) => m.AlertsPanel),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1644,6 +1648,12 @@ export function FacilityDashboardContent({
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {/* Additive (CEO spec Part 11.3 & 15): climate/outage alerts and the
+                daily 06:30 status push preview, below the notifications center. */}
+            {FACILITY_V2_ENABLED && !adminMode && currentActiveSection === 'notifications' && (
+              <AlertsPanel facilityId={facilityId} facilityName={facility?.name ?? null} />
             )}
 
             {/* Report page intentionally removed */}

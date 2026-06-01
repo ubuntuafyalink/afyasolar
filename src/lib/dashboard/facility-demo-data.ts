@@ -669,3 +669,92 @@ export function getNhifEscrow(facilityId?: string): NhifEscrow {
     inflows,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Group I — Alerts & notifications (spec Part 11.3 / 15)
+// ---------------------------------------------------------------------------
+
+export type AlertKind = "heatwave" | "flood" | "outage" | "disease"
+export type AlertSeverity = "info" | "warning" | "danger"
+
+export type FacilityAlert = {
+  kind: AlertKind
+  active: boolean
+  severity: AlertSeverity
+  title: string
+  detail: string
+  leadTime: string
+}
+
+/** Climate & outage alerts with lead time (spec 11.3 "Warn"). */
+export function getFacilityAlerts(facilityId?: string): FacilityAlert[] {
+  const seed = seedFor(facilityId, "alerts")
+  const pick = (salt: number, t: AlertSeverity, f: AlertSeverity = "info"): { active: boolean; severity: AlertSeverity } => {
+    const active = rand(seed, salt) < 0.5
+    return { active, severity: active ? t : f }
+  }
+  const heat = pick(1, "danger")
+  const flood = pick(2, "warning")
+  const outage = pick(3, "warning")
+  const disease = pick(4, "info")
+
+  return [
+    {
+      kind: "heatwave",
+      ...heat,
+      title: heat.active ? "Heatwave expected this week" : "No heat alerts",
+      detail: heat.active
+        ? "Daytime highs near 37°C for 3 days. Your fridge and battery will work harder — check ventilation and keep doors closed."
+        : "Temperatures are within the normal range for the week ahead.",
+      leadTime: heat.active ? "3 days ahead" : "—",
+    },
+    {
+      kind: "flood",
+      ...flood,
+      title: flood.active ? "Heavy rain & flood risk" : "No flood alerts",
+      detail: flood.active
+        ? "Heavy rainfall forecast in your area. Protect ground-level equipment and confirm a dry store for vaccines."
+        : "No significant rainfall or flood risk forecast.",
+      leadTime: flood.active ? "48 hours ahead" : "—",
+    },
+    {
+      kind: "outage",
+      ...outage,
+      title: outage.active ? "Higher chance of power outage" : "Grid looks stable",
+      detail: outage.active
+        ? "Grid instability likely this evening. Ensure the battery is charged and the generator has fuel."
+        : "No elevated outage probability detected for today.",
+      leadTime: outage.active ? "This evening" : "—",
+    },
+    {
+      kind: "disease",
+      ...disease,
+      title: disease.active ? "Climate-linked disease watch" : "No disease alerts",
+      detail: disease.active
+        ? "Standing water after recent rain raises malaria and cholera risk. Prepare supplies and watch for a rise in cases."
+        : "No climate-linked disease signals in your area right now.",
+      leadTime: disease.active ? "1–2 weeks" : "—",
+    },
+  ]
+}
+
+export type DailyPush = { time: string; greeting: string; lines: string[] }
+
+/** The 6:30am WhatsApp+SMS status push, composed for preview (spec 15.3) — surface only. */
+export function getDailyPushPreview(facilityId?: string, facilityName?: string | null): DailyPush {
+  const fridge = getFridgeStatus(facilityId)
+  const power = getPowerToday(facilityId)
+  const tasks = getPendingTasks(facilityId)
+  const skyLabel = { sunny: "sunny", partly: "partly cloudy", cloudy: "cloudy" }[power.expectedSolar]
+  return {
+    time: "06:30",
+    greeting: `Good morning${facilityName ? `, ${facilityName}` : ""}.`,
+    lines: [
+      `Fridge: ${fridge.status === "safe" ? "SAFE" : "DANGER"} (${fridge.tempC.toFixed(1)}°C).`,
+      `Power today: ~${power.expectedHours}h, battery ${power.batterySocPct}%, ${skyLabel}.`,
+      tasks.length > 0
+        ? `Tasks: ${tasks.length} need your attention.`
+        : "Tasks: nothing for today.",
+    ],
+  }
+}
