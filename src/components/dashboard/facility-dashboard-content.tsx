@@ -98,6 +98,10 @@ const PowerSection = dynamic(
   () => import("@/components/dashboard/facility/power-section").then((m) => m.PowerSection),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const ReportsSection = dynamic(
+  () => import("@/components/dashboard/facility/reports-section").then((m) => m.ReportsSection),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1068,6 +1072,10 @@ export function FacilityDashboardContent({
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'power' && (
               <PowerSection facilityId={facilityId} batteryLevel={liveData?.batteryLevel} />
+            )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'reports' && (
+              <ReportsSection facilityId={facilityId} />
             )}
 
             {currentActiveSection === 'package-selection' && (
