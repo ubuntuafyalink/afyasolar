@@ -758,3 +758,93 @@ export function getDailyPushPreview(facilityId?: string, facilityName?: string |
     ],
   }
 }
+
+// ---------------------------------------------------------------------------
+// Group J — AI co-pilot & forecasts (spec Part 11.3)
+// ---------------------------------------------------------------------------
+
+export const COPILOT_SUGGESTIONS = [
+  "Are my vaccines safe right now?",
+  "How much power will I have today?",
+  "How much could I save with solar?",
+  "What should I do about the fridge?",
+] as const
+
+/**
+ * Canned co-pilot answers (spec 11.3). Keyword-matched and grounded in the demo
+ * data, so responses are coherent with the rest of the dashboard.
+ *
+ * TODO: wire the real GenAI co-pilot (Swahili/EN) per spec Part 11.
+ */
+export function answerCopilot(question: string, facilityId?: string): string {
+  const q = question.toLowerCase()
+  if (q.includes("vaccine") || q.includes("fridge") || q.includes("cold")) {
+    const f = getFridgeStatus(facilityId)
+    return f.status === "safe"
+      ? `Your vaccine fridge is SAFE at ${f.tempC.toFixed(1)}°C, within the 2–8°C band. Keep the door closed and log a manual reading if the display looks off.`
+      : `Your fridge is in DANGER at ${f.tempC.toFixed(1)}°C. Move vaccines to a backup cold box, check power and the door seal, and open the troubleshooting flow on the Fridge page.`
+  }
+  if (q.includes("power") || q.includes("battery") || q.includes("electric")) {
+    const p = getPowerToday(facilityId)
+    return `You can expect about ${p.expectedHours} hours of power today. Battery is at ${p.batterySocPct}% and the sky is ${p.expectedSolar}. Charge critical loads while the sun is up.`
+  }
+  if (q.includes("save") || q.includes("cost") || q.includes("bill") || q.includes("money")) {
+    const c = getEaasContract(facilityId)
+    return `Under an Energy-as-a-Service plan your monthly fee would be about ${formatTsh(c.monthlyFeeTsh)} versus roughly ${formatTsh(c.currentSpendTsh)} today — a saving of about ${formatTsh(c.monthlySavingTsh)} every month, breaking even in ${c.breakEvenMonths} months.`
+  }
+  if (q.includes("solar") || q.includes("sun")) {
+    const days = get7daySolarForecast(facilityId)
+    const best = days.reduce((a, b) => (b.expectedKwh > a.expectedKwh ? b : a))
+    return `Your strongest solar day this week looks like ${best.day} (~${best.expectedKwh} kWh, ${best.sky}). Plan heavy tasks like sterilising for sunny days.`
+  }
+  return "I can help with your fridge, today's power, expected solar, and how much you could save with solar. Try one of the suggested questions."
+}
+
+function formatTsh(n: number): string {
+  return `TSh ${Math.round(n).toLocaleString("en-US")}`
+}
+
+export type WhatIfScenario = "add-fridge" | "add-battery" | "late-rains" | "led-retrofit"
+
+export type WhatIfResult = {
+  deltaServiceHours: number
+  deltaMonthlyCostTsh: number
+  deltaResiliencePoints: number
+  note: string
+}
+
+/** "What-if" simulation outcomes (spec 11.3 "Simulate"). */
+export function getWhatIfResult(scenario: WhatIfScenario, facilityId?: string): WhatIfResult {
+  const seed = seedFor(facilityId, `whatif-${scenario}`)
+  switch (scenario) {
+    case "add-fridge":
+      return {
+        deltaServiceHours: -Math.round((1.5 + rand(seed, 1) * 1.5) * 10) / 10,
+        deltaMonthlyCostTsh: Math.round((40_000 + rand(seed, 2) * 40_000) / 1000) * 1000,
+        deltaResiliencePoints: -3,
+        note: "A second fridge adds critical load, shortening battery autonomy and raising energy cost. Consider a solar direct-drive unit and more storage.",
+      }
+    case "add-battery":
+      return {
+        deltaServiceHours: Math.round((3 + rand(seed, 1) * 3) * 10) / 10,
+        deltaMonthlyCostTsh: -Math.round((30_000 + rand(seed, 2) * 40_000) / 1000) * 1000,
+        deltaResiliencePoints: 11,
+        note: "Adding storage lets critical loads ride through longer outages and cuts generator runtime, lowering monthly cost.",
+      }
+    case "late-rains":
+      return {
+        deltaServiceHours: -Math.round((1 + rand(seed, 1) * 2) * 10) / 10,
+        deltaMonthlyCostTsh: Math.round((20_000 + rand(seed, 2) * 30_000) / 1000) * 1000,
+        deltaResiliencePoints: -4,
+        note: "Late rains mean more cloudy days and weaker solar, so the battery and generator carry more of the load.",
+      }
+    case "led-retrofit":
+    default:
+      return {
+        deltaServiceHours: Math.round((1 + rand(seed, 1) * 1.5) * 10) / 10,
+        deltaMonthlyCostTsh: -Math.round((45_000 + rand(seed, 2) * 30_000) / 1000) * 1000,
+        deltaResiliencePoints: 4,
+        note: "An LED retrofit cuts lighting load, extends battery autonomy and lowers your monthly energy bill.",
+      }
+  }
+}
