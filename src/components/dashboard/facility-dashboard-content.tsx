@@ -106,6 +106,13 @@ const AuditEnhancements = dynamic(
   () => import("@/components/dashboard/facility/audit-enhancements").then((m) => m.AuditEnhancements),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const ClimateResilienceEnhancements = dynamic(
+  () =>
+    import("@/components/dashboard/facility/climate-resilience-enhancements").then(
+      (m) => m.ClimateResilienceEnhancements,
+    ),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1406,6 +1413,12 @@ export function FacilityDashboardContent({
                       />
                     </CardContent>
                   </Card>
+                )}
+
+                {/* Additive (CEO spec Part 10): CRiPHC v2.0 7-dimension results,
+                    quantitative hazard score, and Resi-Health Grid CVI. */}
+                {FACILITY_V2_ENABLED && !adminMode && facilityId && (
+                  <ClimateResilienceEnhancements facilityId={facilityId} />
                 )}
               </div>
             )}
