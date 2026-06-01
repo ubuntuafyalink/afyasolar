@@ -125,6 +125,10 @@ const AssistantSection = dynamic(
   () => import("@/components/dashboard/facility/assistant-section").then((m) => m.AssistantSection),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const ChannelsSection = dynamic(
+  () => import("@/components/dashboard/facility/channels-section").then((m) => m.ChannelsSection),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1103,6 +1107,10 @@ export function FacilityDashboardContent({
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'assistant' && (
               <AssistantSection facilityId={facilityId} />
+            )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'channels' && (
+              <ChannelsSection facilityId={facilityId} facilityName={facility?.name ?? null} />
             )}
 
             {currentActiveSection === 'package-selection' && (
