@@ -447,3 +447,98 @@ export function getEcoPulseEpi(facilityId?: string): EcoPulseEpi {
         : "Overnight and daytime consumption track the expected curve for this tier and climate.",
   }
 }
+
+// ---------------------------------------------------------------------------
+// Group F — Climate resilience (CRiPHC v2.0, spec Part 10)
+// ---------------------------------------------------------------------------
+
+export type CrphcDimension = {
+  code: string
+  label: string
+  weight: number
+  /** 0–100 dimension score. */
+  score: number
+  /** True for the two v2 dimensions added in CRiPHC v2.0 (Workforce, WASH). */
+  isNew?: boolean
+}
+
+export type CrphcResult = {
+  dimensions: CrphcDimension[]
+  rcs: number
+  tier: string
+}
+
+/** Demo scores for the five existing CRiPHC dimensions (the two new ones are user-scored). */
+export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
+  const seed = seedFor(facilityId, "crphc-v2")
+  const defs: [string, string, number][] = [
+    ["HES", "Hazard Exposure", 0.15],
+    ["CSF", "Critical Service Fragility", 0.2],
+    ["ECPQ", "Energy Continuity & Power Quality", 0.15],
+    ["EDC", "Efficiency & Demand Control", 0.1],
+    ["RRC", "Readiness & Response", 0.1],
+  ]
+  return defs.map(([code, label, weight], i) => ({
+    code,
+    label,
+    weight,
+    score: Math.round(40 + rand(seed, i * 7) * 55),
+  }))
+}
+
+/** The two new CRiPHC v2.0 dimensions (Workforce, WASH), at default weights. */
+export const CRPHC_NEW_DIMENSIONS: { code: string; label: string; weight: number }[] = [
+  { code: "W", label: "Workforce", weight: 0.15 },
+  { code: "WW", label: "Water, Sanitation, Hygiene & Waste", weight: 0.15 },
+]
+
+/** Compose the 7-dimension RCS and tier from base scores + the user's new-dimension scores. */
+export function computeCrphcResult(dimensions: CrphcDimension[]): CrphcResult {
+  const rcs = Math.round(dimensions.reduce((s, d) => s + d.score * d.weight, 0))
+  const tier =
+    rcs >= 75 ? "Resilient" : rcs >= 55 ? "Developing" : rcs >= 35 ? "At risk" : "Critical"
+  return { dimensions, rcs, tier }
+}
+
+export type HazardScore = {
+  type: string
+  score: number
+  trend: "rising" | "stable" | "falling"
+  note: string
+}
+
+/** Quantitative hazard exposure scores (spec 10.3, NASA POWER / ERA5 derived). */
+export function getHazardScores(facilityId?: string): HazardScore[] {
+  const seed = seedFor(facilityId, "hazard-scores")
+  const types: [string, string][] = [
+    ["Heat", "40-year maximum-temperature trend"],
+    ["Flood", "Extreme-precipitation return period"],
+    ["Wind / storm", "Wind-speed maxima"],
+    ["Drought", "Consecutive-dry-day frequency"],
+  ]
+  return types.map(([type, note], i) => {
+    const score = Math.round(25 + rand(seed, i * 5) * 65)
+    const r = rand(seed, i * 9)
+    const trend: HazardScore["trend"] = r > 0.6 ? "rising" : r > 0.3 ? "stable" : "falling"
+    return { type, score, trend, note }
+  })
+}
+
+export type CviByHazard = { flood: number; drought: number; heat: number; storm: number }
+export type ResiHealthCvi = { composite: number; byHazard: CviByHazard }
+
+/** Resi-Health Grid Climate Vulnerability Index, 0–100, by hazard and year (spec 10.5). */
+export function getResiHealthCvi(facilityId?: string, year: 2030 | 2050 = 2030): ResiHealthCvi {
+  const seed = seedFor(facilityId, "cvi")
+  const bump = year === 2050 ? 12 : 0
+  const byHazard: CviByHazard = {
+    flood: Math.min(100, Math.round(30 + rand(seed, 1) * 45 + bump)),
+    drought: Math.min(100, Math.round(25 + rand(seed, 2) * 45 + bump)),
+    heat: Math.min(100, Math.round(35 + rand(seed, 3) * 45 + bump)),
+    storm: Math.min(100, Math.round(20 + rand(seed, 4) * 45 + bump)),
+  }
+  const composite = Math.round(
+    (byHazard.flood + byHazard.drought + byHazard.heat + byHazard.storm) / 4,
+  )
+  return { composite, byHazard }
+}
