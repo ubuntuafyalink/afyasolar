@@ -121,6 +121,10 @@ const AlertsPanel = dynamic(
   () => import("@/components/dashboard/facility/alerts-panel").then((m) => m.AlertsPanel),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const AssistantSection = dynamic(
+  () => import("@/components/dashboard/facility/assistant-section").then((m) => m.AssistantSection),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1095,6 +1099,10 @@ export function FacilityDashboardContent({
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'reports' && (
               <ReportsSection facilityId={facilityId} />
+            )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'assistant' && (
+              <AssistantSection facilityId={facilityId} />
             )}
 
             {currentActiveSection === 'package-selection' && (
