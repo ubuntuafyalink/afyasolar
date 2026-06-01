@@ -113,6 +113,10 @@ const ClimateResilienceEnhancements = dynamic(
     ),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const FinancingEnhancements = dynamic(
+  () => import("@/components/dashboard/facility/financing-enhancements").then((m) => m.FinancingEnhancements),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1465,6 +1469,12 @@ export function FacilityDashboardContent({
                     <PaygFinancingSection facilityId={facilityId} />
                   </TabsContent>
                 </Tabs>
+
+                {/* Additive (CEO spec Part 13): EaaS contract, Smart-Splitter,
+                    NHIF escrow. Mounted below existing bills/payment content. */}
+                {FACILITY_V2_ENABLED && !adminMode && facilityId && (
+                  <FinancingEnhancements facilityId={facilityId} />
+                )}
               </div>
             )}
 

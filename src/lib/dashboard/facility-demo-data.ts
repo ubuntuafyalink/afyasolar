@@ -542,3 +542,130 @@ export function getResiHealthCvi(facilityId?: string, year: 2030 | 2050 = 2030):
   )
   return { composite, byHazard }
 }
+
+// ---------------------------------------------------------------------------
+// Group H — Financing & payments (spec Part 13)
+// ---------------------------------------------------------------------------
+
+export type EaasContract = {
+  systemCapexTsh: number
+  installCostTsh: number
+  financedTsh: number
+  monthlyFeeTsh: number
+  currentSpendTsh: number
+  monthlySavingTsh: number
+  total7yrTsh: number
+  breakEvenMonths: number
+  termMonths: number
+  assetTransferYear: number
+}
+
+/** Energy-as-a-Service contract figures (spec 13.2–13.4). */
+export function getEaasContract(facilityId?: string): EaasContract {
+  const seed = seedFor(facilityId, "eaas")
+  const systemCapexTsh = Math.round((30_000_000 + rand(seed, 1) * 15_000_000) / 100_000) * 100_000
+  const installCostTsh = Math.round((systemCapexTsh * 0.2) / 1000) * 1000
+  const financedTsh = systemCapexTsh - installCostTsh
+  const termMonths = 84
+  const monthlyFeeTsh = Math.round(((financedTsh * 1.25) / termMonths) / 1000) * 1000
+  const currentSpendTsh = Math.round((monthlyFeeTsh * (1.3 + rand(seed, 2) * 0.3)) / 1000) * 1000
+  const monthlySavingTsh = currentSpendTsh - monthlyFeeTsh
+  const total7yrTsh = monthlyFeeTsh * termMonths
+  const breakEvenMonths = Math.max(1, Math.round(installCostTsh / Math.max(monthlySavingTsh, 1)))
+  return {
+    systemCapexTsh,
+    installCostTsh,
+    financedTsh,
+    monthlyFeeTsh,
+    currentSpendTsh,
+    monthlySavingTsh,
+    total7yrTsh,
+    breakEvenMonths,
+    termMonths,
+    assetTransferYear: new Date().getFullYear() + 7,
+  }
+}
+
+export type SmartSplitterDay = { date: string; revenueTsh: number; paymentTsh: number }
+export type SmartSplitter = {
+  alphaPct: number
+  monthlyCapTsh: number
+  cumulativePaidTsh: number
+  todayRevenueTsh: number
+  todayPaymentTsh: number
+  recentDays: SmartSplitterDay[]
+}
+
+/** Revenue-Linked Smart-Splitter Gateway state (spec 13.5). */
+export function getSmartSplitter(facilityId?: string): SmartSplitter {
+  const seed = seedFor(facilityId, "smart-splitter")
+  const alphaPct = 3 + Math.round(rand(seed, 1) * 2) // 3–5%
+  const monthlyCapTsh = getEaasContract(facilityId).monthlyFeeTsh
+  const recentDays: SmartSplitterDay[] = []
+  let cumulative = 0
+  for (let i = 9; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86_400_000)
+    const revenueTsh = Math.round((80_000 + rand(seed, i * 7) * 220_000) / 1000) * 1000
+    const remaining = Math.max(0, monthlyCapTsh - cumulative)
+    const paymentTsh = Math.min(Math.round((revenueTsh * alphaPct) / 100 / 1000) * 1000, remaining)
+    cumulative += paymentTsh
+    recentDays.push({
+      date: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
+      revenueTsh,
+      paymentTsh,
+    })
+  }
+  const today = recentDays[recentDays.length - 1]
+  return {
+    alphaPct,
+    monthlyCapTsh,
+    cumulativePaidTsh: cumulative,
+    todayRevenueTsh: today.revenueTsh,
+    todayPaymentTsh: today.paymentTsh,
+    recentDays,
+  }
+}
+
+export type EscrowInflow = { date: string; amountTsh: number; source: string }
+export type NhifEscrow = {
+  assignedPct: number
+  monthlyFeeTsh: number
+  escrowBalanceTsh: number
+  retainedThisMonthTsh: number
+  forwardedToClinicTsh: number
+  status: "on-track" | "awaiting-payout" | "shortfall"
+  inflows: EscrowInflow[]
+}
+
+/** NHIF Receivables Escrow status (spec 13.6). */
+export function getNhifEscrow(facilityId?: string): NhifEscrow {
+  const seed = seedFor(facilityId, "nhif-escrow")
+  const monthlyFeeTsh = getEaasContract(facilityId).monthlyFeeTsh
+  const assignedPct = 15 + Math.round(rand(seed, 1) * 10) // 15–25%
+  const inflows: EscrowInflow[] = []
+  let retained = 0
+  let forwarded = 0
+  for (let i = 0; i < 3; i++) {
+    const d = new Date(Date.now() - (i * 26 + 4) * 86_400_000)
+    const amountTsh = Math.round((600_000 + rand(seed, i * 5) * 900_000) / 1000) * 1000
+    inflows.push({
+      date: `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`,
+      amountTsh,
+      source: "NHIF claim payout",
+    })
+    const take = Math.min(amountTsh, Math.max(0, monthlyFeeTsh - retained))
+    retained += take
+    forwarded += amountTsh - take
+  }
+  const status: NhifEscrow["status"] =
+    retained >= monthlyFeeTsh ? "on-track" : retained > 0 ? "awaiting-payout" : "shortfall"
+  return {
+    assignedPct,
+    monthlyFeeTsh,
+    escrowBalanceTsh: retained,
+    retainedThisMonthTsh: retained,
+    forwardedToClinicTsh: forwarded,
+    status,
+    inflows,
+  }
+}
