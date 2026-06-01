@@ -102,6 +102,10 @@ const ReportsSection = dynamic(
   () => import("@/components/dashboard/facility/reports-section").then((m) => m.ReportsSection),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const AuditEnhancements = dynamic(
+  () => import("@/components/dashboard/facility/audit-enhancements").then((m) => m.AuditEnhancements),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 
 interface FacilityDashboardContentProps {
   facility?: Facility | null
@@ -1334,6 +1338,12 @@ export function FacilityDashboardContent({
                         />
                       </CardContent>
                     </Card>
+
+                    {/* Additive (CEO spec Part 7 & 9.6): MVA audit, three-output
+                        report, bill OCR, Eco-Pulse. Mounted below existing content. */}
+                    {FACILITY_V2_ENABLED && facilityId && (
+                      <AuditEnhancements facilityId={facilityId} />
+                    )}
                   </>
                 )}
               </div>

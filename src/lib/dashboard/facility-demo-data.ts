@@ -353,3 +353,97 @@ export function get7daySolarForecast(facilityId?: string): SolarDayForecast[] {
   }
   return out
 }
+
+// ---------------------------------------------------------------------------
+// Group E — Energy efficiency & audit (spec Part 7)
+// ---------------------------------------------------------------------------
+
+export type AuditWasteItem = { label: string; monthlyTsh: number }
+
+export type AuditOutputs = {
+  // Output 1 — waste eliminated
+  totalMonthlySpendTsh: number
+  spendBySource: { source: string; monthlyTsh: number }[]
+  wasteItems: AuditWasteItem[]
+  wasteTotalTsh: number
+  // Output 2 — monthly cash saved
+  currentMonthlySpendTsh: number
+  eaasFeeTsh: number
+  monthlySavingTsh: number
+  cumulative7yrSavingTsh: number
+  // Output 3 — cost per service-hour
+  costPerServiceHourBeforeTsh: number
+  costPerServiceHourAfterTsh: number
+}
+
+/** The three-output audit report figures (spec 7.2). */
+export function getAuditOutputs(facilityId?: string): AuditOutputs {
+  const seed = seedFor(facilityId, "audit-outputs")
+  const grid = Math.round((400_000 + rand(seed, 1) * 500_000) / 1000) * 1000
+  const diesel = Math.round((250_000 + rand(seed, 2) * 400_000) / 1000) * 1000
+  const other = Math.round((40_000 + rand(seed, 3) * 60_000) / 1000) * 1000
+  const totalMonthlySpendTsh = grid + diesel + other
+
+  const wasteItems: AuditWasteItem[] = [
+    { label: "Inefficient refrigerators", monthlyTsh: Math.round((60_000 + rand(seed, 4) * 90_000) / 1000) * 1000 },
+    { label: "After-hours phantom loads", monthlyTsh: Math.round((25_000 + rand(seed, 5) * 45_000) / 1000) * 1000 },
+    { label: "Generator over-runtime", monthlyTsh: Math.round((40_000 + rand(seed, 6) * 80_000) / 1000) * 1000 },
+    { label: "Vaccine spoilage", monthlyTsh: Math.round((15_000 + rand(seed, 7) * 50_000) / 1000) * 1000 },
+  ]
+  const wasteTotalTsh = wasteItems.reduce((s, w) => s + w.monthlyTsh, 0)
+
+  const eaasFeeTsh = Math.round((totalMonthlySpendTsh * (0.62 + rand(seed, 8) * 0.12)) / 1000) * 1000
+  const monthlySavingTsh = totalMonthlySpendTsh - eaasFeeTsh
+  const cumulative7yrSavingTsh = monthlySavingTsh * 84
+
+  const criticalHours = 24
+  const costPerServiceHourBeforeTsh = Math.round(totalMonthlySpendTsh / 30 / criticalHours / 100) * 100
+  const costPerServiceHourAfterTsh = Math.round(eaasFeeTsh / 30 / criticalHours / 100) * 100
+
+  return {
+    totalMonthlySpendTsh,
+    spendBySource: [
+      { source: "Grid (TANESCO)", monthlyTsh: grid },
+      { source: "Diesel", monthlyTsh: diesel },
+      { source: "Other (kerosene, batteries)", monthlyTsh: other },
+    ],
+    wasteItems,
+    wasteTotalTsh,
+    currentMonthlySpendTsh: totalMonthlySpendTsh,
+    eaasFeeTsh,
+    monthlySavingTsh,
+    cumulative7yrSavingTsh,
+    costPerServiceHourBeforeTsh,
+    costPerServiceHourAfterTsh,
+  }
+}
+
+export type EcoPulseEpi = {
+  epi: number
+  band: "efficient" | "expected" | "inefficient" | "check-data"
+  headline: string
+  hypothesis: string
+}
+
+/** Eco-Pulse virtual Energy Performance Index (spec 9.6). */
+export function getEcoPulseEpi(facilityId?: string): EcoPulseEpi {
+  const seed = seedFor(facilityId, "eco-pulse")
+  const epi = Math.round((0.7 + rand(seed, 1) * 0.85) * 100) / 100
+  const band: EcoPulseEpi["band"] =
+    epi < 0.8 ? "check-data" : epi <= 1.1 ? "expected" : epi <= 1.3 ? "inefficient" : "inefficient"
+  const headline =
+    band === "expected"
+      ? "Energy use is in line with similar facilities."
+      : band === "check-data"
+        ? "Energy use looks unusually low — readings may be under-reported."
+        : "Energy use is higher than similar facilities."
+  return {
+    epi,
+    band,
+    headline,
+    hypothesis:
+      epi > 1.1
+        ? `This facility consumes about ${Math.round((epi - 1) * 100)}% more overnight energy than its peer baseline; the most probable cause is cooling-insulation degradation on the vaccine refrigerator or an unaccounted after-hours load.`
+        : "Overnight and daytime consumption track the expected curve for this tier and climate.",
+  }
+}
