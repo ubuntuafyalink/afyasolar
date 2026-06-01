@@ -6,6 +6,8 @@ import { PowerFlowSankey } from "./power-flow-sankey"
 import { Power24hArea } from "./power-24h-area"
 import { PowerForecast12h } from "./power-forecast-12h"
 import { SolarForecast7d } from "./solar-forecast-7d"
+import { PowerLiveReadout } from "./power-live-readout"
+import { useT } from "./facility-preferences-provider"
 
 /**
  * Spec 8.2 "Umeme detail" → the Power section. Current source, power-flow
@@ -20,14 +22,15 @@ export function PowerSection({
   facilityId?: string
   batteryLevel?: number
 }) {
+  const t = useT()
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Power</h2>
-        <p className="text-sm text-muted-foreground">
-          Where your power is coming from now and what to expect today.
-        </p>
+        <h2 className="text-xl font-semibold text-foreground">{t("power.title")}</h2>
+        <p className="text-sm text-muted-foreground">{t("power.subtitle")}</p>
       </div>
+
+      <PowerLiveReadout facilityId={facilityId} batteryLevel={batteryLevel} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <PowerSourceIndicator facilityId={facilityId} batteryLevel={batteryLevel} />

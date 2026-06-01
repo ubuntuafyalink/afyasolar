@@ -7,8 +7,8 @@ import { formatCurrency } from "@/lib/utils"
 import { getEaasContract } from "@/lib/dashboard/facility-demo-data"
 
 /**
- * Spec 13.2–13.4: the Energy-as-a-Service contract as the facility manager sees
- * it — this system, this installation cost, this monthly fee, this monthly
+ * Spec 13.213.4: the Energy-as-a-Service contract as the facility manager sees
+ * it this system, this installation cost, this monthly fee, this monthly
  * saving versus current spend, this break-even, this asset-transfer date. She
  * sees the result, not the calculation.
  */

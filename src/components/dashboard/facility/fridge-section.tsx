@@ -10,6 +10,8 @@ import { FridgeTempChart } from "./fridge-temp-chart"
 import { FridgeEventsList } from "./fridge-events-list"
 import { FridgeReadingCapture } from "./fridge-reading-capture"
 import { FridgeTroubleshoot } from "./fridge-troubleshoot"
+import { FridgeLiveReadout } from "./fridge-live-readout"
+import { useT } from "./facility-preferences-provider"
 
 /**
  * Spec 8.2 "Friji detail" → the Fridge section. Composes the predictive alert,
@@ -17,15 +19,14 @@ import { FridgeTroubleshoot } from "./fridge-troubleshoot"
  * dialog, and the guided troubleshooting flow. Desktop-first.
  */
 export function FridgeSection({ facilityId }: { facilityId?: string }) {
+  const t = useT()
   return (
     <LazyMotionProvider>
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Fridge</h2>
-            <p className="text-sm text-muted-foreground">
-              Cold-chain status and history for your vaccine fridge.
-            </p>
+            <h2 className="text-xl font-semibold text-foreground">{t("fridge.title")}</h2>
+            <p className="text-sm text-muted-foreground">{t("fridge.subtitle")}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <FridgeReadingCapture
@@ -41,6 +42,8 @@ export function FridgeSection({ facilityId }: { facilityId?: string }) {
             />
           </div>
         </div>
+
+        <FridgeLiveReadout facilityId={facilityId} />
 
         <FridgePredictionAlert facilityId={facilityId} />
 

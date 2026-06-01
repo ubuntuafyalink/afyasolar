@@ -5,7 +5,7 @@ import type { ReactNode } from "react"
 
 /**
  * Wraps the new facility sections with framer-motion's LazyMotion (DOM feature
- * bundle only — keeps the client payload small for low-end rural devices) and a
+ * bundle only keeps the client payload small for low-end rural devices) and a
  * MotionConfig that honours the user's reduced-motion preference globally.
  *
  * Inside this provider, use the lightweight `m` components (e.g. `m.div`) from

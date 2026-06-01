@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 /**
  * Presentational zero-data placeholder. The optional action is supplied by the
- * caller via children (e.g. a <Button>) — this component triggers nothing.
+ * caller via children (e.g. a <Button>) this component triggers nothing.
  */
 export interface EmptyStateProps
   extends Omit<React.ComponentProps<'div'>, 'title'> {

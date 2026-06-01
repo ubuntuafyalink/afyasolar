@@ -4,7 +4,7 @@ import { CopilotChat } from "./copilot-chat"
 import { WhatIfSimulator } from "./what-if-simulator"
 
 /**
- * Spec 11.3 (J47–J48) → the Assistant section. A GenAI co-pilot chat and a
+ * Spec 11.3 (J47J48) → the Assistant section. A GenAI co-pilot chat and a
  * what-if simulator. New flag-gated facility section; all [data] (demo).
  * Desktop-first.
  */

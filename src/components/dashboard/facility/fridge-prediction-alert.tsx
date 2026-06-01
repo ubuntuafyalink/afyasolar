@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils"
 import { getColdChainPrediction } from "@/lib/dashboard/facility-demo-data"
 
 /**
- * Spec 11.3 "Predict": predictive cold-chain failure alert, 2–4 weeks ahead.
+ * Spec 11.3 "Predict": predictive cold-chain failure alert, 24 weeks ahead.
  *
- * [data] — fed by the local demo module. TODO: wire the real predictive model
+ * [data] fed by the local demo module. TODO: wire the real predictive model
  * (compressor run-time + temperature-recovery telemetry) per spec Part 11.
  */
 export function FridgePredictionAlert({ facilityId }: { facilityId?: string }) {
@@ -46,7 +46,7 @@ export function FridgePredictionAlert({ facilityId }: { facilityId?: string }) {
           <p className="mt-1 text-sm text-muted-foreground">{p.signal}</p>
           {p.atRisk ? (
             <p className="mt-2 text-sm font-medium text-foreground">
-              Likely window: {p.etaDaysMin}–{p.etaDaysMax} days · {p.confidencePct}% confidence.
+              Likely window: {p.etaDaysMin}{p.etaDaysMax} days · {p.confidencePct}% confidence.
               Schedule a preventive check and prepare a backup cold box.
             </p>
           ) : null}

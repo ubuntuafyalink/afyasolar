@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import {
   AlertTriangle,
   CheckCircle,
@@ -11,6 +11,7 @@ import {
   FileText,
   Receipt,
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -20,6 +21,11 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { formatCurrency, cn } from "@/lib/utils"
+import {
+  RecordDetailDialog,
+  type RecordDetail,
+} from "@/components/dashboard/facility/record-detail-dialog"
+import { downloadRecordPdf } from "@/lib/dashboard/receipt-pdf"
 
 const DEFAULT_PANEL_CARD_CLASS = "shadow-sm border-border bg-card"
 const DEFAULT_SECTION_TITLE_CLASS = "text-base font-semibold text-foreground"
@@ -67,6 +73,60 @@ export function BillsSubscriptionView({
   const safeBills = bills ?? []
   const safeServiceAccessPayments = serviceAccessPayments ?? []
   const safeInvoiceRequests = invoiceRequests ?? []
+
+  const [detail, setDetail] = useState<RecordDetail | null>(null)
+  const [showAllBills, setShowAllBills] = useState(false)
+  const [showAllTx, setShowAllTx] = useState(false)
+
+  const billDetail = (bill: any): RecordDetail => ({
+    title: `Bill ${bill.id}`,
+    filename: `bill-${bill.id}`,
+    rows: [
+      {
+        label: "Period",
+        value: `${new Date(bill.periodStart).toLocaleDateString()} ${new Date(bill.periodEnd).toLocaleDateString()}`,
+      },
+      { label: "Consumption", value: `${bill.totalConsumption} kWh` },
+      { label: "Total", value: formatCurrency(bill.totalCost) },
+      { label: "Status", value: String(bill.status) },
+      { label: "Due date", value: new Date(bill.dueDate).toLocaleDateString() },
+      { label: "Bill ID", value: String(bill.id) },
+    ],
+  })
+
+  const paymentDetail = (payment: any): RecordDetail => ({
+    title: `Payment ${payment.transactionId || payment.id}`,
+    filename: `payment-${payment.transactionId || payment.id}`,
+    rows: [
+      { label: "Amount", value: formatCurrency(payment.amount ?? 0) },
+      { label: "Method", value: String(payment.paymentMethod || "") },
+      { label: "Status", value: String(payment.status || "") },
+      { label: "Transaction ID", value: String(payment.transactionId || "N/A") },
+      {
+        label: "Date",
+        value: payment.createdAt ? new Date(payment.createdAt).toLocaleString() : "",
+      },
+    ],
+  })
+
+  const invoiceDetail = (invoice: any): RecordDetail => ({
+    title: `Invoice ${invoice.id}`,
+    filename: `invoice-${invoice.id}`,
+    rows: [
+      { label: "Amount", value: formatCurrency(invoice.amount) },
+      { label: "Package", value: String(invoice.packageName || "") },
+      { label: "Plan", value: String(invoice.paymentPlan || "") },
+      { label: "Status", value: String(invoice.status) },
+      { label: "Date", value: new Date(invoice.createdAt).toLocaleDateString() },
+      { label: "Request ID", value: String(invoice.id) },
+    ],
+  })
+
+  const runDownload = (record: RecordDetail) => {
+    downloadRecordPdf(record.title, record.rows, record.filename)
+      .then(() => toast.success("Downloaded"))
+      .catch(() => toast.error("Download failed"))
+  }
 
   const completedServiceAccessPayments = useMemo(
     () =>
@@ -531,7 +591,7 @@ export function BillsSubscriptionView({
           {/* Bills list */}
           {safeBills.length > 0 && (
             <div className="space-y-4">
-              {safeBills.slice(0, 5).map((bill: any) => (
+              {(showAllBills ? safeBills : safeBills.slice(0, 5)).map((bill: any) => (
                 <div
                   key={bill.id}
                   className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
@@ -601,12 +661,12 @@ export function BillsSubscriptionView({
                   </div>
                   <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => setDetail(billDetail(bill))}>
                         <FileText className="w-4 h-4 mr-2" aria-hidden />
                         View Details
                       </Button>
                       {bill.status !== "paid" ? renderPayButton(`pay-${bill.id}`) : null}
-                      <Button size="sm" variant="outline" disabled>
+                      <Button size="sm" variant="outline" onClick={() => runDownload(billDetail(bill))}>
                         <Download className="w-4 h-4 mr-2" aria-hidden />
                         Download
                       </Button>
@@ -619,8 +679,8 @@ export function BillsSubscriptionView({
               ))}
               {safeBills.length > 5 && (
                 <div className="text-center">
-                  <Button variant="outline" size="sm">
-                    View All Bills ({safeBills.length - 5} more)
+                  <Button variant="outline" size="sm" onClick={() => setShowAllBills((v) => !v)}>
+                    {showAllBills ? "Show less" : `View All Bills (${safeBills.length - 5} more)`}
                   </Button>
                 </div>
               )}
@@ -654,9 +714,10 @@ export function BillsSubscriptionView({
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {completedServiceAccessPayments
-                      .slice(0, 5)
-                      .map((payment: any) => (
+                    {(showAllTx
+                      ? completedServiceAccessPayments
+                      : completedServiceAccessPayments.slice(0, 5)
+                    ).map((payment: any) => (
                         <div
                           key={payment.id}
                           className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
@@ -721,11 +782,19 @@ export function BillsSubscriptionView({
                               Transaction ID: {payment.transactionId || "N/A"}
                             </div>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline" disabled>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setDetail(paymentDetail(payment))}
+                              >
                                 <Receipt className="w-4 h-4 mr-2" aria-hidden />
                                 Receipt
                               </Button>
-                              <Button size="sm" variant="outline" disabled>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => runDownload(paymentDetail(payment))}
+                              >
                                 <Download className="w-4 h-4 mr-2" aria-hidden />
                                 Download
                               </Button>
@@ -750,9 +819,10 @@ export function BillsSubscriptionView({
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {pendingServiceAccessPayments
-                      .slice(0, 5)
-                      .map((payment: any) => (
+                    {(showAllTx
+                      ? pendingServiceAccessPayments
+                      : pendingServiceAccessPayments.slice(0, 5)
+                    ).map((payment: any) => (
                         <div
                           key={payment.id}
                           className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
@@ -826,7 +896,7 @@ export function BillsSubscriptionView({
                     </span>
                   </div>
                   <div className="space-y-3">
-                    {safeInvoiceRequests.slice(0, 5).map((invoice: any) => (
+                    {(showAllTx ? safeInvoiceRequests : safeInvoiceRequests.slice(0, 5)).map((invoice: any) => (
                       <div
                         key={invoice.id}
                         className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
@@ -886,11 +956,19 @@ export function BillsSubscriptionView({
                                 Awaiting invoice processing
                               </Button>
                             )}
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setDetail(invoiceDetail(invoice))}
+                            >
                               <FileText className="w-4 h-4 mr-2" aria-hidden />
                               View Details
                             </Button>
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => runDownload(invoiceDetail(invoice))}
+                            >
                               <Download className="w-4 h-4 mr-2" aria-hidden />
                               Download
                             </Button>
@@ -905,17 +983,14 @@ export function BillsSubscriptionView({
               {(safeServiceAccessPayments.length > 5 ||
                 safeInvoiceRequests.length > 5) && (
                 <div className="text-center pt-4">
-                  <Button variant="outline" size="sm">
-                    View All Transactions
-                    {safeServiceAccessPayments.length +
-                      safeInvoiceRequests.length >
-                    5
-                      ? ` (${
-                          safeServiceAccessPayments.length +
-                          safeInvoiceRequests.length -
-                          5
-                        } more)`
-                      : ""}
+                  <Button variant="outline" size="sm" onClick={() => setShowAllTx((v) => !v)}>
+                    {showAllTx
+                      ? "Show less"
+                      : `View All Transactions${
+                          safeServiceAccessPayments.length + safeInvoiceRequests.length > 5
+                            ? ` (${safeServiceAccessPayments.length + safeInvoiceRequests.length - 5} more)`
+                            : ""
+                        }`}
                   </Button>
                 </div>
               )}
@@ -982,6 +1057,8 @@ export function BillsSubscriptionView({
           )}
         </CardContent>
       </Card>
+
+      <RecordDetailDialog detail={detail} onOpenChange={(open) => !open && setDetail(null)} />
     </div>
   )
 }

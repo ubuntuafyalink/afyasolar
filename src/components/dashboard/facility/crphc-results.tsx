@@ -28,10 +28,10 @@ function barColor(score: number): string {
 }
 
 /**
- * Spec 10.2 / 10.4: the CRiPHC v2.0 results — the composite Resilience Capacity
+ * Spec 10.2 / 10.4: the CRiPHC v2.0 results the composite Resilience Capacity
  * Score across SEVEN dimensions (the existing five plus the new Workforce and
  * WASH dimensions), the resilience tier, and the top risks. The two new
- * dimensions are scored here on a 5-point scale (additive — the existing
+ * dimensions are scored here on a 5-point scale (additive the existing
  * assessment is left untouched); the other five use saved demo scores.
  */
 export function CrphcResults({ facilityId }: { facilityId?: string }) {
@@ -60,7 +60,7 @@ export function CrphcResults({ facilityId }: { facilityId?: string }) {
         {/* RCS headline */}
         <div className="flex flex-wrap items-center gap-4 rounded-lg border border-border p-4">
           <div>
-            <p className="text-xs text-muted-foreground">RCS (0–100)</p>
+            <p className="text-xs text-muted-foreground">RCS (0100)</p>
             <p className="text-4xl font-black tracking-tight text-foreground">{rcs}</p>
           </div>
           <Badge className={cn("text-sm", TIER_STYLE[tier])} variant="secondary">

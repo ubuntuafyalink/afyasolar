@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 
 /**
- * Presentational KPI / stat block. Callers pass already-computed values — this
+ * Presentational KPI / stat block. Callers pass already-computed values this
  * component fetches nothing and owns no logic. The optional left accent and the
  * icon chip share a semantic color token.
  */
@@ -40,6 +40,20 @@ const iconChip = cva(
   },
 )
 
+const progressFill = cva('h-full rounded-full transition-all', {
+  variants: {
+    accent: {
+      primary: 'bg-primary',
+      success: 'bg-success',
+      warning: 'bg-warning',
+      solar: 'bg-solar',
+      destructive: 'bg-destructive',
+      muted: 'bg-muted-foreground/40',
+    },
+  },
+  defaultVariants: { accent: 'primary' },
+})
+
 type StatCardAccent = NonNullable<VariantProps<typeof accentBar>['accent']>
 
 export interface StatCardProps
@@ -53,6 +67,10 @@ export interface StatCardProps
   accent?: StatCardAccent
   /** Render the left accent bar. Defaults to true. */
   showAccent?: boolean
+  /** Optional 0100 progress bar rendered full-width under the content. */
+  progress?: number
+  /** Accessible label for the progress bar (falls back to the title when a string). */
+  progressLabel?: string
 }
 
 function StatCard({
@@ -62,9 +80,13 @@ function StatCard({
   meta,
   accent = 'primary',
   showAccent = true,
+  progress,
+  progressLabel,
   className,
   ...props
 }: StatCardProps) {
+  const hasProgress = typeof progress === 'number'
+  const clamped = hasProgress ? Math.min(Math.max(progress as number, 0), 100) : 0
   return (
     <Card
       data-slot="stat-card"
@@ -75,18 +97,30 @@ function StatCard({
       {...props}
     >
       {showAccent ? <span aria-hidden className={accentBar({ accent })} /> : null}
-      <CardContent className="flex items-start justify-between gap-3 p-5">
-        <div className="min-w-0 space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
-          {meta ? (
-            <div className="text-xs text-muted-foreground">{meta}</div>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
+            {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
+          </div>
+          {icon ? (
+            <span aria-hidden className={iconChip({ accent })}>
+              {icon}
+            </span>
           ) : null}
         </div>
-        {icon ? (
-          <span aria-hidden className={iconChip({ accent })}>
-            {icon}
-          </span>
+        {hasProgress ? (
+          <div
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuenow={Math.round(clamped)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={progressLabel ?? (typeof title === 'string' ? title : undefined)}
+          >
+            <div className={progressFill({ accent })} style={{ width: `${clamped}%` }} />
+          </div>
         ) : null}
       </CardContent>
     </Card>

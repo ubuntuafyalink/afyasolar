@@ -27,7 +27,7 @@ const SCENARIOS: { value: WhatIfScenario; label: string }[] = [
  * Spec 11.3 "Simulate": a what-if simulator. Pick a scenario and see the
  * estimated effect on service hours, monthly cost and resilience.
  *
- * [data] — fed by the local demo module. TODO: wire the real simulation engine.
+ * [data] fed by the local demo module. TODO: wire the real simulation engine.
  */
 export function WhatIfSimulator({ facilityId }: { facilityId?: string }) {
   const [scenario, setScenario] = useState<WhatIfScenario>("add-battery")

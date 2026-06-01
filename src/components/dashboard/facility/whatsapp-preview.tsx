@@ -10,10 +10,10 @@ import { answerCopilot, getDailyPushPreview } from "@/lib/dashboard/facility-dem
 type Bubble = { from: "platform" | "user"; text: string }
 
 /**
- * Spec 8.2 / 15.2: a read-only preview of the WhatsApp conversational surface —
+ * Spec 8.2 / 15.2: a read-only preview of the WhatsApp conversational surface 
  * the daily push followed by a sample question and answer.
  *
- * [data] — composed from the demo module. TODO: wire the real WhatsApp Cloud API
+ * [data] composed from the demo module. TODO: wire the real WhatsApp Cloud API
  * + conversational state machine per spec Part 15. Nothing is sent from here.
  */
 export function WhatsappPreview({

@@ -7,7 +7,7 @@ import { formatCurrency } from "@/lib/utils"
 import { getAuditOutputs } from "@/lib/dashboard/facility-demo-data"
 
 /**
- * Spec 7.2: the three-output audit report — Waste eliminated, Monthly cash
+ * Spec 7.2: the three-output audit report Waste eliminated, Monthly cash
  * saved, Cost per service-hour reduced. Each output is anchored to a specific
  * decision the facility manager needs to make.
  */
@@ -16,7 +16,7 @@ export function AuditThreeOutputs({ facilityId }: { facilityId?: string }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      {/* Output 1 — Waste eliminated */}
+      {/* Output 1 Waste eliminated */}
       <Card className="border-l-4 border-l-warning">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -52,7 +52,7 @@ export function AuditThreeOutputs({ facilityId }: { facilityId?: string }) {
         </CardContent>
       </Card>
 
-      {/* Output 2 — Monthly cash saved */}
+      {/* Output 2 Monthly cash saved */}
       <Card className="border-l-4 border-l-success">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -82,7 +82,7 @@ export function AuditThreeOutputs({ facilityId }: { facilityId?: string }) {
         </CardContent>
       </Card>
 
-      {/* Output 3 — Cost per service-hour */}
+      {/* Output 3 Cost per service-hour */}
       <Card className="border-l-4 border-l-primary">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">

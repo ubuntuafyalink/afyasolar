@@ -174,7 +174,7 @@ export function FacilityIntelligencePlatform({
     if (raw instanceof Date) d = raw
     else if (typeof raw === "string") d = new Date(raw)
     else d = new Date()
-    const label = Number.isFinite(d.getTime()) ? d.toLocaleDateString(undefined, { dateStyle: "medium" }) : "—"
+    const label = Number.isFinite(d.getTime()) ? d.toLocaleDateString(undefined, { dateStyle: "medium" }) : ""
     const tag =
       c.status === "draft" ? "Current (editing)" : c.status === "completed" ? "Previous (saved)" : c.status
     const assessmentNum = c.assessmentNumber ? `#${c.assessmentNumber}` : ""
@@ -689,7 +689,7 @@ export function FacilityIntelligencePlatform({
               {isClimateOnly
                 ? "Guided climate readiness (CRiPHC-aligned), hazard context, adaptation tracking, and saved risk drivers for your facility."
                 : isEnergyOnly
-                  ? "Guided devices & loads sizing, operational efficiency (BMI), and analysis charts—without mixing in the climate questionnaire here."
+                  ? "Guided devices & loads sizing, operational efficiency (BMI), and analysis chartswithout mixing in the climate questionnaire here."
                   : "Guided assessment, analysis, and actions in one workflow. Energy, meter efficiency, and climate resilience scoring are integrated below."}
             </p>
           </div>
@@ -726,10 +726,10 @@ export function FacilityIntelligencePlatform({
                   <span className="text-emerald-900/70">
                     {" "}
                     {isClimateOnly
-                      ? "— complete the climate readiness questionnaire."
+                      ? " complete the climate readiness questionnaire."
                       : isEnergyOnly
-                        ? "— complete Devices & loads and Operational efficiency."
-                        : "— complete Devices & loads, Operational efficiency, and Climate readiness."}
+                        ? " complete Devices & loads and Operational efficiency."
+                        : " complete Devices & loads, Operational efficiency, and Climate readiness."}
                   </span>
                 )}
               </p>
@@ -759,7 +759,7 @@ export function FacilityIntelligencePlatform({
                     {assessmentDbLoading ? (
                       <span className="inline-block h-8 w-20 animate-pulse rounded bg-emerald-100" />
                     ) : (
-                      persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "—")
+                      persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")
                     )}
                   </CardTitle>
                   {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
@@ -769,7 +769,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Tier &amp; attention</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {persistedClimateScore ? `Tier ${persistedClimateScore.tier}` : "—"}
+                    {persistedClimateScore ? `Tier ${persistedClimateScore.tier}` : ""}
                   </CardTitle>
                   {persistedClimateScore?.criticalAttention && (
                     <p className="text-[11px] text-amber-800 font-medium">Critical attention</p>
@@ -800,7 +800,7 @@ export function FacilityIntelligencePlatform({
               <Card className="border-emerald-100">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Facility</CardDescription>
-                  <CardTitle className="text-lg text-emerald-900 line-clamp-2">{facilityName ?? facilityId ?? "—"}</CardTitle>
+                  <CardTitle className="text-lg text-emerald-900 line-clamp-2">{facilityName ?? facilityId ?? ""}</CardTitle>
                   <p className="text-[11px] text-muted-foreground">Cycle auto-saved to your assessment record.</p>
                 </CardHeader>
               </Card>
@@ -816,7 +816,7 @@ export function FacilityIntelligencePlatform({
                     ) : resolvedSizingSummary ? (
                       `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d`
                     ) : (
-                      "—"
+                      ""
                     )}
                   </CardTitle>
                   {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
@@ -831,7 +831,7 @@ export function FacilityIntelligencePlatform({
                     ) : resolvedSizingSummary ? (
                       `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW`
                     ) : (
-                      "—"
+                      ""
                     )}
                   </CardTitle>
                   {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
@@ -846,7 +846,7 @@ export function FacilityIntelligencePlatform({
                     ) : resolvedSizingSummary ? (
                       formatCurrency(resolvedSizingSummary.annualSavings)
                     ) : (
-                      "—"
+                      ""
                     )}
                   </CardTitle>
                   {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
@@ -861,7 +861,7 @@ export function FacilityIntelligencePlatform({
                     ) : efficiencyScore !== null ? (
                       `${efficiencyScore}%`
                     ) : (
-                      "—"
+                      ""
                     )}
                   </CardTitle>
                   {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
@@ -877,7 +877,7 @@ export function FacilityIntelligencePlatform({
                       ) : climateResilienceScore !== null ? (
                         climateResilienceScore
                       ) : (
-                        "—"
+                        ""
                       )}
                     </CardTitle>
                     <p className="text-[11px] text-muted-foreground">
@@ -934,21 +934,21 @@ export function FacilityIntelligencePlatform({
                     ? "Climate readiness snapshot"
                     : isEnergyOnly
                       ? "Energy snapshot"
-                      : "Energy–resilience snapshot"}
+                      : "Energyresilience snapshot"}
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {isClimateOnly ? (
                     <>
                       RCS{" "}
-                      {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "—")} ·
-                      Tier {persistedClimateScore ? persistedClimateScore.tier : "—"}
+                      {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")} ·
+                      Tier {persistedClimateScore ? persistedClimateScore.tier : ""}
                     </>
                   ) : isEnergyOnly ? (
-                    <>BMI {efficiencyScore !== null ? `${efficiencyScore}%` : "—"} (operational efficiency)</>
+                    <>BMI {efficiencyScore !== null ? `${efficiencyScore}%` : ""} (operational efficiency)</>
                   ) : (
                     <>
-                      BMI {efficiencyScore !== null ? `${efficiencyScore}%` : "—"} · Resilience{" "}
-                      {climateResilienceScore !== null ? climateResilienceScore : "—"}
+                      BMI {efficiencyScore !== null ? `${efficiencyScore}%` : ""} · Resilience{" "}
+                      {climateResilienceScore !== null ? climateResilienceScore : ""}
                     </>
                   )}
                 </CardDescription>
@@ -1210,7 +1210,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader>
                   <CardTitle className="text-sm">Climate resilience &amp; adaptation</CardTitle>
                   <CardDescription className="text-xs">
-                    Hazard exposure, resilience trend, and adaptation plan tracking — integrated in the same workflow.
+                    Hazard exposure, resilience trend, and adaptation plan tracking integrated in the same workflow.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1258,7 +1258,7 @@ export function FacilityIntelligencePlatform({
                         horizon: r.horizon,
                         ownerType: "facility",
                         evidenceRequired: false,
-                        explanation: `${r.issue} — ${r.whyItMatters}`,
+                        explanation: `${r.issue} ${r.whyItMatters}`,
                       })),
                     }),
                   })
@@ -1387,7 +1387,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Resilience capacity (RCS)</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "—")}
+                    {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1395,7 +1395,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Tier &amp; attention</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {persistedClimateScore ? `Tier ${persistedClimateScore.tier}` : "—"}
+                    {persistedClimateScore ? `Tier ${persistedClimateScore.tier}` : ""}
                   </CardTitle>
                   {persistedClimateScore?.criticalAttention && (
                     <p className="text-[11px] text-amber-800 font-medium">Critical attention</p>
@@ -1412,7 +1412,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Operational BMI (if captured)</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {efficiencyScore !== null ? `${efficiencyScore}%` : "—"}
+                    {efficiencyScore !== null ? `${efficiencyScore}%` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1423,7 +1423,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Total daily energy</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {resolvedSizingSummary ? `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d` : "—"}
+                    {resolvedSizingSummary ? `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1431,7 +1431,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Indicative solar</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {resolvedSizingSummary ? `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW` : "—"}
+                    {resolvedSizingSummary ? `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1439,7 +1439,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Annual savings</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {resolvedSizingSummary ? formatCurrency(resolvedSizingSummary.annualSavings) : "—"}
+                    {resolvedSizingSummary ? formatCurrency(resolvedSizingSummary.annualSavings) : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1447,7 +1447,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Efficiency score (BMI)</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {efficiencyScore !== null ? `${efficiencyScore}%` : "—"}
+                    {efficiencyScore !== null ? `${efficiencyScore}%` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1458,7 +1458,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Total daily energy</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {resolvedSizingSummary ? `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d` : "—"}
+                    {resolvedSizingSummary ? `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1466,7 +1466,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Indicative solar</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {resolvedSizingSummary ? `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW` : "—"}
+                    {resolvedSizingSummary ? `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1474,7 +1474,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Annual savings</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {resolvedSizingSummary ? formatCurrency(resolvedSizingSummary.annualSavings) : "—"}
+                    {resolvedSizingSummary ? formatCurrency(resolvedSizingSummary.annualSavings) : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1482,7 +1482,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Resilience status</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "—")}
+                    {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")}
                   </CardTitle>
                   {persistedClimateScore && (
                     <p className="text-[11px] text-muted-foreground">
@@ -1496,7 +1496,7 @@ export function FacilityIntelligencePlatform({
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Efficiency score (BMI)</CardDescription>
                   <CardTitle className="text-2xl text-emerald-900">
-                    {efficiencyScore !== null ? `${efficiencyScore}%` : "—"}
+                    {efficiencyScore !== null ? `${efficiencyScore}%` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
@@ -1506,7 +1506,7 @@ export function FacilityIntelligencePlatform({
           <Card className="border-emerald-100">
             <CardHeader>
               <CardTitle className="text-base">Executive summary</CardTitle>
-              <CardDescription className="text-xs">Text snapshot — pair with charts in Analyze and PDF from design engine</CardDescription>
+              <CardDescription className="text-xs">Text snapshot pair with charts in Analyze and PDF from design engine</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-gray-700">
               {resolvedSizingSummary && (
@@ -1589,7 +1589,7 @@ export function FacilityIntelligencePlatform({
                           </Badge>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-1">
-                          Due: {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : "—"} · Rec: {t.recommendationId}
+                          Due: {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : ""} · Rec: {t.recommendationId}
                         </p>
                       </div>
                     ))
