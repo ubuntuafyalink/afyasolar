@@ -105,9 +105,9 @@ export function getPendingTasks(facilityId?: string): FacilityTask[] {
       id: "task-assessment-due",
       kind: "assessment-due",
       title: "Quarterly resilience assessment due",
-      detail: "Complete your climate-resilience review for this quarter.",
+      detail: "Review your Climate Outlook hazard trends for this quarter.",
       dueLabel: "This week",
-      target: "climate-resilience",
+      target: "climate-outlook",
     },
   ]
   const count = Math.floor(rand(seed, 4) * (all.length + 1)) // 0..3
@@ -501,8 +501,16 @@ export type CrphcResult = {
   tier: string
 }
 
+/**
+ * Optional real-data overrides for the otherwise-seeded RCS dimensions. Today
+ * only `hesScore` is supported: the Hazard Exposure capacity derived from the
+ * facility's real Climate Outlook data (see getRcsExplainer callers). When
+ * omitted, every value is seeded demo data exactly as before.
+ */
+export type RcsOverrides = { hesScore?: number }
+
 /** Demo scores for the five existing CRiPHC dimensions (the two new ones are user-scored). */
-export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
+export function getCrphcBaseDimensions(facilityId?: string, overrides?: RcsOverrides): CrphcDimension[] {
   const seed = seedFor(facilityId, "crphc-v2")
   const defs: [string, string, number][] = [
     ["HES", "Hazard Exposure", 0.15],
@@ -518,12 +526,13 @@ export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
   const bias = (rand(seed, 101) - 0.5) * 70
   return defs.map(([code, label, weight], i) => {
     const raw = 30 + rand(seed, i * 7) * 55 + bias
-    return {
-      code,
-      label,
-      weight,
-      score: Math.max(5, Math.min(98, Math.round(raw))),
-    }
+    // HES (Hazard Exposure capacity) can be driven by real climate data when
+    // provided: higher measured exposure -> lower capacity score.
+    const score =
+      code === "HES" && overrides?.hesScore != null
+        ? Math.max(0, Math.min(100, Math.round(overrides.hesScore)))
+        : Math.max(5, Math.min(98, Math.round(raw)))
+    return { code, label, weight, score }
   })
 }
 
@@ -1104,14 +1113,48 @@ function statusFromHeadroom(headroom: number): ChildServiceStatus {
 }
 
 /**
+ * Optional real-data overrides for the child-services board. `byHazard` is the
+ * facility's measured 0-100 Climate Outlook hazard index per type; when present
+ * it drives the headroom of the two climate-sensitive services (cold-chain from
+ * heat, water-pumping from drought/flood). Omitted -> fully seeded demo.
+ */
+export type ChildServicesOverrides = { byHazard?: CviByHazard }
+
+/** Plain-language climate driver shown when a climate-driven service is at risk. */
+const CLIMATE_DRIVER: Partial<Record<ChildServiceKey, Bilingual>> = {
+  "cold-chain": {
+    en: "Measured heat exposure is high in your Climate Outlook data, raising fridge cooling load and spoilage risk.",
+    sw: "Kukabiliwa na joto kulikopimwa ni kwa juu katika data yako ya Mtazamo wa Hali ya Hewa, kunaongeza mzigo wa kupoza friji na hatari ya kuharibika.",
+  },
+  "water-pumping": {
+    en: "Measured drought and flood exposure is high in your Climate Outlook data, stressing water supply.",
+    sw: "Kukabiliwa na ukame na mafuriko kulikopimwa ni kwa juu katika data yako ya Mtazamo wa Hali ya Hewa, kunaathiri upatikanaji wa maji.",
+  },
+}
+
+/** Real headroom for a climate-sensitive service = inverse of its measured hazard. */
+function climateHeadroom(key: ChildServiceKey, byHazard: CviByHazard): number | undefined {
+  if (key === "cold-chain") return Math.max(0, Math.min(100, Math.round(100 - byHazard.heat)))
+  if (key === "water-pumping")
+    return Math.max(0, Math.min(100, Math.round(100 - Math.max(byHazard.drought, byHazard.flood))))
+  return undefined
+}
+
+/**
  * Per-facility status board for the five child-critical services. Deterministic
  * from the facilityId so demos are stable. Each at-risk/failing service gets an
- * about-to-fail prediction window; protected services get none.
+ * about-to-fail prediction window; protected services get none. When `overrides.
+ * byHazard` is supplied, cold-chain and water-pumping headroom come from real
+ * Climate Outlook data instead of seeded values.
  */
-export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] {
+export function getChildServicesAtRisk(
+  facilityId?: string,
+  overrides?: ChildServicesOverrides,
+): ChildServiceRisk[] {
   const seed = seedFor(facilityId, "child-services")
   return CHILD_SERVICE_DEFS.map((def, i) => {
-    const headroomPct = Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
+    const climate = overrides?.byHazard ? climateHeadroom(def.key, overrides.byHazard) : undefined
+    const headroomPct = climate != null ? climate : Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
     const status = statusFromHeadroom(headroomPct)
     const prediction: ChildServicePrediction | null =
       status === "ok"
@@ -1127,12 +1170,17 @@ export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] 
             )
             return { etaDaysMin, etaDaysMax, confidencePct, signal: def.signal }
           })()
+    // Drivers: seeded reasons, with a real-climate driver prepended for the
+    // climate-driven services when they are not protected.
+    const baseDrivers = status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1)
+    const climateDriver = climate != null && status !== "ok" ? CLIMATE_DRIVER[def.key] : undefined
+    const drivers = climateDriver ? [climateDriver, ...baseDrivers].slice(0, 2) : baseDrivers
     return {
       key: def.key,
       status,
       headroomPct,
       dependsOn: def.dependsOn,
-      drivers: status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1),
+      drivers,
       prediction,
       linkedDimension: def.linkedDimension,
     }
@@ -1142,9 +1190,12 @@ export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] 
 export type ChildServicesSummary = { failing: number; atRisk: number; ok: number }
 
 /** Roll-up counts for the board header. */
-export function getChildServicesSummary(facilityId?: string): ChildServicesSummary {
+export function getChildServicesSummary(
+  facilityId?: string,
+  overrides?: ChildServicesOverrides,
+): ChildServicesSummary {
   const out: ChildServicesSummary = { failing: 0, atRisk: 0, ok: 0 }
-  for (const s of getChildServicesAtRisk(facilityId)) {
+  for (const s of getChildServicesAtRisk(facilityId, overrides)) {
     if (s.status === "failing") out.failing += 1
     else if (s.status === "at-risk") out.atRisk += 1
     else out.ok += 1
@@ -1270,8 +1321,8 @@ const RCS_DIMENSION_COPY: Record<
  * dimensions use the same default (60) as the interactive widget so the RCS
  * headline matches across the dashboard.
  */
-export function getRcsExplainer(facilityId?: string): RcsExplainer {
-  const base = getCrphcBaseDimensions(facilityId)
+export function getRcsExplainer(facilityId?: string, overrides?: RcsOverrides): RcsExplainer {
+  const base = getCrphcBaseDimensions(facilityId, overrides)
   const dims: CrphcDimension[] = [
     ...base,
     ...CRPHC_NEW_DIMENSIONS.map((d) => ({ ...d, score: 60, isNew: true })),
@@ -1304,9 +1355,9 @@ export type RcsTrendPoint = { label: string; rcs: number }
  * Quarterly RCS history ending at the facility's current score, trending up from
  * a lower baseline with mild seeded noise. Simulated for the RCS trend chart.
  */
-export function getRcsTrend(facilityId?: string): RcsTrendPoint[] {
+export function getRcsTrend(facilityId?: string, overrides?: RcsOverrides): RcsTrendPoint[] {
   const seed = seedFor(facilityId, "rcs-trend")
-  const current = getRcsExplainer(facilityId).rcs
+  const current = getRcsExplainer(facilityId, overrides).rcs
   const now = new Date()
   const n = 6
   const baseline = Math.max(0, current - 12)

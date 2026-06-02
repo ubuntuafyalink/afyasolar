@@ -80,5 +80,11 @@ export const env = {
   get GOOGLE_AI_API_KEY() { return getEnvVarOptional('GOOGLE_AI_API_KEY') },
   get GOOGLE_AI_MODEL_NAME() { return getEnvVarOptional('GOOGLE_AI_MODEL_NAME', 'gemini-1.5-flash') },
   get GOOGLE_AI_SYSTEM_PROMPT() { return getEnvVarOptional('GOOGLE_AI_SYSTEM_PROMPT') },
+  get GEMINI_API_KEY() { return getEnvVarOptional('GEMINI_API_KEY') ?? getEnvVarOptional('GOOGLE_AI_API_KEY') },
+  get GEMINI_MODEL() { return getEnvVarOptional('GEMINI_MODEL', 'gemini-2.0-flash') },
+  get OPENAI_API_KEY() { return getEnvVarOptional('OPENAI_API_KEY') },
+  get OPENAI_MODEL() { return getEnvVarOptional('OPENAI_MODEL', 'gpt-4o-mini') },
+  get GROQ_API_KEY() { return getEnvVarOptional('GROQ_API_KEY') },
+  get GROQ_MODEL() { return getEnvVarOptional('GROQ_MODEL', 'llama-3.1-8b-instant') },
 } as const
 

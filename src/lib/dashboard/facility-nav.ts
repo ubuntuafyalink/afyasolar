@@ -5,12 +5,10 @@ import {
   Plug,
   Zap,
   Gauge,
-  CloudSun,
   Receipt,
   Bell,
   Leaf,
   CreditCard,
-  Snowflake,
   PlugZap,
   ClipboardList,
   Bot,
@@ -29,7 +27,6 @@ export type NavSection =
   | "devices"
   | "energy"
   | "energy-efficiency"
-  | "climate-resilience"
   | "bills-payment"
   | "notifications"
   | "carbon-credits"
@@ -53,7 +50,6 @@ export const FACILITY_NAV_ITEMS: { id: NavSection; label: string; icon: LucideIc
   { id: "devices", label: "Devices", icon: Plug },
   { id: "energy", label: "Energy", icon: Zap },
   { id: "energy-efficiency", label: "Energy Efficiency", icon: Gauge },
-  { id: "climate-resilience", label: "Climate Resilience", icon: CloudSun },
   { id: "bills-payment", label: "Bills & Payment", icon: Receipt },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "carbon-credits", label: "Carbon Credits", icon: Leaf },
@@ -67,10 +63,9 @@ export const FACILITY_NAV_ITEMS: { id: NavSection; label: string; icon: LucideIc
  * but the dashboard still defaults to "overview" to preserve current behavior.
  */
 export const FACILITY_V2_NAV_ITEMS: { id: NavSection; label: string; icon: LucideIcon }[] = [
-  { id: "child-services", label: "Child Services", icon: Baby },
+  { id: "child-services", label: "Maternal & Newborn", icon: Baby },
   { id: "rcs", label: "Resilience Score", icon: BarChart3 },
   { id: "climate-outlook", label: "Climate Outlook", icon: Satellite },
-  { id: "fridge", label: "Fridge", icon: Snowflake },
   { id: "power", label: "Power", icon: PlugZap },
   { id: "reports", label: "Reports", icon: ClipboardList },
   { id: "assistant", label: "Assistant", icon: Bot },
@@ -78,7 +73,7 @@ export const FACILITY_V2_NAV_ITEMS: { id: NavSection; label: string; icon: Lucid
   { id: "help", label: "Help", icon: LifeBuoy },
 ]
 
-const ADMIN_HIDDEN_SECTIONS: NavSection[] = ["energy-efficiency", "climate-resilience"]
+const ADMIN_HIDDEN_SECTIONS: NavSection[] = ["energy-efficiency"]
 
 export function getFacilityNavItems(options: { adminMode: boolean }) {
   if (options.adminMode) {
@@ -105,8 +100,8 @@ const GROUP_ORDER: NavGroupId[] = ["home", "resilience", "energy", "updates", "b
  */
 const GROUP_MEMBERS: Record<NavGroupId, NavSection[]> = {
   home: ["overview"],
-  resilience: ["child-services", "rcs", "climate-outlook", "climate-resilience"],
-  energy: ["power", "fridge", "energy-efficiency"],
+  resilience: ["child-services", "rcs", "climate-outlook"],
+  energy: ["power", "energy-efficiency"],
   updates: ["reports", "notifications", "assistant", "channels"],
   billing: ["bills-payment", "carbon-credits", "subscription", "package-selection"],
   support: ["help"],
@@ -134,7 +129,6 @@ export function getFacilityNavGroups(options: { adminMode: boolean }): NavGroup[
 /** The five tabs of the optional mobile bottom navigation (spec 8.2). */
 export const FACILITY_BOTTOM_NAV_ITEMS: { id: NavSection; label: string; icon: LucideIcon }[] = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "fridge", label: "Fridge", icon: Snowflake },
   { id: "power", label: "Power", icon: PlugZap },
   { id: "reports", label: "Reports", icon: ClipboardList },
 ]

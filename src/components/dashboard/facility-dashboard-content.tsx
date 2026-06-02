@@ -133,10 +133,6 @@ const FacilityTour = dynamic(
   () => import("@/components/dashboard/facility/facility-tour").then((m) => m.FacilityTour),
   { ssr: false },
 )
-const FridgeSection = dynamic(
-  () => import("@/components/dashboard/facility/fridge-section").then((m) => m.FridgeSection),
-  { loading: () => <ChartSkeleton />, ssr: false },
-)
 const PowerSection = dynamic(
   () => import("@/components/dashboard/facility/power-section").then((m) => m.PowerSection),
   { loading: () => <ChartSkeleton />, ssr: false },
@@ -147,13 +143,6 @@ const ReportsSection = dynamic(
 )
 const AuditEnhancements = dynamic(
   () => import("@/components/dashboard/facility/audit-enhancements").then((m) => m.AuditEnhancements),
-  { loading: () => <ChartSkeleton />, ssr: false },
-)
-const ClimateResilienceEnhancements = dynamic(
-  () =>
-    import("@/components/dashboard/facility/climate-resilience-enhancements").then(
-      (m) => m.ClimateResilienceEnhancements,
-    ),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
 const FinancingEnhancements = dynamic(
@@ -291,7 +280,7 @@ export function FacilityDashboardContent({
   useEffect(() => {
     if (!adminMode || !onSectionChange) return
     const section = activeSection ?? internalActiveSection
-    if (section === "energy-efficiency" || section === "climate-resilience") {
+    if (section === "energy-efficiency") {
       onSectionChange("overview")
     }
   }, [adminMode, activeSection, internalActiveSection, onSectionChange])
@@ -1131,7 +1120,7 @@ export function FacilityDashboardContent({
             </>)}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'child-services' && (
-              <ChildServicesSection facilityId={facilityId} onNavigate={setCurrentSection} />
+              <ChildServicesSection facilityId={facilityId} region={facility?.region ?? null} onNavigate={setCurrentSection} />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'rcs' && (
@@ -1149,10 +1138,6 @@ export function FacilityDashboardContent({
                 facilityName={facility?.name ?? null}
                 region={facility?.region ?? null}
               />
-            )}
-
-            {FACILITY_V2_ENABLED && currentActiveSection === 'fridge' && (
-              <FridgeSection facilityId={facilityId} />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'power' && (
@@ -1438,73 +1423,6 @@ export function FacilityDashboardContent({
                       <AuditEnhancements facilityId={facilityId} />
                     )}
                   </>
-                )}
-              </div>
-            )}
-
-            {currentActiveSection === 'climate-resilience' && (
-              <div className="space-y-6">
-                {adminMode ? (
-                  <Card className={panelCardClass}>
-                    <CardHeader>
-                      <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                        <CloudSun className="w-5 h-5 text-primary" aria-hidden />
-                        Climate resilience assessments
-                      </CardTitle>
-                      <CardDescription className={metaTextClass}>
-                        Guided climate assessments are managed in AfyaLink. Use the Afya Solar admin hub for read-only
-                        portfolio snapshots across facilities.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {afyaLinkUrl ? (
-                        <Button asChild>
-                          <a href={afyaLinkUrl} target="_blank" rel="noopener noreferrer">
-                            Open AfyaLink assessments
-                          </a>
-                        </Button>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Configure <code className="text-xs bg-muted px-1 rounded">NEXT_PUBLIC_AFYALINK_ASSESSMENT_URL</code>{" "}
-                          for a direct link to your AfyaLink workspace.
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className={panelCardClass}>
-                    <CardHeader>
-                      <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                        <CloudSun className="w-5 h-5 text-primary" aria-hidden />
-                        Climate resilience
-                      </CardTitle>
-                      <CardDescription className={metaTextClass}>
-                        Guided climate readiness, hazard context, adaptation tracking, and saved risk drivers (same assessment
-                        cycle as Energy Efficiency).
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-2 sm:p-4">
-                      <FacilityIntelligencePlatform
-                        facilityId={facility?.id}
-                        facilityName={facility?.name ?? undefined}
-                        platformScope="climate"
-                        sizingSummary={sizingSummary}
-                        meuSummary={meuSummary}
-                        bmiSummary={bmiSummary}
-                        sectionScores={sectionScores}
-                        onSizingSummaryChange={setSizingSummary}
-                        onMeuSummaryChange={setMeuSummary}
-                        onBmiSummaryChange={setBmiSummary}
-                        onSectionScoresChange={setSectionScores}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Additive (CEO spec Part 10): CRiPHC v2.0 7-dimension results,
-                    quantitative hazard score, and Resi-Health Grid CVI. */}
-                {FACILITY_V2_ENABLED && !adminMode && facilityId && (
-                  <ClimateResilienceEnhancements facilityId={facilityId} />
                 )}
               </div>
             )}
