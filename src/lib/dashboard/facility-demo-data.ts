@@ -9,6 +9,7 @@
  * function here performs any network, DB, payment, SMS, or email side-effect.
  */
 import { hashSeed } from "@/lib/efficiency-climate/simulation"
+import { hourlySolarKw, SOLAR_PR, BATTERY_DOD, type PowerInputs } from "@/lib/dashboard/power-model"
 
 export const DEMO_DATA_NOTE = "Demo data sample values, not yet wired to a live source."
 
@@ -57,12 +58,21 @@ export type PowerToday = {
 }
 
 /** Power-forecast figures for today (spec 8.2 "card two"). */
-export function getPowerToday(facilityId?: string): PowerToday {
+export function getPowerToday(facilityId?: string, inputs?: PowerInputs): PowerToday {
   const seed = seedFor(facilityId, "power-today")
+  // Battery SoC has no real source in this build, so it stays seeded; the sky
+  // and expected sun hours come from the real Climate Outlook resource when set.
+  const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
+  if (inputs) {
+    return {
+      expectedHours: Math.round(Math.max(12, Math.min(20, 12 + inputs.peakSunHours)) * 10) / 10,
+      batterySocPct,
+      expectedSolar: inputs.sky,
+    }
+  }
   const skyRoll = rand(seed, 2)
   const expectedSolar = skyRoll > 0.66 ? "sunny" : skyRoll > 0.33 ? "partly" : "cloudy"
   const expectedHours = Math.round((skyRoll * 6 + 14) * 10) / 10 // ~1420h
-  const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
   return { expectedHours, batterySocPct, expectedSolar }
 }
 
@@ -223,12 +233,30 @@ export type PowerSnapshot = {
 }
 
 /** Current instantaneous power picture for the source indicator + flow diagram. */
-export function getPowerSnapshot(facilityId?: string, batterySocOverride?: number): PowerSnapshot {
+export function getPowerSnapshot(
+  facilityId?: string,
+  batterySocOverride?: number,
+  inputs?: PowerInputs,
+): PowerSnapshot {
   const seed = seedFor(facilityId, "power-snapshot")
   const hour = new Date().getHours()
   const daytime = hour >= 7 && hour <= 18
-  const solarKw = daytime ? Math.round((1.5 + rand(seed, hour) * 4) * 10) / 10 : 0
-  const loadKw = Math.round((1.2 + rand(seed, 5) * 2.5) * 10) / 10
+
+  // Solar + load: real (assessed load + sized solar + climate sun) when inputs
+  // are set, otherwise the seeded demo profile.
+  const solarKw = inputs
+    ? hourlySolarKw(hour, inputs.solarCapacityKw, inputs.peakSunHours)
+    : daytime
+      ? Math.round((1.5 + rand(seed, hour) * 4) * 10) / 10
+      : 0
+  const loadKw = inputs
+    ? Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 10) / 10
+    : Math.round((1.2 + rand(seed, 5) * 2.5) * 10) / 10
+
+  const batterySocPct =
+    typeof batterySocOverride === "number"
+      ? Math.round(batterySocOverride)
+      : getPowerToday(facilityId, inputs).batterySocPct
 
   let gridKw = 0
   let batteryKw = 0
@@ -239,7 +267,8 @@ export function getPowerSnapshot(facilityId?: string, batterySocOverride?: numbe
   } else if (daytime) {
     activeSource = "solar"
     batteryKw = -Math.round((loadKw - solarKw) * 10) / 10 // battery tops up
-  } else if (rand(seed, 3) < 0.4) {
+  } else if (inputs ? batterySocPct < 25 : rand(seed, 3) < 0.4) {
+    // Night with a low battery falls back to grid; otherwise run off battery.
     activeSource = "grid"
     gridKw = loadKw
   } else {
@@ -247,10 +276,6 @@ export function getPowerSnapshot(facilityId?: string, batterySocOverride?: numbe
     batteryKw = -loadKw
   }
 
-  const batterySocPct =
-    typeof batterySocOverride === "number"
-      ? Math.round(batterySocOverride)
-      : getPowerToday(facilityId).batterySocPct
   return { activeSource, solarKw, gridKw, batteryKw, loadKw, batterySocPct }
 }
 
@@ -264,8 +289,9 @@ export function getLivePowerSnapshot(
   facilityId: string | undefined,
   tick: number,
   batterySocOverride?: number,
+  inputs?: PowerInputs,
 ): PowerSnapshot {
-  const base = getPowerSnapshot(facilityId, batterySocOverride)
+  const base = getPowerSnapshot(facilityId, batterySocOverride, inputs)
   const seed = seedFor(facilityId, "live-power")
   const j = (salt: number, amp: number) => (rand(seed, tick * 7 + salt) - 0.5) * 2 * amp
   const kw = (v: number) => Math.max(0, Math.round(v * 100) / 100)
@@ -290,13 +316,26 @@ export function getLiveFridgeTempC(facilityId: string | undefined, tick: number)
 export type PowerBySourcePoint = { time: string; solar: number; grid: number; battery: number }
 
 /** 24 hourly points of delivered power split by source, for the stacked-area chart. */
-export function get24hPowerBySource(facilityId?: string): PowerBySourcePoint[] {
+export function get24hPowerBySource(facilityId?: string, inputs?: PowerInputs): PowerBySourcePoint[] {
   const seed = seedFor(facilityId, "power-24h")
   const out: PowerBySourcePoint[] = []
   for (let h = 24; h >= 0; h--) {
     const t = new Date(Date.now() - h * 3_600_000)
     const hr = t.getHours()
     const daytime = hr >= 7 && hr <= 18
+
+    if (inputs) {
+      // Real: climate-shaped solar covers the assessed load; battery fills the
+      // gap (solar + storage). Grid only appears if the system is grid-tied and
+      // short, which we cannot know here, so it stays solar + battery.
+      const solar = hourlySolarKw(hr, inputs.solarCapacityKw, inputs.peakSunHours)
+      const load = Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 10) / 10
+      const deliveredSolar = Math.min(solar, load)
+      const battery = Math.max(0, Math.round((load - deliveredSolar) * 10) / 10)
+      out.push({ time: `${String(hr).padStart(2, "0")}:00`, solar: deliveredSolar, grid: 0, battery })
+      continue
+    }
+
     const solar = daytime
       ? Math.max(0, Math.round(Math.sin(((hr - 6) / 12) * Math.PI) * (3 + rand(seed, hr) * 2) * 10) / 10)
       : 0
@@ -316,14 +355,36 @@ export type PowerForecastPoint = {
 }
 
 /** Next-12-hours forecast of expected source and battery State of Charge. */
-export function getPower12hForecast(facilityId?: string): PowerForecastPoint[] {
+export function getPower12hForecast(facilityId?: string, inputs?: PowerInputs): PowerForecastPoint[] {
   const seed = seedFor(facilityId, "power-12h")
-  let soc = getPowerToday(facilityId).batterySocPct
+  let soc = getPowerToday(facilityId, inputs).batterySocPct
   const out: PowerForecastPoint[] = []
   for (let i = 1; i <= 12; i++) {
     const t = new Date(Date.now() + i * 3_600_000)
     const hr = t.getHours()
     const daytime = hr >= 7 && hr <= 18
+
+    if (inputs) {
+      // Real physics: SoC moves by the net energy over the hour relative to the
+      // assessed battery capacity. Solar from the climate-shaped curve.
+      const solar = hourlySolarKw(hr, inputs.solarCapacityKw, inputs.peakSunHours)
+      const load = Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 100) / 100
+      const netKwh = solar - load // over one hour
+      const socDelta = inputs.batteryCapacityKwh > 0 ? (netKwh / inputs.batteryCapacityKwh) * 100 : 0
+      soc = Math.max(5, Math.min(100, soc + socDelta))
+      let source: PowerSource
+      if (solar >= load) source = "solar"
+      else if (daytime) source = "solar"
+      else source = soc <= 20 ? "grid" : "battery"
+      out.push({
+        time: `${String(hr).padStart(2, "0")}:00`,
+        source,
+        batterySocPct: Math.round(soc),
+        expectedKw: Math.round((daytime ? solar : load) * 10) / 10,
+      })
+      continue
+    }
+
     const solar = daytime ? 2 + rand(seed, hr) * 3 : 0
     const load = 1.4 + rand(seed, i * 7) * 1.6
     let source: PowerSource
@@ -355,12 +416,16 @@ export type ServiceHoursEstimate = { hours: number; untilLabel: string; critical
 export function getServiceHoursRemaining(
   facilityId?: string,
   batterySocPct?: number,
+  inputs?: PowerInputs,
 ): ServiceHoursEstimate {
   const seed = seedFor(facilityId, "service-hours")
-  const soc = typeof batterySocPct === "number" ? batterySocPct : getPowerToday(facilityId).batterySocPct
-  const batteryKwh = 5 + (seed % 5) // demo usable capacity
-  const criticalLoadKw = Math.round((0.6 + rand(seed, 2) * 0.8) * 100) / 100
-  const usableKwh = batteryKwh * (soc / 100)
+  const soc = typeof batterySocPct === "number" ? batterySocPct : getPowerToday(facilityId, inputs).batterySocPct
+  // Real battery capacity + critical load from the assessment when available.
+  const batteryKwh = inputs ? inputs.batteryCapacityKwh : 5 + (seed % 5)
+  const criticalLoadKw = inputs
+    ? Math.max(0.05, Math.round(inputs.criticalLoadKw * 100) / 100)
+    : Math.round((0.6 + rand(seed, 2) * 0.8) * 100) / 100
+  const usableKwh = batteryKwh * (soc / 100) * (inputs ? BATTERY_DOD : 1)
   const hours = Math.max(0, usableKwh / criticalLoadKw)
   const until = new Date(Date.now() + hours * 3_600_000)
   const hh = String(until.getHours()).padStart(2, "0")
@@ -372,12 +437,23 @@ export function getServiceHoursRemaining(
 export type SolarDayForecast = { day: string; expectedKwh: number; sky: "sunny" | "partly" | "cloudy" }
 
 /** 7-day solar generation forecast (spec C16 / 11.3 "Forecast"). */
-export function get7daySolarForecast(facilityId?: string): SolarDayForecast[] {
+export function get7daySolarForecast(facilityId?: string, inputs?: PowerInputs): SolarDayForecast[] {
   const seed = seedFor(facilityId, "solar-7d")
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
   const out: SolarDayForecast[] = []
   for (let i = 0; i < 7; i++) {
     const t = new Date(Date.now() + i * 86_400_000)
+
+    if (inputs) {
+      // Real: capacity x PSH x PR, with the day's PSH varied +/-15% around the
+      // measured Climate Outlook mean.
+      const dayPsh = Math.max(0, inputs.peakSunHours * (0.85 + rand(seed, i * 11) * 0.3))
+      const sky: SolarDayForecast["sky"] = dayPsh >= 5.5 ? "sunny" : dayPsh >= 4 ? "partly" : "cloudy"
+      const expectedKwh = Math.round(inputs.solarCapacityKw * dayPsh * SOLAR_PR)
+      out.push({ day: days[t.getDay()], expectedKwh, sky })
+      continue
+    }
+
     const r = rand(seed, i * 11)
     const sky = r > 0.66 ? "sunny" : r > 0.33 ? "partly" : "cloudy"
     const factor = sky === "sunny" ? 1 : sky === "partly" ? 0.75 : 0.5
