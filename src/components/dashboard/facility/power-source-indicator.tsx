@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { getPowerSnapshot, type PowerSource } from "@/lib/dashboard/facility-demo-data"
+import type { PowerInputs } from "@/lib/dashboard/power-model"
 
 const SOURCE_META: Record<
   PowerSource,
@@ -35,11 +36,13 @@ const SOURCE_META: Record<
 export function PowerSourceIndicator({
   facilityId,
   batteryLevel,
+  inputs,
 }: {
   facilityId?: string
   batteryLevel?: number
+  inputs?: PowerInputs | null
 }) {
-  const snap = getPowerSnapshot(facilityId, batteryLevel)
+  const snap = getPowerSnapshot(facilityId, batteryLevel, inputs ?? undefined)
   const meta = SOURCE_META[snap.activeSource]
   const Icon = meta.icon
 

@@ -16,7 +16,7 @@
  */
 import { z } from "zod"
 
-const ALLOWED_PARAMETERS = ["T2M_MAX", "PRECTOTCORR", "WS10M"] as const
+const ALLOWED_PARAMETERS = ["T2M_MAX", "PRECTOTCORR", "WS10M", "ALLSKY_SFC_SW_DWN"] as const
 const ALLOWED = new Set<string>(ALLOWED_PARAMETERS)
 
 const UPSTREAM_TIMEOUT_MS = 8000
