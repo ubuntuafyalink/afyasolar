@@ -3077,3 +3077,32 @@ export const facilitiesAfyaFinanceRelations = relations(facilities, ({ many }) =
 }))
 
 
+
+// ---------------------------------------------------------------------------
+// AI assistant chat (conversations + messages), scoped per user.
+// ---------------------------------------------------------------------------
+export const aiConversations = mysqlTable('ai_conversations', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  userId: varchar('user_id', { length: 36 }).notNull(),
+  facilityId: varchar('facility_id', { length: 36 }),
+  title: varchar('title', { length: 200 }),
+  messageCount: int('message_count').notNull().default(0),
+  createdAt: datetime('created_at', { mode: 'date' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: datetime('updated_at', { mode: 'date' }).notNull().default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+}, (table) => ({
+  userIdx: index('aic_user_idx').on(table.userId),
+  updatedIdx: index('aic_updated_idx').on(table.updatedAt),
+}))
+
+export const aiMessages = mysqlTable('ai_messages', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  conversationId: varchar('conversation_id', { length: 36 }).notNull(),
+  userId: varchar('user_id', { length: 36 }).notNull(),
+  role: varchar('role', { length: 20 }).notNull(),
+  content: text('content').notNull(),
+  provider: varchar('provider', { length: 50 }),
+  createdAt: datetime('created_at', { mode: 'date' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+}, (table) => ({
+  conversationIdx: index('aim_conversation_idx').on(table.conversationId),
+  userIdx: index('aim_user_idx').on(table.userId),
+}))

@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Bot, Mic, SendHorizonal, User } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,17 +12,40 @@ import { COPILOT_SUGGESTIONS, answerCopilot } from "@/lib/dashboard/facility-dem
 import { streamAssistant, type AssistantTurn } from "@/hooks/use-assistant"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 import { TypingCursor } from "@/components/assistant/typing-cursor"
+import {
+  resolveCoords,
+  rangeForPreset,
+  toSolarResource,
+  SOLAR_PARAMETERS,
+} from "@/lib/climate/nasa-power"
+import { useNasaPower } from "@/hooks/use-nasa-power"
+import { deriveEnergyProfile, DEFAULT_ENERGY_PROFILE } from "@/lib/dashboard/power-model"
+import { BATTERY_DOD } from "@/lib/dashboard/power-model"
+import type { MeuSummary, SizingSummary } from "@/components/solar/afya-solar-sizing-tool"
 import { useFacilityPreferences } from "./facility-preferences-provider"
 
 type Message = { role: "user" | "assistant"; text: string }
 
+const EXTRA_SUGGESTIONS = ["How can I cut my energy bill?", "Will my fridge survive tonight?"]
+
 /**
  * Spec 11.3: the GenAI co-pilot chat surface. Answers come from the real AI
- * assistant route (OpenAI, GROQ fallback); if that fails or the device is
+ * assistant route (Gemini, GROQ fallback), grounded in the facility's assessed
+ * load + sized solar + Climate Outlook sun; if that fails or the device is
  * offline it falls back to the canned demo answers so it always responds.
  * Supports voice input via the browser Web Speech API.
  */
-export function CopilotChat({ facilityId }: { facilityId?: string }) {
+export function CopilotChat({
+  facilityId,
+  meuSummary,
+  sizingSummary,
+  region,
+}: {
+  facilityId?: string
+  meuSummary?: MeuSummary | null
+  sizingSummary?: SizingSummary | null
+  region?: string | null
+}) {
   const { locale } = useFacilityPreferences()
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -37,6 +60,32 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
     lang: locale === "sw" ? "sw-TZ" : "en-US",
     onResult: setInput,
   })
+
+  // Ground the assistant in the facility's real energy + climate figures.
+  const coords = useMemo(() => resolveCoords({ facilityId, region }), [facilityId, region])
+  const range = useMemo(() => rangeForPreset("1y"), [])
+  const climate = useNasaPower({
+    lat: coords.lat,
+    lon: coords.lon,
+    temporal: range.temporal,
+    start: range.start,
+    end: range.end,
+    parameters: SOLAR_PARAMETERS,
+  })
+  const facilityContext = useMemo(() => {
+    const profile = deriveEnergyProfile(meuSummary, sizingSummary) ?? DEFAULT_ENERGY_PROFILE
+    const solar = climate.data ? toSolarResource(climate.data) : null
+    const psh = solar?.peakSunHours ?? 4.2
+    const autonomyH =
+      profile.criticalLoadKw > 0 ? (profile.batteryCapacityKwh * BATTERY_DOD * 0.9) / profile.criticalLoadKw : 0
+    return (
+      `Facility id: ${facilityId ?? "unknown"}. ` +
+      `Sized solar ${profile.solarCapacityKw} kW, daily load ${(profile.avgLoadKw * 24).toFixed(1)} kWh, ` +
+      `usable battery ${profile.batteryCapacityKwh} kWh, critical load ${profile.criticalLoadKw} kW, ` +
+      `peak sun hours ${psh.toFixed(1)} (${solar?.sky ?? "partly"}), ` +
+      `critical-load battery autonomy about ${autonomyH.toFixed(1)} hours.`
+    )
+  }, [facilityId, meuSummary, sizingSummary, climate.data])
 
   function scrollToEnd() {
     requestAnimationFrame(() => {
@@ -67,7 +116,7 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
 
     try {
       await streamAssistant(
-        { messages: history, context: facilityId ? `Facility id: ${facilityId}` : undefined, mode: "chat" },
+        { messages: history, context: facilityContext, mode: "chat" },
         setLastAssistant,
       )
     } catch {
@@ -126,7 +175,7 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
 
         {/* Suggestions */}
         <div className="flex flex-wrap gap-1.5">
-          {COPILOT_SUGGESTIONS.map((s) => (
+          {[...COPILOT_SUGGESTIONS, ...EXTRA_SUGGESTIONS].map((s) => (
             <button
               key={s}
               type="button"

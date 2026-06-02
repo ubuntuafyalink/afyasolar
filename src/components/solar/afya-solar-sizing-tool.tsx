@@ -892,7 +892,7 @@ export function AfyaSolarSizingTool({
     >
     <div className="space-y-6">
       {readOnly && (
-        <p className="text-xs text-muted-foreground rounded-lg border border-emerald-100 bg-emerald-50/40 px-3 py-2">
+        <p className="text-xs text-muted-foreground rounded-lg border border-border bg-muted/40 px-3 py-2">
           Viewing a saved devices &amp; loads snapshot for this assessment record (read-only).
         </p>
       )}
@@ -931,7 +931,7 @@ export function AfyaSolarSizingTool({
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex rounded-md border border-emerald-200 bg-white p-0.5">
+                  <div className="flex rounded-md border border-border bg-card p-0.5">
                     <Button
                       type="button"
                       variant={deviceView === "table" ? "default" : "ghost"}
@@ -959,17 +959,17 @@ export function AfyaSolarSizingTool({
                   </Button>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 pt-2 border-t border-emerald-100/80 mt-2">
-                <p className="text-xs font-medium text-emerald-900">Quick add bundles</p>
+              <div className="flex flex-col gap-2 pt-2 border-t border-border mt-2">
+                <p className="text-xs font-medium text-foreground">Quick add bundles</p>
                 <div className="flex flex-wrap gap-2">
                   {DEVICE_BUNDLES.map((b) => (
-                    <Button key={b.id} type="button" variant="outline" size="sm" className="text-xs h-8 border-emerald-200" onClick={() => addBundle(b.id)}>
+                    <Button key={b.id} type="button" variant="outline" size="sm" className="text-xs h-8 border-border" onClick={() => addBundle(b.id)}>
                       {b.label}
                     </Button>
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-emerald-800">Single template:</span>
+                  <span className="text-xs text-primary">Single template:</span>
                   <Select onValueChange={(v) => addFromTemplate(v)}>
                     <SelectTrigger className="h-8 w-[min(100%,220px)] text-xs">
                       <SelectValue placeholder="Pick device template…" />
@@ -1007,7 +1007,7 @@ export function AfyaSolarSizingTool({
                       const abnormalW = device.wattage > 20000 || (device.wattage > 0 && device.wattage < 3)
                       const abnormalH = device.hoursPerDay > 24
                       return (
-                        <TableRow key={device.id} className={abnormalW || abnormalH ? "bg-amber-50/50" : undefined}>
+                        <TableRow key={device.id} className={abnormalW || abnormalH ? "bg-warning/10" : undefined}>
                           <TableCell>
                             <Input
                               value={device.deviceName}
@@ -1106,7 +1106,7 @@ export function AfyaSolarSizingTool({
                   {devices.map((device) => {
                     const dailyKwh = (device.wattage * device.quantity * device.hoursPerDay) / 1000
                     return (
-                      <Card key={device.id} className="border-emerald-100 bg-white shadow-sm">
+                      <Card key={device.id} className="rounded-2xl border-border bg-card shadow-sm transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                         <CardHeader className="py-3 px-4 space-y-0">
                           <div className="flex justify-between gap-2">
                             <Input
@@ -1166,9 +1166,9 @@ export function AfyaSolarSizingTool({
                               />
                             </div>
                           </div>
-                          <div className="flex items-center justify-between rounded-md bg-emerald-50/80 px-2 py-1.5">
-                            <span className="text-emerald-900">Daily kWh</span>
-                            <span className="font-mono font-semibold text-emerald-800">{dailyKwh.toFixed(2)}</span>
+                          <div className="flex items-center justify-between rounded-md bg-muted/50 px-2 py-1.5">
+                            <span className="text-foreground">Daily kWh</span>
+                            <span className="font-mono font-semibold text-primary">{dailyKwh.toFixed(2)}</span>
                           </div>
                           {/* Backup + zone intentionally hidden per UX request */}
                           <div className="grid grid-cols-2 gap-2">
@@ -1204,18 +1204,18 @@ export function AfyaSolarSizingTool({
                 </div>
               )}
 
-              <div className="mt-6 rounded-lg border border-emerald-100 bg-emerald-50/70 p-4 text-[11px] sm:text-xs text-emerald-800">
+              <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4 text-[11px] sm:text-xs text-primary">
                 {meuSummary.totalDailyLoad <= 0 ? (
-                  <p className="font-medium text-emerald-800">
+                  <p className="font-medium text-primary">
                     Enter wattage, quantity and hours to see insights about your major energy uses.
                   </p>
                 ) : (
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                      <h4 className="text-xs sm:text-sm font-semibold text-emerald-900">
+                      <h4 className="text-xs sm:text-sm font-semibold text-foreground">
                         Major energy use insights
                       </h4>
-                      <p className="text-[11px] sm:text-xs text-emerald-900">
+                      <p className="text-[11px] sm:text-xs text-foreground">
                         Total estimated daily load:{" "}
                         <span className="font-semibold">
                           {meuSummary.totalDailyLoad.toFixed(1)} kWh/day
@@ -1236,7 +1236,7 @@ export function AfyaSolarSizingTool({
 
                     {meuSummary.topDevices.length > 0 && (
                       <div>
-                        <p className="text-[11px] font-semibold text-emerald-900 mb-1">
+                        <p className="text-[11px] font-semibold text-foreground mb-1">
                           Top energy uses
                         </p>
                         <ul className="list-disc list-inside space-y-0.5">
@@ -1255,7 +1255,7 @@ export function AfyaSolarSizingTool({
 
                     {meuSummary.potentialInefficiencies.length > 0 && (
                       <div>
-                        <p className="text-[11px] font-semibold text-emerald-900 mb-1">
+                        <p className="text-[11px] font-semibold text-foreground mb-1">
                           Possible long-running / high-load devices
                         </p>
                         <ul className="list-disc list-inside space-y-0.5">
@@ -1338,23 +1338,23 @@ export function AfyaSolarSizingTool({
           </Card>
 
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4 border-t pt-3">
-            <div className="text-xs sm:text-sm text-emerald-800 bg-emerald-50/80 border border-emerald-100 rounded-md px-3 py-2 w-full sm:w-auto">
+            <div className="text-xs sm:text-sm text-primary bg-muted/50 border border-border rounded-md px-3 py-2 w-full sm:w-auto">
               Run the Afya Solar design engine to generate a full engineering design and finance comparison, then view
               the detailed results in the Cost tab.
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               {quoteError && (
-                <span className="text-[11px] text-red-600 max-w-xs truncate">
+                <span className="text-[11px] text-destructive max-w-xs truncate">
                   {quoteError}
                 </span>
               )}
-              {saveDbError && <span className="text-[11px] text-red-600 max-w-xs truncate">{saveDbError}</span>}
+              {saveDbError && <span className="text-[11px] text-destructive max-w-xs truncate">{saveDbError}</span>}
               {saveDbSuccessAt && !saveDbError && (
-                <span className="text-[11px] text-emerald-700 max-w-xs truncate">Saved to database.</span>
+                <span className="text-[11px] text-primary max-w-xs truncate">Saved to database.</span>
               )}
               <Button
                 size="sm"
-                className="bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-700 hover:to-green-600 text-white font-semibold shadow-sm hover:shadow-md px-4 py-2 text-xs sm:text-sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm hover:shadow-md px-4 py-2 text-xs sm:text-sm"
                 onClick={runDesignQuote}
                 disabled={quoteLoading}
               >
@@ -1363,7 +1363,7 @@ export function AfyaSolarSizingTool({
               <Button
                 size="sm"
                 variant="outline"
-                className="border-emerald-300 text-emerald-800"
+                className="border-primary/30 text-primary"
                 onClick={saveAssessmentToDatabase}
                 disabled={saveDbLoading || !quoteData}
               >
@@ -1618,7 +1618,7 @@ export function AfyaSolarSizingTool({
                 <div className="grid gap-4">
                   <div className="flex justify-between">
                     <span>Annual Savings:</span>
-                    <span className="font-bold text-green-600">
+                    <span className="font-bold text-success">
                       {formatCurrency(calculations.annualSavings)}
                     </span>
                   </div>
@@ -1641,7 +1641,7 @@ export function AfyaSolarSizingTool({
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-2xl font-bold text-destructive">
                     {formatCurrency(
                       facilityData.facilityType === "on-grid"
                         ? calculations.annualGridCost
@@ -1651,13 +1651,13 @@ export function AfyaSolarSizingTool({
                   <div className="text-sm text-muted-foreground">Current Annual Cost</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-success">
                     {formatCurrency(calculations.annualSavings)}
                   </div>
                   <div className="text-sm text-muted-foreground">Annual Savings</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-chart-3">
                     {formatCurrency(calculations.remainingEnergyCost)}
                   </div>
                   <div className="text-sm text-muted-foreground">New Annual Cost</div>
@@ -1965,7 +1965,7 @@ export function AfyaSolarSizingTool({
                     <p className="text-lg font-semibold">
                       {quoteData.system_design.pv_system_size_kw.toFixed(2)} kW
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {quoteData.system_design.number_of_620w_panels} × 620 W panels
                     </p>
                   </div>
@@ -1974,7 +1974,7 @@ export function AfyaSolarSizingTool({
                     <p className="text-lg font-semibold">
                       {quoteData.system_design.battery_capacity_kwh.toFixed(1)} kWh
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {Math.round(quoteData.system_design.battery_ah_at_system_voltage)} Ah @ system voltage
                     </p>
                   </div>
@@ -1983,7 +1983,7 @@ export function AfyaSolarSizingTool({
                     <p className="text-lg font-semibold">
                       {quoteData.system_design.recommended_inverter_kw.toFixed(1)} kW inverter
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       MPPT current ≈ {quoteData.system_design.mppt_current_a.toFixed(0)} A
                     </p>
                   </div>
@@ -1992,19 +1992,19 @@ export function AfyaSolarSizingTool({
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">Baseline Monthly Cost</p>
-                    <p className="text-xl font-bold text-red-600">
+                    <p className="text-xl font-bold text-destructive">
                       {formatCurrency(quoteData.current_energy_cost.total_baseline_cost_monthly_tzs)}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">After-Solar Monthly Cost</p>
-                    <p className="text-xl font-bold text-blue-600">
+                    <p className="text-xl font-bold text-chart-3">
                       {formatCurrency(quoteData.after_solar_cost.total_cost_after_solar_monthly_tzs)}
                     </p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">Gross Monthly Savings</p>
-                    <p className="text-xl font-bold text-green-600">
+                    <p className="text-xl font-bold text-success">
                       {formatCurrency(quoteData.monthly_savings.gross_monthly_savings_tzs)}
                     </p>
                   </div>
@@ -2014,7 +2014,7 @@ export function AfyaSolarSizingTool({
                   <div className="grid gap-4 md:grid-cols-3">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Cash Option</p>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-foreground">
                         System price:{" "}
                         <span className="font-semibold">
                           {formatCurrency(
@@ -2022,7 +2022,7 @@ export function AfyaSolarSizingTool({
                           )}
                         </span>
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Payback:{" "}
                         {quoteData.financing_comparison.cash_payback_months
                           ? `${quoteData.financing_comparison.cash_payback_months.toFixed(1)} months`
@@ -2031,7 +2031,7 @@ export function AfyaSolarSizingTool({
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Installment Option</p>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-foreground">
                         Upfront:{" "}
                         <span className="font-semibold">
                           {formatCurrency(
@@ -2039,14 +2039,14 @@ export function AfyaSolarSizingTool({
                           )}
                         </span>
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         {quoteData.financing_comparison.selected_pricing.install_term_months} ×{" "}
                         {formatCurrency(
                           quoteData.financing_comparison.selected_pricing.install_monthly_tzs,
                         )}
                         /month
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         Net savings vs baseline:{" "}
                         {quoteData.financing_comparison.installment_net_savings_monthly != null
                           ? formatCurrency(
@@ -2060,7 +2060,7 @@ export function AfyaSolarSizingTool({
                       <p className="text-xs text-muted-foreground mb-1">Energy-as-a-Service (EaaS)</p>
                       {quoteData.financing_comparison.selected_pricing.eaas_monthly_tzs != null ? (
                         <>
-                          <p className="text-sm text-gray-700">
+                          <p className="text-sm text-foreground">
                             Fee:{" "}
                             <span className="font-semibold">
                               {formatCurrency(
@@ -2069,13 +2069,13 @@ export function AfyaSolarSizingTool({
                               /month
                             </span>
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             Minimum term:{" "}
                             {quoteData.financing_comparison.selected_pricing.eaas_term_months ??
                               72}{" "}
                             months
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             Net savings vs baseline:{" "}
                             {quoteData.financing_comparison.eaas_net_savings_monthly != null
                               ? formatCurrency(
@@ -2086,7 +2086,7 @@ export function AfyaSolarSizingTool({
                           </p>
                         </>
                       ) : (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           No EaaS tariff configured for the closest system size.
                         </p>
                       )}
