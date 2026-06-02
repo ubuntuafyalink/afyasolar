@@ -57,10 +57,10 @@ export default function AdminFacilityDashboard() {
 
   if (facilityLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/40">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading facility dashboard...</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading facility dashboard...</p>
         </div>
       </div>
     )
@@ -68,10 +68,10 @@ export default function AdminFacilityDashboard() {
 
   if (!facility) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/40">
         <div className="text-center">
-          <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Facility not found</p>
+          <Building2 aria-hidden className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Facility not found</p>
           <Button onClick={handleBackToSubscribers} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Subscribers
@@ -83,7 +83,7 @@ export default function AdminFacilityDashboard() {
 
   if (overviewOnly) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/40">
         <main className="p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">
             <FacilityDashboardContent
@@ -100,8 +100,8 @@ export default function AdminFacilityDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
-      <header className="bg-white border-b shadow-sm flex-shrink-0 z-20">
+    <div className="min-h-screen bg-muted/40 flex flex-col overflow-hidden">
+      <header className="bg-card border-b border-border shadow-sm flex-shrink-0 z-20">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center space-x-4 min-w-0">
@@ -115,47 +115,47 @@ export default function AdminFacilityDashboard() {
                 Back
               </Button>
               <div className="min-w-0">
-                <h1 className="text-xl font-semibold text-gray-900 flex items-center gap-2 truncate">
-                  <Building2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <h1 className="text-xl font-semibold text-foreground flex items-center gap-2 truncate">
+                  <Building2 aria-hidden className="w-5 h-5 text-primary flex-shrink-0" />
                   <span className="truncate">{facility.name}</span>
                 </h1>
-                <p className="text-sm text-gray-600 truncate">Admin view — same experience as the facility (assessments in AfyaLink)</p>
+                <p className="text-sm text-muted-foreground truncate">Admin view same experience as the facility (assessments in AfyaLink)</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 flex-shrink-0">
-              <Badge variant={facility.status === 'active' ? 'default' : 'destructive'}>
+              <Badge variant={facility.status === 'active' ? 'success' : 'destructive'}>
                 {facility.status}
               </Badge>
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-foreground">
                   {formatCurrency(Number(facility.creditBalance || 0))}
                 </p>
-                <p className="text-xs text-gray-600">Credit</p>
+                <p className="text-xs text-muted-foreground">Credit</p>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="bg-white border-b flex-shrink-0">
+      <div className="bg-card border-b border-border flex-shrink-0">
         <div className="px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs sm:text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs sm:text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
+              <MapPin aria-hidden className="w-4 h-4 flex-shrink-0" />
               {facility.city}, {facility.region}
             </div>
             <div className="flex items-center gap-1">
-              <Phone className="w-4 h-4 flex-shrink-0" />
+              <Phone aria-hidden className="w-4 h-4 flex-shrink-0" />
               {facility.phone}
             </div>
             {facility.email && (
               <div className="flex items-center gap-1 min-w-0">
-                <Mail className="w-4 h-4 flex-shrink-0" />
+                <Mail aria-hidden className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate">{facility.email}</span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
+              <Calendar aria-hidden className="w-4 h-4 flex-shrink-0" />
               Registered {new Date(facility.createdAt).toLocaleDateString()}
             </div>
           </div>

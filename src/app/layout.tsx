@@ -2,12 +2,22 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { Atkinson_Hyperlegible } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Providers } from "@/components/providers"
 import { InstallPrompt } from "@/components/pwa/install-prompt"
 import { SessionGuard } from "@/components/auth/session-guard"
 import { PushNotificationPrompt } from "@/components/push-notification-prompt"
 import "../styles/globals.css"
+
+// Atkinson Hyperlegible a dyslexia-friendly, high-legibility face exposed via
+// the accessibility menu (the `a11y-dyslexia-friendly` class swaps --font-sans).
+const atkinson = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-atkinson",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "Afya Solar | Healthcare facility solar dashboards",
@@ -53,7 +63,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} min-h-dvh overflow-x-hidden antialiased touch-manipulation`}
+        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${atkinson.variable} min-h-dvh overflow-x-hidden antialiased touch-manipulation`}
         suppressHydrationWarning
       >
         <Providers>

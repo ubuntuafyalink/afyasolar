@@ -141,12 +141,12 @@ function AcceptInvitationContent() {
 
   if (isValidating) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50/30 via-white to-green-50/20">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 via-background to-primary/5">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-              <p className="text-sm text-gray-600">Validating invitation...</p>
+              <Loader2 className="w-8 h-8 animate-spin text-primary" aria-hidden />
+              <p className="text-sm text-muted-foreground">Validating invitation...</p>
             </div>
           </CardContent>
         </Card>
@@ -159,7 +159,7 @@ function AcceptInvitationContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50/30 via-white to-green-50/20 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 via-background to-primary/5 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
@@ -189,7 +189,7 @@ function AcceptInvitationContent() {
                 type="email"
                 value={facilityInfo.email}
                 disabled
-                className="bg-gray-50"
+                className="bg-muted"
               />
             </div>
             <div className="space-y-2">
@@ -205,23 +205,24 @@ function AcceptInvitationContent() {
                   }}
                   required
                   placeholder="Enter your password"
-                  className={errors.password ? "border-red-500" : ""}
+                  className={errors.password ? "border-destructive" : ""}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" aria-hidden /> : <Eye className="w-4 h-4" aria-hidden />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <XCircle className="w-4 h-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <XCircle className="w-4 h-4" aria-hidden />
                   {errors.password}
                 </p>
               )}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Password must be at least 8 characters with uppercase, lowercase, and number
               </p>
             </div>
@@ -238,19 +239,20 @@ function AcceptInvitationContent() {
                   }}
                   required
                   placeholder="Confirm your password"
-                  className={errors.confirmPassword ? "border-red-500" : ""}
+                  className={errors.confirmPassword ? "border-destructive" : ""}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" aria-hidden /> : <Eye className="w-4 h-4" aria-hidden />}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <XCircle className="w-4 h-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <XCircle className="w-4 h-4" aria-hidden />
                   {errors.confirmPassword}
                 </p>
               )}
@@ -266,8 +268,8 @@ function AcceptInvitationContent() {
                 disabled={isLoading}
               />
               {errors.location && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <XCircle className="w-4 h-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <XCircle className="w-4 h-4" aria-hidden />
                   {errors.location}
                 </p>
               )}
@@ -284,17 +286,17 @@ function AcceptInvitationContent() {
                     setErrors({ ...errors, referralCode: undefined })
                   }}
                   placeholder="Enter referral code if you have one"
-                  className={errors.referralCode ? "border-red-500" : ""}
+                  className={errors.referralCode ? "border-destructive" : ""}
                   disabled={!!referralCode} // Disable if already in URL
                 />
                 {errors.referralCode && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <XCircle className="w-4 h-4" />
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <XCircle className="w-4 h-4" aria-hidden />
                     {errors.referralCode}
                   </p>
                 )}
                 {referralCode && (
-                  <p className="text-xs text-green-600">
+                  <p className="text-xs text-primary">
                     Referral code detected from invitation link
                   </p>
                 )}
@@ -312,33 +314,33 @@ function AcceptInvitationContent() {
                     setErrors({ ...errors, referralCode: undefined })
                   }}
                   placeholder="Enter referral code if you have one"
-                  className={errors.referralCode ? "border-red-500" : ""}
+                  className={errors.referralCode ? "border-destructive" : ""}
                   maxLength={11}
                 />
                 {errors.referralCode && (
-                  <p className="text-sm text-red-600 flex items-center gap-1">
-                    <XCircle className="w-4 h-4" />
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <XCircle className="w-4 h-4" aria-hidden />
                     {errors.referralCode}
                   </p>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   If you were referred by another facility, enter their referral code here
                 </p>
               </div>
             )}
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
                   Completing Registration...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  <CheckCircle2 className="w-4 h-4 mr-2" aria-hidden />
                   Complete Registration
                 </>
               )}
@@ -353,12 +355,12 @@ function AcceptInvitationContent() {
 export default function AcceptInvitationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50/30 via-white to-green-50/20">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 via-background to-primary/5">
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-              <p className="text-sm text-gray-600">Loading...</p>
+              <Loader2 className="w-8 h-8 animate-spin text-primary" aria-hidden />
+              <p className="text-sm text-muted-foreground">Loading...</p>
             </div>
           </CardContent>
         </Card>

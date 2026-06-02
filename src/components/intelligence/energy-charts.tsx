@@ -321,7 +321,7 @@ export function OpportunityMatrix({
           name="Resilience"
           tick={{ fontSize: 10 }}
           domain={[0, 100]}
-          label={{ value: "Resilience score (0–100)", angle: -90, position: "insideLeft", fontSize: 10 }}
+          label={{ value: "Resilience score (0100)", angle: -90, position: "insideLeft", fontSize: 10 }}
         />
         <Tooltip
           cursor={{ strokeDasharray: "3 3" }}
@@ -527,7 +527,7 @@ export function IntelligenceChartGrid({
 
           <Card className="border-emerald-100 lg:col-span-2">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Energy–resilience opportunity matrix</CardTitle>
+              <CardTitle className="text-sm">Energyresilience opportunity matrix</CardTitle>
               <CardDescription className="text-xs">Cost savings potential vs resilience score</CardDescription>
             </CardHeader>
             <CardContent>

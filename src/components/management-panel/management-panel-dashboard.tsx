@@ -43,6 +43,7 @@ import {
   ManagementPanelErrorState,
 } from '@/components/management-panel/management-panel-loading'
 import { FacilityDetailSimulation } from '@/components/management-panel/facility-detail-simulation'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface SimulatedFacility {
   id: string
@@ -193,21 +194,14 @@ export default function ManagementPanelDashboard() {
     sitesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-      case 'operational':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
+  const isOperational = (status: string) =>
+    status?.toLowerCase() === 'active' || status?.toLowerCase() === 'operational'
 
   const getPerformanceBadge = (savingsPercent: number) => {
-    if (savingsPercent >= 50) return { text: 'Excellent', color: 'bg-green-100 text-green-800' }
-    if (savingsPercent >= 40) return { text: 'Very Good', color: 'bg-blue-100 text-blue-800' }
-    if (savingsPercent >= 30) return { text: 'Good', color: 'bg-yellow-100 text-yellow-800' }
-    return { text: 'Fair', color: 'bg-gray-100 text-gray-800' }
+    if (savingsPercent >= 50) return { text: 'Excellent', color: 'border-transparent bg-success/10 text-success' }
+    if (savingsPercent >= 40) return { text: 'Very Good', color: 'border-transparent bg-secondary text-secondary-foreground' }
+    if (savingsPercent >= 30) return { text: 'Good', color: 'border-transparent bg-warning/15 text-warning-foreground' }
+    return { text: 'Fair', color: 'border-transparent bg-muted text-muted-foreground' }
   }
 
   if (loading) {
@@ -230,12 +224,12 @@ export default function ManagementPanelDashboard() {
       <div className="mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Installation sites – results and performance overview
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Installation sites results and performance overview
             </p>
             {lastUpdated && (
-              <p className="text-xs text-gray-500 mt-1" title={lastUpdated}>
+              <p className="text-xs text-muted-foreground mt-1" title={lastUpdated}>
                 Data as of {format(new Date(lastUpdated), 'd MMM yyyy')}
                 {typeof window !== 'undefined' && ' · Refreshed ' + formatDistanceToNow(new Date(lastUpdated), { addSuffix: true })}
               </p>
@@ -249,7 +243,7 @@ export default function ManagementPanelDashboard() {
               disabled={refreshing}
               className="gap-2 min-w-[88px]"
             >
-              <RefreshCw className={cn('w-4 h-4 shrink-0', refreshing && 'animate-spin')} />
+              <RefreshCw className={cn('w-4 h-4 shrink-0', refreshing && 'animate-spin')} aria-hidden />
               {refreshing ? 'Refreshing…' : 'Refresh'}
             </Button>
             <Button
@@ -259,100 +253,100 @@ export default function ManagementPanelDashboard() {
               onClick={handleExport}
               disabled={exporting || facilities.length === 0}
             >
-              <Download className={cn('w-4 h-4 shrink-0', exporting && 'animate-pulse')} />
+              <Download className={cn('w-4 h-4 shrink-0', exporting && 'animate-pulse')} aria-hidden />
               {exporting ? 'Exporting…' : 'Export'}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Stat cards – clickable, scroll to sites */}
+      {/* Stat cards clickable, scroll to sites */}
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
           <button
             type="button"
             onClick={scrollToSites}
             className={cn(
-              'group text-left rounded-xl border bg-white p-5 shadow-sm',
-              'transition-all duration-200 hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5',
-              'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2',
-              'border-l-4 border-l-blue-500'
+              'group text-left rounded-lg border border-border bg-card p-5 shadow-sm cursor-pointer',
+              'transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'border-l-4 border-l-primary'
             )}
           >
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-500">Active Sites</CardTitle>
-              <Building2 className="w-5 h-5 text-blue-500 opacity-80 group-hover:opacity-100" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Active Sites</CardTitle>
+              <Building2 className="w-5 h-5 text-primary opacity-80 group-hover:opacity-100" aria-hidden />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{stats.totalFacilities}</p>
-            <p className="text-xs text-gray-500 mt-1">Completed & operational</p>
-            <ChevronRight className="w-4 h-4 text-gray-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="mt-2 text-2xl font-bold text-foreground">{stats.totalFacilities}</p>
+            <p className="text-xs text-muted-foreground mt-1">Completed & operational</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
           </button>
 
           <button
             type="button"
             onClick={scrollToSites}
             className={cn(
-              'group text-left rounded-xl border bg-white p-5 shadow-sm',
-              'transition-all duration-200 hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5',
-              'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2',
-              'border-l-4 border-l-emerald-500'
+              'group text-left rounded-lg border border-border bg-card p-5 shadow-sm cursor-pointer',
+              'transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'border-l-4 border-l-success'
             )}
           >
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-500">Monthly Energy Savings</CardTitle>
-              <Zap className="w-5 h-5 text-emerald-500 opacity-80 group-hover:opacity-100" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Energy Savings</CardTitle>
+              <Zap className="w-5 h-5 text-success opacity-80 group-hover:opacity-100" aria-hidden />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{stats.totalEnergySavings.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">kWh per month</p>
-            <ChevronRight className="w-4 h-4 text-gray-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="mt-2 text-2xl font-bold text-foreground">{stats.totalEnergySavings.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">kWh per month</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
           </button>
 
           <button
             type="button"
             onClick={scrollToSites}
             className={cn(
-              'group text-left rounded-xl border bg-white p-5 shadow-sm',
-              'transition-all duration-200 hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5',
-              'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2',
-              'border-l-4 border-l-amber-500'
+              'group text-left rounded-lg border border-border bg-card p-5 shadow-sm cursor-pointer',
+              'transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'border-l-4 border-l-solar'
             )}
           >
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-500">Monthly Cost Savings</CardTitle>
-              <DollarSign className="w-5 h-5 text-amber-500 opacity-80 group-hover:opacity-100" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Cost Savings</CardTitle>
+              <DollarSign className="w-5 h-5 text-solar-foreground opacity-80 group-hover:opacity-100" aria-hidden />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">TZS {Number(stats.totalCostSavings).toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">Across all sites</p>
-            <ChevronRight className="w-4 h-4 text-gray-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="mt-2 text-2xl font-bold text-foreground">TZS {Number(stats.totalCostSavings).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">Across all sites</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
           </button>
 
           <button
             type="button"
             onClick={scrollToSites}
             className={cn(
-              'group text-left rounded-xl border bg-white p-5 shadow-sm',
-              'transition-all duration-200 hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5',
-              'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2',
-              'border-l-4 border-l-teal-500'
+              'group text-left rounded-lg border border-border bg-card p-5 shadow-sm cursor-pointer',
+              'transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+              'border-l-4 border-l-success'
             )}
           >
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-gray-500">CO₂ Reduction</CardTitle>
-              <Leaf className="w-5 h-5 text-teal-500 opacity-80 group-hover:opacity-100" />
+              <CardTitle className="text-sm font-medium text-muted-foreground">CO₂ Reduction</CardTitle>
+              <Leaf className="w-5 h-5 text-success opacity-80 group-hover:opacity-100" aria-hidden />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{stats.totalCarbonReduction.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">kg per month</p>
-            <ChevronRight className="w-4 h-4 text-gray-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="mt-2 text-2xl font-bold text-foreground">{stats.totalCarbonReduction.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">kg per month</p>
+            <ChevronRight className="w-4 h-4 text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden />
           </button>
         </div>
       )}
 
-      {/* Monthly trend chart – from DB */}
+      {/* Monthly trend chart from DB */}
       {trend.length > 0 && (
-        <Card className="rounded-xl border shadow-sm overflow-hidden mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
-          <CardHeader className="bg-gray-50/50 border-b">
+        <Card className="rounded-lg border-border shadow-sm overflow-hidden mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
+          <CardHeader className="bg-muted/50 border-b border-border">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="w-5 h-5" />
+              <BarChart3 className="w-5 h-5" aria-hidden />
               Monthly savings trend
             </CardTitle>
             <CardDescription>Aggregate energy and cost savings by month (last 12 months)</CardDescription>
@@ -361,7 +355,7 @@ export default function ManagementPanelDashboard() {
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trend} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                   <XAxis dataKey="yearMonth" tick={{ fontSize: 12 }} />
                   <YAxis yAxisId="energy" tick={{ fontSize: 12 }} width={45} />
                   <YAxis yAxisId="cost" orientation="right" tick={{ fontSize: 12 }} width={55} tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
@@ -370,10 +364,11 @@ export default function ManagementPanelDashboard() {
                       name === 'totalEnergySavings' ? [value + ' kWh', 'Energy savings'] : [Number(value).toLocaleString() + ' TZS', 'Cost savings']
                     }
                     labelFormatter={(label) => `Month: ${label}`}
+                    contentStyle={{ background: 'var(--color-popover)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)' }}
                   />
                   <Legend />
-                  <Line yAxisId="energy" type="monotone" dataKey="totalEnergySavings" name="Energy savings (kWh)" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} />
-                  <Line yAxisId="cost" type="monotone" dataKey="totalCostSavings" name="Cost savings (TZS)" stroke="#d97706" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line yAxisId="energy" type="monotone" dataKey="totalEnergySavings" name="Energy savings (kWh)" stroke="var(--color-chart-1)" strokeWidth={2} dot={{ r: 3 }} />
+                  <Line yAxisId="cost" type="monotone" dataKey="totalCostSavings" name="Cost savings (TZS)" stroke="var(--color-chart-4)" strokeWidth={2} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -381,58 +376,58 @@ export default function ManagementPanelDashboard() {
         </Card>
       )}
 
-      {/* Performance overview card – clickable */}
+      {/* Performance overview card clickable */}
       {stats && (
         <button
           type="button"
           onClick={scrollToSites}
           className={cn(
-            'w-full text-left rounded-xl border bg-white p-6 shadow-sm mb-6 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100',
-            'transition-all duration-200 hover:shadow-md hover:border-emerald-200',
-            'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2'
+            'w-full text-left rounded-lg border border-border bg-card p-6 shadow-sm mb-6 cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100',
+            'transition-all duration-200 hover:shadow-md hover:border-primary/20',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
           )}
         >
           <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-gray-600" />
+            <BarChart3 className="w-5 h-5 text-muted-foreground" aria-hidden />
             <CardTitle className="text-base">Performance Overview</CardTitle>
-            <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" aria-hidden />
           </div>
           <CardDescription className="mb-4">Average improvements across all installed sites</CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 rounded-lg bg-gray-50/80">
-              <p className="text-2xl font-bold text-emerald-600">{stats.averageEnergyReduction}%</p>
-              <p className="text-sm text-gray-600">Average Energy Reduction</p>
+            <div className="text-center p-4 rounded-lg bg-muted/80">
+              <p className="text-2xl font-bold text-primary">{stats.averageEnergyReduction}%</p>
+              <p className="text-sm text-muted-foreground">Average Energy Reduction</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-gray-50/80">
-              <p className="text-2xl font-bold text-blue-600">{stats.averageCostReduction}%</p>
-              <p className="text-sm text-gray-600">Average Cost Reduction</p>
+            <div className="text-center p-4 rounded-lg bg-muted/80">
+              <p className="text-2xl font-bold text-foreground">{stats.averageCostReduction}%</p>
+              <p className="text-sm text-muted-foreground">Average Cost Reduction</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-gray-50/80">
-              <p className="text-2xl font-bold text-violet-600">{stats.totalSolarCapacity} kW</p>
-              <p className="text-sm text-gray-600">Total Solar Capacity</p>
+            <div className="text-center p-4 rounded-lg bg-muted/80">
+              <p className="text-2xl font-bold text-foreground">{stats.totalSolarCapacity} kW</p>
+              <p className="text-sm text-muted-foreground">Total Solar Capacity</p>
             </div>
           </div>
         </button>
       )}
 
-      {/* Installed sites – scroll target and facility cards */}
+      {/* Installed sites scroll target and facility cards */}
       <div ref={sitesSectionRef} className="scroll-mt-4 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-        <Card className="rounded-xl border shadow-sm overflow-hidden">
-          <CardHeader className="bg-gray-50/50 border-b">
+        <Card className="rounded-lg border-border shadow-sm overflow-hidden">
+          <CardHeader className="bg-muted/50 border-b border-border">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Building2 className="w-5 h-5" />
-              Installed Sites – Before & After
+              <Building2 className="w-5 h-5" aria-hidden />
+              Installed Sites Before & After
             </CardTitle>
             <CardDescription>Click a site card to view full details</CardDescription>
           </CardHeader>
           <CardContent className="p-4 md:p-6">
             <div className="space-y-4 max-h-[60vh] overflow-y-auto overflow-x-hidden pr-1 scroll-smooth [scrollbar-gutter:stable]">
               {facilities.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
-                  <Building2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No installation sites in the database yet.</p>
-                  <p className="text-sm mt-1">Run the management panel seed to load sites.</p>
-                </div>
+                <EmptyState
+                  icon={<Building2 />}
+                  title="No installation sites in the database yet."
+                  description="Run the management panel seed to load sites."
+                />
               )}
               {facilities.map((facility) => {
                 const energyReductionPercent = facility.energyConsumptionBefore
@@ -450,53 +445,53 @@ export default function ManagementPanelDashboard() {
                     type="button"
                     onClick={() => setSelectedFacility(facility)}
                     className={cn(
-                      'w-full text-left rounded-xl border bg-white p-5',
-                      'transition-all duration-200 hover:shadow-lg hover:border-emerald-200 hover:-translate-y-0.5',
-                      'focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2',
+                      'w-full text-left rounded-lg border border-border bg-card p-5 cursor-pointer',
+                      'transition-all duration-200 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                       'flex flex-col sm:flex-row sm:items-center gap-4'
                     )}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-semibold text-gray-900">{facility.name}</h3>
-                        <Badge className={getStatusColor(facility.status)}>
-                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                        <h3 className="text-base font-semibold text-foreground">{facility.name}</h3>
+                        <Badge variant={isOperational(facility.status) ? 'success' : 'secondary'}>
+                          <CheckCircle2 className="w-3 h-3 mr-1" aria-hidden />
                           {facility.status}
                         </Badge>
                         <Badge variant="outline" className={performanceBadge.color}>
                           {performanceBadge.text}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-3 mt-1.5 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" />
+                          <MapPin className="w-3.5 h-3.5" aria-hidden />
                           {facility.location}, {facility.region}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
+                          <Calendar className="w-3.5 h-3.5" aria-hidden />
                           {new Date(facility.installationDate).toLocaleDateString()}
                         </span>
                       </div>
                       <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                         <div>
-                          <p className="text-gray-500">Energy</p>
-                          <p className="font-medium text-emerald-600">-{energyReductionPercent}%</p>
+                          <p className="text-muted-foreground">Energy</p>
+                          <p className="font-medium text-primary">-{energyReductionPercent}%</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Cost</p>
-                          <p className="font-medium text-emerald-600">-{costReductionPercent}%</p>
+                          <p className="text-muted-foreground">Cost</p>
+                          <p className="font-medium text-primary">-{costReductionPercent}%</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Solar</p>
+                          <p className="text-muted-foreground">Solar</p>
                           <p className="font-medium">{facility.solarCapacity} kW</p>
                         </div>
                         <div>
-                          <p className="text-gray-500">CO₂</p>
+                          <p className="text-muted-foreground">CO₂</p>
                           <p className="font-medium">{facility.carbonEmissionReduction} kg/mo</p>
                         </div>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 shrink-0 self-center sm:self-auto" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 self-center sm:self-auto" aria-hidden />
                   </button>
                 )
               })}
@@ -518,89 +513,89 @@ export default function ManagementPanelDashboard() {
               </DialogHeader>
               <div className="space-y-6 pt-2">
                 <div className="flex flex-wrap gap-2">
-                  <Badge className={getStatusColor(selectedFacility.status)}>{selectedFacility.status}</Badge>
+                  <Badge variant={isOperational(selectedFacility.status) ? 'success' : 'secondary'}>{selectedFacility.status}</Badge>
                   <Badge variant="outline">{selectedFacility.solarStatus}</Badge>
                   <Badge variant="outline">{selectedFacility.paygStatus}</Badge>
                   <Badge variant="secondary">{selectedFacility.facilityType}</Badge>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="rounded-lg border bg-gray-50 p-4">
+                  <div className="rounded-lg border border-border bg-muted p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Calendar className="w-4 h-4 text-gray-500" />
+                      <Calendar className="w-4 h-4 text-muted-foreground" aria-hidden />
                       <span className="text-sm font-medium">Installation</span>
                     </div>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-muted-foreground">
                       Installed: {new Date(selectedFacility.installationDate).toLocaleDateString()}
                     </p>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-muted-foreground">
                       PAYG operational: {new Date(selectedFacility.paygOperationalDate).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="rounded-lg border bg-gray-50 p-4">
+                  <div className="rounded-lg border border-border bg-muted p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Activity className="w-4 h-4 text-gray-500" />
+                      <Activity className="w-4 h-4 text-muted-foreground" aria-hidden />
                       <span className="text-sm font-medium">Meter</span>
                     </div>
-                    <p className="text-sm font-mono text-gray-700">{selectedFacility.smartMeterSerial}</p>
+                    <p className="text-sm font-mono text-muted-foreground">{selectedFacility.smartMeterSerial}</p>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Energy consumption</h4>
-                  <div className="rounded-lg border p-4 space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Energy consumption</h4>
+                  <div className="rounded-lg border border-border p-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Before</span>
+                      <span className="text-muted-foreground">Before</span>
                       <span className="font-medium">{selectedFacility.energyConsumptionBefore} kWh/month</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">After</span>
-                      <span className="font-medium text-emerald-600">{selectedFacility.energyConsumptionAfter} kWh/month</span>
+                      <span className="text-muted-foreground">After</span>
+                      <span className="font-medium text-primary">{selectedFacility.energyConsumptionAfter} kWh/month</span>
                     </div>
-                    <div className="flex justify-between text-sm font-semibold text-emerald-600 pt-1 border-t">
+                    <div className="flex justify-between text-sm font-semibold text-primary pt-1 border-t border-border">
                       <span>Monthly savings</span>
                       <span>{selectedFacility.monthlyEnergySavings} kWh</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Costs</h4>
-                  <div className="rounded-lg border p-4 space-y-2">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">Costs</h4>
+                  <div className="rounded-lg border border-border p-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Before</span>
+                      <span className="text-muted-foreground">Before</span>
                       <span className="font-medium">TZS {Number(selectedFacility.electricityCostBefore).toLocaleString()}/month</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">After</span>
-                      <span className="font-medium text-emerald-600">TZS {Number(selectedFacility.electricityCostAfter).toLocaleString()}/month</span>
+                      <span className="text-muted-foreground">After</span>
+                      <span className="font-medium text-primary">TZS {Number(selectedFacility.electricityCostAfter).toLocaleString()}/month</span>
                     </div>
-                    <div className="flex justify-between text-sm font-semibold text-emerald-600 pt-1 border-t">
+                    <div className="flex justify-between text-sm font-semibold text-primary pt-1 border-t border-border">
                       <span>Monthly savings</span>
                       <span>TZS {Number(selectedFacility.monthlyCostSavings).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-lg border p-4">
+                  <div className="rounded-lg border border-border p-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <Sun className="w-4 h-4 text-amber-500" />
+                      <Sun className="w-4 h-4 text-solar-foreground" aria-hidden />
                       <span className="text-sm font-medium">System</span>
                     </div>
-                    <p className="text-sm text-gray-700">{selectedFacility.solarCapacity} kW solar</p>
-                    <p className="text-sm text-gray-700">{selectedFacility.batteryCapacity} kWh battery</p>
+                    <p className="text-sm text-muted-foreground">{selectedFacility.solarCapacity} kW solar</p>
+                    <p className="text-sm text-muted-foreground">{selectedFacility.batteryCapacity} kWh battery</p>
                   </div>
-                  <div className="rounded-lg border p-4">
+                  <div className="rounded-lg border border-border p-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <Leaf className="w-4 h-4 text-teal-500" />
+                      <Leaf className="w-4 h-4 text-success" aria-hidden />
                       <span className="text-sm font-medium">Impact</span>
                     </div>
-                    <p className="text-sm text-gray-700">{selectedFacility.carbonEmissionReduction} kg CO₂/month</p>
+                    <p className="text-sm text-muted-foreground">{selectedFacility.carbonEmissionReduction} kg CO₂/month</p>
                   </div>
                 </div>
-                <div className="rounded-lg border p-4 bg-gray-50/50">
+                <div className="rounded-lg border border-border p-4 bg-muted/50">
                   <FacilityDetailSimulation facility={selectedFacility} />
                 </div>
                 {selectedFacility.notes && (
-                  <div className="rounded-lg bg-blue-50 border border-blue-100 p-4">
-                    <p className="text-sm text-blue-800">
+                  <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
+                    <p className="text-sm text-foreground">
                       <strong>Note:</strong> {selectedFacility.notes}
                     </p>
                   </div>

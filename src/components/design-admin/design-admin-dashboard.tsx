@@ -227,7 +227,7 @@ export function DesignAdminDashboard() {
         nextLive.facilities = rows.map((f) => ({
           id: String(f.id ?? ""),
           name: String(f.name ?? "Unknown"),
-          region: String(f.region ?? f.city ?? "—"),
+          region: String(f.region ?? f.city ?? ""),
           systemSizeKw: 0,
           paymentModel:
             f.paymentModel === "installment" || f.paymentModel === "full_payment" ? f.paymentModel : "payg",
@@ -261,7 +261,7 @@ export function DesignAdminDashboard() {
             amount,
             method,
             status,
-            timestamp: String(t.createdAt ?? t.timestamp ?? t?.transaction?.createdAt ?? "—"),
+            timestamp: String(t.createdAt ?? t.timestamp ?? t?.transaction?.createdAt ?? ""),
             type: "payment",
           }
         })
@@ -289,7 +289,7 @@ export function DesignAdminDashboard() {
               amount,
               method,
               status,
-              timestamp: String(t.createdAt ?? "—"),
+              timestamp: String(t.createdAt ?? ""),
               type: "payment",
             }
           })
@@ -318,8 +318,8 @@ export function DesignAdminDashboard() {
               : t.status === "in_progress"
                 ? "in-progress"
                 : "open",
-          subject: String(t.subject ?? "—"),
-          createdAt: String(t.createdAt ?? "—"),
+          subject: String(t.subject ?? ""),
+          createdAt: String(t.createdAt ?? ""),
         }))
       } catch (e: any) {
         errors.push(e?.message || "Failed to load tickets")
@@ -332,9 +332,9 @@ export function DesignAdminDashboard() {
         nextLive.meters = rows.map((m) => ({
           id: String(m.id ?? ""),
           serial: String(m.meterSerial ?? m.serial ?? ""),
-          parentFacilityName: String(m?.service?.siteName ?? "—"),
+          parentFacilityName: String(m?.service?.siteName ?? ""),
           status: "installed",
-          lastSync: String(m.lastSeenAt ?? m.updatedAt ?? m.createdAt ?? "—"),
+          lastSync: String(m.lastSeenAt ?? m.updatedAt ?? m.createdAt ?? ""),
           tariffPerKwh: 0,
         }))
       } catch (e: any) {
@@ -347,7 +347,7 @@ export function DesignAdminDashboard() {
         const rows: any[] = Array.isArray(aRes?.data) ? aRes.data : []
         nextLive.appliances = rows.map((a) => ({
           id: String(a.id ?? ""),
-          name: String(a.equipmentName ?? a.name ?? "—"),
+          name: String(a.equipmentName ?? a.name ?? ""),
           category: String(a.category ?? "general"),
           wattage: 0,
           price: asMoneyNumber(a.price),
@@ -364,8 +364,8 @@ export function DesignAdminDashboard() {
         const rows: any[] = Array.isArray(agRes?.data) ? agRes.data : []
         nextLive.agents = rows.map((t) => ({
           id: String(t.id ?? ""),
-          name: `${String(t.firstName ?? "").trim()} ${String(t.lastName ?? "").trim()}`.trim() || String(t.email ?? "—"),
-          region: String(t.regionId ?? "—"),
+          name: `${String(t.firstName ?? "").trim()} ${String(t.lastName ?? "").trim()}`.trim() || String(t.email ?? ""),
+          region: String(t.regionId ?? ""),
           commissionRate: 0,
           customersRegistered: 0,
           status: t.status === "inactive" ? "inactive" : "active",
@@ -413,9 +413,9 @@ export function DesignAdminDashboard() {
         const rows: any[] = Array.isArray(mgRes?.data) ? mgRes.data : []
         nextLive.microgridConsumers = rows.map((c) => ({
           id: String(c.consumerCode ?? c.id ?? ""),
-          name: String(c.name ?? "—"),
-          parentFacilityName: String(c.parentFacilityName ?? "—"),
-          meterSerial: String(c.meterSerial ?? "—"),
+          name: String(c.name ?? ""),
+          parentFacilityName: String(c.parentFacilityName ?? ""),
+          meterSerial: String(c.meterSerial ?? ""),
           tariffPerKwh: asMoneyNumber(c.tariffRate),
           balance: asMoneyNumber(c.creditBalance),
           status:
@@ -443,7 +443,7 @@ export function DesignAdminDashboard() {
         }
         nextLive.efficiencyByFacilityId = byFacilityId
       } catch (e: any) {
-        // optional — don’t block live mode
+        // optional don’t block live mode
       }
 
       if (cancelled) return

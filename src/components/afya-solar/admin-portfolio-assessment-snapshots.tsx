@@ -59,17 +59,17 @@ type ReportRow = {
 } | null
 
 function formatDate(value: string | Date | null | undefined) {
-  if (!value) return "—"
+  if (!value) return ""
   return new Date(value).toLocaleString()
 }
 
 function fmtKwh(n: number | null) {
-  if (n == null || Number.isNaN(n)) return "—"
+  if (n == null || Number.isNaN(n)) return ""
   return `${Number(n).toFixed(2)} kWh`
 }
 
 function fmtMoney(n: number | null) {
-  if (n == null || Number.isNaN(n)) return "—"
+  if (n == null || Number.isNaN(n)) return ""
   return formatCurrency(n)
 }
 
@@ -273,8 +273,8 @@ export function AdminPortfolioAssessmentSnapshots() {
   const busy = facilitiesFetching || cyclesFetching
 
   const cycleLabel = activeCycle
-    ? `${new Date(activeCycle.startedAt || "").toLocaleDateString()} · ${activeCycle.status || "—"}`
-    : "—"
+    ? `${new Date(activeCycle.startedAt || "").toLocaleDateString()} · ${activeCycle.status || ""}`
+    : ""
 
   return (
     <div className="space-y-6">
@@ -350,7 +350,7 @@ export function AdminPortfolioAssessmentSnapshots() {
                 <SelectContent className="max-h-[300px] overflow-y-auto">
                   {cycles.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {new Date(c.startedAt || "").toLocaleDateString()} · {c.status || "—"}
+                      {new Date(c.startedAt || "").toLocaleDateString()} · {c.status || ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -359,7 +359,7 @@ export function AdminPortfolioAssessmentSnapshots() {
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Badge variant="outline">Facility: {selectedFacility.name}</Badge>
                   <Badge variant={activeCycle?.status === "completed" ? "default" : "secondary"}>
-                    Cycle status: {activeCycle?.status || "—"}
+                    Cycle status: {activeCycle?.status || ""}
                   </Badge>
                   <Badge variant="outline" className="border-amber-300 text-amber-900 bg-amber-50">
                     Read-only (previous submission)
@@ -435,11 +435,11 @@ export function AdminPortfolioAssessmentSnapshots() {
                 <TabMetricCard label="Daily load" value={fmtKwh(energyModel.dailyLoadKwh)} />
                 <TabMetricCard
                   label="Energy score"
-                  value={energyModel.energyScorePercent != null ? `${energyModel.energyScorePercent}/100` : "—"}
+                  value={energyModel.energyScorePercent != null ? `${energyModel.energyScorePercent}/100` : ""}
                 />
                 <TabMetricCard
                   label="BMI score"
-                  value={energyModel.bmiPercent != null ? `${energyModel.bmiPercent}/100` : "—"}
+                  value={energyModel.bmiPercent != null ? `${energyModel.bmiPercent}/100` : ""}
                 />
                 <TabMetricCard label="Baseline / month" value={fmtMoney(energyModel.baselineMonthly)} />
                 <TabMetricCard label="After solar / month" value={fmtMoney(energyModel.afterSolarMonthly)} />
@@ -448,7 +448,7 @@ export function AdminPortfolioAssessmentSnapshots() {
                 <TabMetricCard label="Diesel baseline / month" value={fmtMoney(energyModel.dieselBaseline)} />
                 <TabMetricCard
                   label="Solar offset"
-                  value={energyModel.solarOffsetPercent != null ? `${energyModel.solarOffsetPercent}%` : "—"}
+                  value={energyModel.solarOffsetPercent != null ? `${energyModel.solarOffsetPercent}%` : ""}
                 />
               </div>
               <p className="text-xs text-muted-foreground">Viewing saved assessment (read-only). Cycle: {cycleLabel}</p>
@@ -501,11 +501,11 @@ export function AdminPortfolioAssessmentSnapshots() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <TabMetricCard
                   label="RCS score"
-                  value={climateModel.score?.rcs != null ? `${climateModel.score.rcs}/100` : "—"}
+                  value={climateModel.score?.rcs != null ? `${climateModel.score.rcs}/100` : ""}
                 />
                 <TabMetricCard
                   label="Tier"
-                  value={climateModel.score?.tier != null ? `Tier ${climateModel.score.tier}` : "—"}
+                  value={climateModel.score?.tier != null ? `Tier ${climateModel.score.tier}` : ""}
                 />
                 <TabMetricCard
                   label="Status"
@@ -515,7 +515,7 @@ export function AdminPortfolioAssessmentSnapshots() {
                     ) : climateModel.score ? (
                       "Stable"
                     ) : (
-                      "—"
+                      ""
                     )
                   }
                 />
@@ -526,18 +526,18 @@ export function AdminPortfolioAssessmentSnapshots() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <TabMetricCard
                   label="Critical attention"
-                  value={climateModel.score ? (climateModel.score.criticalAttention ? "Yes" : "No") : "—"}
+                  value={climateModel.score ? (climateModel.score.criticalAttention ? "Yes" : "No") : ""}
                 />
                 <TabMetricCard label="Top risk" value={climateModel.topRiskTitle} />
                 <TabMetricCard
                   label="Top risk severity"
-                  value={climateModel.topRiskSeverity != null ? `${climateModel.topRiskSeverity}%` : "—"}
+                  value={climateModel.topRiskSeverity != null ? `${climateModel.topRiskSeverity}%` : ""}
                 />
                 <TabMetricCard label="Evidence items" value={climateModel.evidenceCount} />
                 <TabMetricCard label="Evidence coverage" value={`${climateModel.evidenceCoveragePct}%`} />
                 <TabMetricCard
                   label="Avg. risk severity"
-                  value={climateModel.avgRiskSeverity != null ? `${climateModel.avgRiskSeverity}%` : "—"}
+                  value={climateModel.avgRiskSeverity != null ? `${climateModel.avgRiskSeverity}%` : ""}
                 />
               </div>
               <p className="text-xs text-muted-foreground">Viewing saved assessment (read-only). Cycle: {cycleLabel}</p>
@@ -584,7 +584,7 @@ export function AdminPortfolioAssessmentSnapshots() {
                       className={cn("cursor-pointer hover:bg-gray-50", c.id === selectedCycleId && "bg-emerald-50/70")}
                       onClick={() => setSelectedCycleId(c.id)}
                     >
-                      <td className="px-3 py-2 font-medium">{c.assessmentNumber ?? "—"}</td>
+                      <td className="px-3 py-2 font-medium">{c.assessmentNumber ?? ""}</td>
                       <td className="px-3 py-2">
                         <Badge variant="outline">{c.status}</Badge>
                       </td>

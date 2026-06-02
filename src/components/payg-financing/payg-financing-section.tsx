@@ -67,9 +67,9 @@ function toNumber(v: string | number | null | undefined): number {
 }
 
 function formatDate(value: string | null | undefined): string {
-  if (!value) return "—"
+  if (!value) return ""
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return ""
   return d.toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
@@ -201,7 +201,7 @@ export function PaygFinancingSection({ facilityId }: PaygFinancingSectionProps) 
         <KpiCard
           icon={<Calendar className="w-4 h-4 text-emerald-600" />}
           label="Next Due"
-          value={kpis.nextDueAmount > 0 ? formatCurrency(kpis.nextDueAmount) : "—"}
+          value={kpis.nextDueAmount > 0 ? formatCurrency(kpis.nextDueAmount) : ""}
           subValue={kpis.nextDueDate ? formatDate(kpis.nextDueDate) : "No upcoming due"}
           accent="emerald"
         />
@@ -380,7 +380,7 @@ export function PaygFinancingSection({ facilityId }: PaygFinancingSectionProps) 
                           {formatDate(entry.dueDate)}
                         </td>
                         <td className="px-2 py-2 font-mono text-xs">
-                          {contract ? `#${entry.contractId.slice(0, 8).toUpperCase()}` : "—"}
+                          {contract ? `#${entry.contractId.slice(0, 8).toUpperCase()}` : ""}
                         </td>
                         <td className="px-2 py-2 text-right tabular-nums">
                           {formatCurrency(toNumber(entry.amount))}

@@ -43,7 +43,8 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="mb-4">Loading equipment details...</div>
+            <Loader2 aria-hidden className="mx-auto mb-3 h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="text-sm text-muted-foreground">Loading equipment details...</div>
           </div>
         </div>
       </div>
@@ -53,9 +54,9 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
   if (!equipment) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="rounded-md bg-red-50 p-4">
-          <h3 className="text-sm font-medium text-red-800">Equipment not found</h3>
-          <div className="mt-2 text-sm text-red-700">
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+          <h3 className="text-sm font-medium text-destructive">Equipment not found</h3>
+          <div className="mt-2 text-sm text-destructive/90">
             <p>The equipment you are looking for does not exist or has been deleted.</p>
           </div>
           <div className="mt-4">
@@ -78,8 +79,8 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
         </Button>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{equipment.equipmentName}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight">{equipment.equipmentName}</h1>
+            <p className="text-sm text-muted-foreground">
               {equipment.brand} {equipment.model}
             </p>
           </div>
@@ -133,7 +134,7 @@ export default function EquipmentDetailsPage({ params }: { params: { id: string 
                 <p className="text-sm text-muted-foreground">Status</p>
                 <p className="font-medium">
                   {equipment.status === "draft" && <Badge variant="secondary">Draft</Badge>}
-                  {equipment.status === "published" && <Badge variant="default">Published</Badge>}
+                  {equipment.status === "published" && <Badge variant="success">Published</Badge>}
                   {equipment.status === "sold_out" && <Badge variant="destructive">Sold Out</Badge>}
                   {equipment.status === "archived" && <Badge variant="outline">Archived</Badge>}
                 </p>

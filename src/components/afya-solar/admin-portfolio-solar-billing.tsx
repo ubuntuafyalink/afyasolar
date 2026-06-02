@@ -73,7 +73,7 @@ export function AdminPortfolioSolarBilling() {
     refetch: refetchEligible,
   } = useAfyaSolarBillingEligibleFacilities()
 
-  // Admin portfolio billing — used for the summary metrics and per-facility invoice list.
+  // Admin portfolio billing used for the summary metrics and per-facility invoice list.
   const { summary, invoiceRequests } = useAdminPortfolioBilling("30d")
   const {
     data: summaryJson,
@@ -258,7 +258,7 @@ export function AdminPortfolioSolarBilling() {
         <MetricCard
           title="Active facilities"
           subtitle={`${portfolioMetrics.solarSubscribers} on Afya Solar`}
-          value={String(portfolioMetrics.totalFacilities || "—")}
+          value={String(portfolioMetrics.totalFacilities || "")}
           icon={Building2}
           loading={allFacilitiesLoading || eligibleLoading}
         />
@@ -279,7 +279,7 @@ export function AdminPortfolioSolarBilling() {
         <MetricCard
           title="Active subscriptions"
           subtitle="Solar customers"
-          value={String(portfolioMetrics.activeSubscriptions || "—")}
+          value={String(portfolioMetrics.activeSubscriptions || "")}
           icon={CheckCircle}
           loading={summaryLoading}
         />

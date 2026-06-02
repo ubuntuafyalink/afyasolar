@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { StatCard } from "@/components/ui/stat-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -19,6 +20,7 @@ import {
   BarChart3,
   Battery,
   CheckCircle,
+  DollarSign,
   Home,
   Lightbulb,
   Shield,
@@ -56,12 +58,12 @@ import {
 } from "recharts"
 
 const CHART_COLORS = {
-  solar: "#eab308",
-  consumption: "#3b82f6",
-  battery: "#22c55e",
-  grid: "#ef4444",
-  export: "#8b5cf6",
-  savings: "#10b981",
+  solar: "var(--color-chart-1)",
+  consumption: "var(--color-chart-2)",
+  battery: "var(--color-chart-3)",
+  grid: "var(--color-chart-4)",
+  export: "var(--color-chart-5)",
+  savings: "var(--color-chart-3)",
 }
 
 export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }) {
@@ -129,14 +131,26 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
     }))
   }, [equipmentByCategory])
 
-  const PIE_COLORS = ["#eab308", "#3b82f6", "#22c55e", "#ef4444", "#8b5cf6", "#f59e0b"]
+  const PIE_COLORS = [
+    "var(--color-chart-1)",
+    "var(--color-chart-2)",
+    "var(--color-chart-3)",
+    "var(--color-chart-4)",
+    "var(--color-chart-5)",
+    "var(--color-solar)",
+  ]
 
   const efficiencyGaugeData = useMemo(
     () => [
       {
         name: "Score",
         value: facility.eeatScore,
-        fill: facility.eeatScore >= 70 ? "#22c55e" : facility.eeatScore >= 55 ? "#eab308" : "#ef4444",
+        fill:
+          facility.eeatScore >= 70
+            ? "var(--color-chart-3)"
+            : facility.eeatScore >= 55
+              ? "var(--color-chart-1)"
+              : "var(--color-chart-4)",
       },
     ],
     [facility.eeatScore],
@@ -144,8 +158,8 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
 
   const getScoreLevel = (score: number) => {
     if (score >= 80) return { level: "Gold", color: "text-primary" }
-    if (score >= 60) return { level: "Green", color: "text-emerald-600" }
-    if (score >= 40) return { level: "Yellow", color: "text-amber-600" }
+    if (score >= 60) return { level: "Green", color: "text-primary" }
+    if (score >= 40) return { level: "Yellow", color: "text-warning-foreground" }
     return { level: "Red", color: "text-destructive" }
   }
 
@@ -174,7 +188,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="hidden md:flex gap-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" aria-hidden />
               System Active
             </Badge>
             <Badge>{facility.facilityType}</Badge>
@@ -224,83 +238,83 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Current Load</CardDescription>
-                      <CardTitle className="text-2xl">
-                        {Math.abs(liveData.currentPower).toFixed(1)} kW
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Progress
-                        value={Math.min(
-                          (Math.abs(liveData.currentPower) / facility.systemSizeKw) * 100,
-                          100,
-                        )}
-                        className="h-1.5"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        of {facility.systemSizeKw}kW capacity
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Current Load"
+                    value={`${Math.abs(liveData.currentPower).toFixed(1)} kW`}
+                    icon={<Zap />}
+                    accent="primary"
+                    meta={
+                      <>
+                        <Progress
+                          value={Math.min(
+                            (Math.abs(liveData.currentPower) / facility.systemSizeKw) * 100,
+                            100,
+                          )}
+                          className="h-1.5"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          of {facility.systemSizeKw}kW capacity
+                        </p>
+                      </>
+                    }
+                  />
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Solar Generation</CardDescription>
-                      <CardTitle className="text-2xl" style={{ color: CHART_COLORS.solar }}>
-                        {Math.abs(liveData.solarGeneration).toFixed(1)} kW
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center text-xs text-emerald-600">
-                        <Sun className="w-3 h-3 mr-1" />
+                  <StatCard
+                    title="Solar Generation"
+                    value={`${Math.abs(liveData.solarGeneration).toFixed(1)} kW`}
+                    icon={<Sun />}
+                    accent="solar"
+                    meta={
+                      <span className="flex items-center text-primary">
+                        <Sun className="w-3 h-3 mr-1" aria-hidden />
                         {solarCoverage}% coverage
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </span>
+                    }
+                  />
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Battery</CardDescription>
-                      <CardTitle className="text-2xl">{liveData.batteryLevel}%</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Progress value={liveData.batteryLevel} className="h-1.5" />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {facility.batteryCapacityKwh} kWh total
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Battery"
+                    value={`${liveData.batteryLevel}%`}
+                    icon={<Battery />}
+                    accent="success"
+                    meta={
+                      <>
+                        <Progress value={liveData.batteryLevel} className="h-1.5" />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {facility.batteryCapacityKwh} kWh total
+                        </p>
+                      </>
+                    }
+                  />
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Today's Usage</CardDescription>
-                      <CardTitle className="text-2xl">{liveData.dailyConsumption} kWh</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center text-xs">
-                        <TrendingUp className="w-3 h-3 text-emerald-600 mr-1" />
-                        <span className="text-emerald-600">Normal range</span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <StatCard
+                    title="Today's Usage"
+                    value={`${liveData.dailyConsumption} kWh`}
+                    icon={<Activity />}
+                    accent="primary"
+                    meta={
+                      <span className="flex items-center text-primary">
+                        <TrendingUp className="w-3 h-3 mr-1" aria-hidden />
+                        Normal range
+                      </span>
+                    }
+                  />
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardDescription className="text-xs">Credit Balance</CardDescription>
-                      <CardTitle className="text-2xl">TSh {liveData.creditBalance.toLocaleString()}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">
+                  <StatCard
+                    title="Credit Balance"
+                    value={`TSh ${liveData.creditBalance.toLocaleString()}`}
+                    icon={<DollarSign />}
+                    accent="success"
+                    meta={
+                      <>
                         ~
                         {Math.ceil(
                           liveData.creditBalance / (facility.dailyConsumption * facility.solarCostPerKwh),
                         )}{" "}
                         days remaining
-                      </p>
-                    </CardContent>
-                  </Card>
+                      </>
+                    }
+                  />
                 </div>
 
                 <Card className="border-accent">
@@ -321,13 +335,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         {facility.eeatScore}
                       </div>
                       <div className="flex-1">
-                        <Badge
-                          className={
-                            facility.eeatScore >= 70
-                              ? "bg-emerald-500/10 text-emerald-700"
-                              : "bg-amber-500/10 text-amber-700"
-                          }
-                        >
+                        <Badge variant={facility.eeatScore >= 70 ? "success" : "warning"}>
                           {getScoreLevel(facility.eeatScore).level} Standard
                         </Badge>
                         <Progress value={facility.eeatScore} className="h-3 mt-2 mb-2" />
@@ -352,7 +360,15 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                         <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            backgroundColor: "var(--color-popover)",
+                            borderColor: "var(--color-border)",
+                            borderRadius: "var(--radius)",
+                            color: "var(--color-popover-foreground)",
+                          }}
+                        />
                         <Legend wrapperStyle={{ fontSize: 12 }} />
                         <Area
                           type="monotone"
@@ -375,10 +391,10 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-tr from-emerald-500/5 to-accent/5">
+                <Card className="bg-primary/5">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <TrendingDown className="w-5 h-5 text-emerald-600" />
+                      <TrendingDown className="w-5 h-5 text-primary" aria-hidden />
                       Monthly Savings vs Grid
                     </CardTitle>
                   </CardHeader>
@@ -398,7 +414,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Monthly Savings</p>
-                        <p className="text-xl font-bold text-emerald-600">
+                        <p className="text-xl font-bold text-primary">
                           TSh {facility.monthlySolarSavings.toLocaleString()}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -407,7 +423,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Annual Projection</p>
-                        <p className="text-xl font-bold text-emerald-600">
+                        <p className="text-xl font-bold text-primary">
                           TSh {(facility.monthlySolarSavings * 12).toLocaleString()}
                         </p>
                         <p className="text-xs text-muted-foreground">Based on current usage</p>
@@ -432,8 +448,8 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                   <CardContent>
                     <div className="grid grid-cols-3 gap-4 items-center text-center py-8">
                       <div className="space-y-2">
-                        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto bg-amber-500/10">
-                          <Sun className="w-10 h-10" style={{ color: CHART_COLORS.solar }} />
+                        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto bg-solar/15">
+                          <Sun className="w-10 h-10" style={{ color: CHART_COLORS.solar }} aria-hidden />
                         </div>
                         <p className="font-bold text-2xl" style={{ color: CHART_COLORS.solar }}>
                           {Math.abs(liveData.solarGeneration).toFixed(1)} kW
@@ -442,8 +458,8 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                       </div>
 
                       <div className="space-y-2">
-                        <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto">
-                          <Battery className="w-10 h-10 text-emerald-600" />
+                        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                          <Battery className="w-10 h-10 text-primary" aria-hidden />
                         </div>
                         <p className="font-bold text-2xl">{liveData.batteryLevel}%</p>
                         <p className="text-sm text-muted-foreground">{facility.batteryCapacityKwh} kWh Battery</p>
@@ -454,7 +470,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
 
                       <div className="space-y-2">
                         <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto">
-                          <Zap className="w-10 h-10 text-accent" />
+                          <Zap className="w-10 h-10 text-accent-foreground" aria-hidden />
                         </div>
                         <p className="font-bold text-2xl">{Math.abs(liveData.currentPower).toFixed(1)} kW</p>
                         <p className="text-sm text-muted-foreground">Facility Load</p>
@@ -462,8 +478,8 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-4 mt-4">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 rounded-full">
-                        <ArrowRight className="w-4 h-4" style={{ color: CHART_COLORS.solar }} />
+                      <div className="flex items-center gap-2 px-4 py-2 bg-solar/15 rounded-full">
+                        <ArrowRight className="w-4 h-4" style={{ color: CHART_COLORS.solar }} aria-hidden />
                         <span className="text-sm">
                           Solar to Load:{" "}
                           {Math.min(
@@ -474,8 +490,8 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         </span>
                       </div>
                       {liveData.solarGeneration > liveData.currentPower && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 rounded-full">
-                          <ArrowDown className="w-4 h-4 text-emerald-600" />
+                        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+                          <ArrowDown className="w-4 h-4 text-primary" aria-hidden />
                           <span className="text-sm">
                             To Battery:{" "}
                             {(Math.abs(liveData.solarGeneration) - Math.abs(liveData.currentPower)).toFixed(1)}{" "}
@@ -484,8 +500,8 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         </div>
                       )}
                       {liveData.currentPower > liveData.solarGeneration && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 rounded-full">
-                          <ArrowUp className="w-4 h-4 text-amber-700" />
+                        <div className="flex items-center gap-2 px-4 py-2 bg-solar/15 rounded-full">
+                          <ArrowUp className="w-4 h-4 text-solar-foreground" aria-hidden />
                           <span className="text-sm">
                             From Battery:{" "}
                             {(Math.abs(liveData.currentPower) - Math.abs(liveData.solarGeneration)).toFixed(1)}{" "}
@@ -508,7 +524,15 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                         <YAxis yAxisId="left" tick={{ fontSize: 11 }} />
                         <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            backgroundColor: "var(--color-popover)",
+                            borderColor: "var(--color-border)",
+                            borderRadius: "var(--radius)",
+                            color: "var(--color-popover-foreground)",
+                          }}
+                        />
                         <Legend wrapperStyle={{ fontSize: 12 }} />
                         <Bar yAxisId="left" dataKey="solarGeneration" name="Solar (kW)" fill={CHART_COLORS.solar} opacity={0.8} />
                         <Bar yAxisId="left" dataKey="consumption" name="Load (kW)" fill={CHART_COLORS.consumption} opacity={0.8} />
@@ -529,7 +553,15 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                         <XAxis dataKey="time" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            backgroundColor: "var(--color-popover)",
+                            borderColor: "var(--color-border)",
+                            borderRadius: "var(--radius)",
+                            color: "var(--color-popover-foreground)",
+                          }}
+                        />
                         <Legend wrapperStyle={{ fontSize: 12 }} />
                         <Bar dataKey="gridImport" name="Grid Import (kW)" fill={CHART_COLORS.grid} opacity={0.7} />
                         <Bar dataKey="gridExport" name="Grid Export (kW)" fill={CHART_COLORS.export} opacity={0.7} />
@@ -567,20 +599,14 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                             startAngle={180}
                             endAngle={0}
                           >
-                            <RadialBar dataKey="value" cornerRadius={10} background={{ fill: "hsl(var(--muted))" }} />
+                            <RadialBar dataKey="value" cornerRadius={10} background={{ fill: "var(--color-muted)" }} />
                           </RadialBarChart>
                         </ResponsiveContainer>
                         <div>
                           <p className={`text-5xl font-bold ${getScoreLevel(facility.eeatScore).color}`}>
                             {facility.eeatScore}
                           </p>
-                          <Badge
-                            className={
-                              facility.eeatScore >= 70
-                                ? "bg-emerald-500/10 text-emerald-700"
-                                : "bg-amber-500/10 text-amber-700"
-                            }
-                          >
+                          <Badge variant={facility.eeatScore >= 70 ? "success" : "warning"}>
                             {getScoreLevel(facility.eeatScore).level} Standard
                           </Badge>
                           <p className="text-sm text-muted-foreground mt-2">Solar Coverage: {solarCoverage}%</p>
@@ -603,7 +629,15 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                               <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip />
+                          <Tooltip
+                            contentStyle={{
+                              fontSize: 12,
+                              backgroundColor: "var(--color-popover)",
+                              borderColor: "var(--color-border)",
+                              borderRadius: "var(--radius)",
+                              color: "var(--color-popover-foreground)",
+                            }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -784,10 +818,10 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <Card className="border-emerald-500/30">
+                  <Card className="border-primary/20">
                     <CardHeader className="pb-2">
                       <CardDescription className="text-xs">Optimization Score</CardDescription>
-                      <CardTitle className="text-3xl text-emerald-600">{loadOpt.optimizationScore}%</CardTitle>
+                      <CardTitle className="text-3xl text-primary">{loadOpt.optimizationScore}%</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <Progress value={loadOpt.optimizationScore} className="h-1.5" />
@@ -805,7 +839,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                   <Card>
                     <CardHeader className="pb-2">
                       <CardDescription className="text-xs">Daily Savings Potential</CardDescription>
-                      <CardTitle className="text-2xl text-emerald-600">TSh {loadOpt.totalPotentialDailySavings.toLocaleString()}</CardTitle>
+                      <CardTitle className="text-2xl text-primary">TSh {loadOpt.totalPotentialDailySavings.toLocaleString()}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-xs text-muted-foreground">from load shifting</p>
@@ -814,7 +848,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                   <Card>
                     <CardHeader className="pb-2">
                       <CardDescription className="text-xs">Monthly Savings</CardDescription>
-                      <CardTitle className="text-2xl text-emerald-600">TSh {loadOpt.totalPotentialMonthlySavings.toLocaleString()}</CardTitle>
+                      <CardTitle className="text-2xl text-primary">TSh {loadOpt.totalPotentialMonthlySavings.toLocaleString()}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className="text-xs text-muted-foreground">projected from optimization</p>
@@ -853,14 +887,14 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
 
                       <div>
                         <div className="flex items-center gap-2 mb-3">
-                          <Lightbulb className="w-5 h-5 text-amber-600" />
+                          <Lightbulb className="w-5 h-5 text-solar-foreground" aria-hidden />
                           <h4 className="font-semibold">Shiftable Loads ({facility.nonCriticalLoadKw} kW)</h4>
                         </div>
                         <div className="space-y-2">
                           {loadOpt.schedule
                             .filter((s) => s.canShiftToOffPeak)
                             .map((item, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-2 border rounded-lg bg-amber-500/5">
+                              <div key={idx} className="flex items-center justify-between p-2 border rounded-lg bg-solar/10">
                                 <div>
                                   <p className="text-sm font-medium">{item.name}</p>
                                   <p className="text-xs text-muted-foreground">
@@ -870,7 +904,7 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                                 <div className="text-right">
                                   <Badge variant="secondary">Shift</Badge>
                                   {item.potentialSavings > 0 && (
-                                    <p className="text-xs text-emerald-600 mt-1">Save TSh {item.potentialSavings}/day</p>
+                                    <p className="text-xs text-primary mt-1">Save TSh {item.potentialSavings}/day</p>
                                   )}
                                 </div>
                               </div>
@@ -900,7 +934,15 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                         <XAxis dataKey="dateLabel" tick={{ fontSize: 10 }} interval={2} />
                         <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            backgroundColor: "var(--color-popover)",
+                            borderColor: "var(--color-border)",
+                            borderRadius: "var(--radius)",
+                            color: "var(--color-popover-foreground)",
+                          }}
+                        />
                         <Legend wrapperStyle={{ fontSize: 12 }} />
                         <Bar dataKey="solarProduction" name="Solar (kWh)" fill={CHART_COLORS.solar} opacity={0.8} />
                         <Bar dataKey="consumption" name="Consumption (kWh)" fill={CHART_COLORS.consumption} opacity={0.8} />
@@ -920,7 +962,15 @@ export function DemoFacilityDashboard({ facility }: { facility: FacilityConfig }
                         <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                         <XAxis dataKey="dateLabel" tick={{ fontSize: 10 }} interval={2} />
                         <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            backgroundColor: "var(--color-popover)",
+                            borderColor: "var(--color-border)",
+                            borderRadius: "var(--radius)",
+                            color: "var(--color-popover-foreground)",
+                          }}
+                        />
                         <Area type="monotone" dataKey="savings" name="Daily Savings (TSh)" fill={CHART_COLORS.savings} stroke={CHART_COLORS.savings} fillOpacity={0.3} />
                       </AreaChart>
                     </ResponsiveContainer>
