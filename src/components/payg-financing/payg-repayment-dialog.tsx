@@ -253,7 +253,7 @@ export function PaygRepaymentDialog({
             </span>
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm mt-1.5">
-            Contract #{contractShortId} — paying{" "}
+            Contract #{contractShortId} paying{" "}
             <span className="font-semibold">{formatCurrency(amount)}</span>{" "}
             {mode === "installment"
               ? "for the next installment."

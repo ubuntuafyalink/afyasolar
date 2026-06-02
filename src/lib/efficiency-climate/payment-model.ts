@@ -41,7 +41,7 @@ export function billingContextForEfficiency(
   }
   switch (model) {
     case "EAAS":
-      return "EaaS: output below benchmark — flag for SLA review; invoice credit or service visit per contract terms."
+      return "EaaS: output below benchmark flag for SLA review; invoice credit or service visit per contract terms."
     case "PAAS":
       return "Pay-as-you-go: verify meter calibration and token logic; sustained underproduction may reduce effective energy delivery."
     case "INSTALLMENT":

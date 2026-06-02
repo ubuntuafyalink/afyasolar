@@ -115,7 +115,9 @@ export function FeatureRequestDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" suppressHydrationWarning>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <span className="text-2xl">{serviceIcons[serviceName] || "💡"}</span>
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="h-4 w-4" aria-hidden />
+            </span>
             Request New Feature - {serviceDisplayName}
           </DialogTitle>
           <DialogDescription>
@@ -126,7 +128,7 @@ export function FeatureRequestDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-semibold">
-              Feature Title <span className="text-red-500">*</span>
+              Feature Title <span className="text-destructive">*</span>
             </Label>
             <Input
               id="title"
@@ -146,7 +148,7 @@ export function FeatureRequestDialog({
 
           <div className="space-y-2">
             <Label htmlFor="description" className="text-sm font-semibold">
-              Description <span className="text-red-500">*</span>
+              Description <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="description"
@@ -179,19 +181,19 @@ export function FeatureRequestDialog({
               <SelectContent>
                 <SelectItem value="low">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                    <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
                     Low - Nice to have
                   </div>
                 </SelectItem>
                 <SelectItem value="medium">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-yellow-400"></span>
+                    <span className="w-2 h-2 rounded-full bg-warning"></span>
                     Medium - Would be helpful
                   </div>
                 </SelectItem>
                 <SelectItem value="high">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span className="w-2 h-2 rounded-full bg-destructive"></span>
                     High - Critical for operations
                   </div>
                 </SelectItem>
@@ -215,7 +217,7 @@ export function FeatureRequestDialog({
             <Button
               type="submit"
               disabled={isSubmitting || !title.trim() || !description.trim()}
-              className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold h-10"
+              className="w-full sm:w-auto font-semibold h-10"
             >
               {isSubmitting ? (
                 <>

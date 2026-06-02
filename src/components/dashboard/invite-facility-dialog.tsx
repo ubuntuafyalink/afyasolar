@@ -375,8 +375,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="text-xs h-7 px-2 bg-green-600 hover:bg-green-700">
-          <Plus className="w-3 h-3 mr-1" />
+        <Button className="text-xs h-7 px-2">
+          <Plus className="w-3 h-3 mr-1" aria-hidden="true" />
           Invite Facility
         </Button>
       </DialogTrigger>
@@ -391,12 +391,12 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Basic Information Section */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-green-900 border-b border-green-200 pb-1.5">Basic Information</h3>
+            <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1.5">Basic Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Facility Name */}
               <div className="space-y-1">
-                <Label htmlFor="facilityName" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-green-600" />
+                <Label htmlFor="facilityName" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                   Facility Name
                 </Label>
                 <div className="relative group">
@@ -411,12 +411,12 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                       setErrors(restErrors)
                     }}
                     disabled={isLoading}
-                    className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all"
+                    className="h-9 text-sm border border-border bg-background shadow-sm hover:shadow-md transition-shadow"
                   />
                 </div>
                 {errors.name && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                     {errors.name}
                   </p>
                 )}
@@ -424,8 +424,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
 
               {/* Email Field */}
               <div className="space-y-1">
-                <Label htmlFor="email" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-green-600" />
+                <Label htmlFor="email" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                   Email Address
                 </Label>
                 <div className="relative group">
@@ -440,12 +440,12 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                       setErrors(restErrors)
                     }}
                     disabled={isLoading}
-                    className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all"
+                    className="h-9 text-sm border border-border bg-background shadow-sm hover:shadow-md transition-shadow"
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                     {errors.email}
                   </p>
                 )}
@@ -453,8 +453,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
 
               {/* Phone Number */}
               <div className="space-y-1">
-                <Label htmlFor="phone" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-green-600" />
+                <Label htmlFor="phone" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                   Phone Number
                 </Label>
                 <div className="relative group">
@@ -467,12 +467,12 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                     onKeyDown={handlePhoneKeyDown}
                     onFocus={handlePhoneFocus}
                     disabled={isLoading}
-                    className="h-9 w-[180px] text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all"
+                    className="h-9 w-[180px] text-sm border border-border bg-background shadow-sm hover:shadow-md transition-shadow"
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                     {errors.phone}
                   </p>
                 )}
@@ -482,13 +482,13 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
 
           {/* Location Information Section */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-green-900 border-b border-green-200 pb-1.5">Location Information</h3>
+            <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1.5">Location Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {/* Address */}
               <div className="space-y-1 md:col-span-2">
-                <Label htmlFor="address" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-green-600" />
-                  Address <span className="text-gray-500 font-normal">(Optional)</span>
+                <Label htmlFor="address" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                  Address <span className="text-muted-foreground font-normal">(Optional)</span>
                 </Label>
                 <div className="relative group">
                   <Input
@@ -500,12 +500,12 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                     onKeyDown={handleAddressKeyDown}
                     onFocus={handleAddressFocus}
                     disabled={isLoading}
-                    className="h-9 w-[160px] text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all"
+                    className="h-9 w-[160px] text-sm border border-border bg-background shadow-sm hover:shadow-md transition-shadow"
                   />
                 </div>
                 {errors.address && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                     {errors.address}
                   </p>
                 )}
@@ -513,8 +513,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
 
               {/* Region */}
               <div className="space-y-1">
-                <Label htmlFor="region" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-green-600" />
+                <Label htmlFor="region" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                   Region
                 </Label>
                 <Select
@@ -522,16 +522,16 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                   onValueChange={handleRegionChange}
                   disabled={isLoading || isLoadingRegions}
                 >
-                  <SelectTrigger className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 shadow-sm hover:shadow-md transition-all">
+                  <SelectTrigger className="h-9 text-sm border border-border bg-background shadow-sm hover:shadow-md transition-shadow">
                     <SelectValue placeholder={isLoadingRegions ? "Loading regions..." : "Select region"} />
                   </SelectTrigger>
                   <SelectContent>
                     {isLoadingRegions ? (
-                      <div className="p-2 text-center text-sm text-gray-500">
-                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                      <div className="p-2 text-center text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin mx-auto" aria-hidden="true" />
                       </div>
                     ) : regions.length === 0 ? (
-                      <div className="p-2 text-center text-sm text-gray-500">
+                      <div className="p-2 text-center text-sm text-muted-foreground">
                         No regions available
                       </div>
                     ) : (
@@ -544,8 +544,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                   </SelectContent>
                 </Select>
                 {errors.region && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                     {errors.region}
                   </p>
                 )}
@@ -553,8 +553,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
 
               {/* District/City */}
               <div className="space-y-1">
-                <Label htmlFor="district" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-green-600" />
+                <Label htmlFor="district" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                   District
                 </Label>
                 <Select
@@ -562,12 +562,12 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                   onValueChange={handleDistrictChange}
                   disabled={isLoading || !selectedRegionId}
                 >
-                  <SelectTrigger className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 shadow-sm hover:shadow-md transition-all">
+                  <SelectTrigger className="h-9 text-sm border border-border bg-background shadow-sm hover:shadow-md transition-shadow">
                     <SelectValue placeholder={!selectedRegionId ? "Select region first" : districts.length === 0 ? "No districts available" : "Select district"} />
                   </SelectTrigger>
                   <SelectContent>
                     {districts.length === 0 ? (
-                      <div className="p-2 text-center text-sm text-gray-500">
+                      <div className="p-2 text-center text-sm text-muted-foreground">
                         {!selectedRegionId ? "Please select a region first" : "No districts available"}
                       </div>
                     ) : (
@@ -580,8 +580,8 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
                   </SelectContent>
                 </Select>
                 {errors.district && (
-                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
                     {errors.district}
                   </p>
                 )}
@@ -612,10 +612,10 @@ export function InviteFacilityDialog({ onSuccess }: InviteFacilityDialogProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading} className="bg-green-600 hover:bg-green-700">
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                   Sending...
                 </>
               ) : (

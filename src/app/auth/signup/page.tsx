@@ -715,15 +715,15 @@ export default function SignUpPage() {
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 min-h-[280px] animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Left Column - Contact Information */}
-            <div className="space-y-3 p-3 bg-gradient-to-br from-white via-emerald-50/20 to-white rounded-lg border border-emerald-100/60 shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
+            <div className="space-y-3 p-3 bg-card rounded-lg border border-border shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
               <div className="space-y-2.5">
-                <div className="flex items-center gap-2 pb-1 border-b border-emerald-100/50">
-                  <div className="w-7 h-7 rounded-md bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-sm">
-                    <Phone className="w-3.5 h-3.5 text-white" />
+                <div className="flex items-center gap-2 pb-1 border-b border-border">
+                  <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center shadow-sm">
+                    <Phone className="w-3.5 h-3.5 text-primary-foreground" aria-hidden />
                   </div>
                   <div>
-                    <Label htmlFor="phone" className="text-sm font-bold text-gray-900">Phone Number <span className="text-red-500">*</span></Label>
-                    <p className="text-xs text-gray-500">Required for facility contact</p>
+                    <Label htmlFor="phone" className="text-sm font-bold text-foreground">Phone Number <span className="text-destructive">*</span></Label>
+                    <p className="text-xs text-muted-foreground">Required for facility contact</p>
                   </div>
                 </div>
                 <div className="relative group">
@@ -846,40 +846,40 @@ export default function SignUpPage() {
                       }, 0)
                     }}
                     disabled={isLoading}
-                    className={`h-8 sm:h-9 pl-10 text-sm border-2 ${phoneDuplicate ? 'border-red-300 bg-red-50' : 'border-gray-200/80 bg-gradient-to-r from-white to-emerald-50/20'} focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all duration-300 font-medium rounded-lg`}
+                    className={`h-8 sm:h-9 pl-10 text-sm border-2 ${phoneDuplicate ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'} focus:bg-card shadow-sm hover:shadow-md transition-all duration-300 font-medium rounded-lg`}
                   />
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-600 group-focus-within:text-emerald-700 transition-all duration-300" />
+                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary transition-all duration-300" aria-hidden />
                   {phoneDuplicate && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <AlertCircle className="w-5 h-5 text-destructive" aria-hidden />
                     </div>
                   )}
                 </div>
                 {errors.phone && (
-                  <p className="text-sm text-red-600 mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.phone.message}
                   </p>
                 )}
                 {phoneDuplicate && (
-                  <p className="text-sm text-red-600 mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-2 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     Phone number already exists. Please use a different number.
                   </p>
                 )}
-                <p className="text-xs text-emerald-700/80 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Enter the 9-digit phone number (numbers only)
                 </p>
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3 pb-2 border-b border-emerald-100/50">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg">
-                    <Mail className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-3 pb-2 border-b border-border">
+                  <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-lg">
+                    <Mail className="w-5 h-5 text-primary-foreground" aria-hidden />
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-sm font-bold text-gray-900">Email Address <span className="text-red-500">*</span></Label>
-                    <p className="text-xs text-gray-500">Required for account creation</p>
+                    <Label htmlFor="email" className="text-sm font-bold text-foreground">Email Address <span className="text-destructive">*</span></Label>
+                    <p className="text-xs text-muted-foreground">Required for account creation</p>
                   </div>
                 </div>
                 <div className="relative group">
@@ -909,37 +909,37 @@ export default function SignUpPage() {
                       }
                     })}
                     disabled={isLoading}
-                    className={`h-8 sm:h-9 pl-10 text-sm border ${emailDuplicate ? 'border-red-300 bg-red-50' : 'border-green-200/80 bg-white'} focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all`}
+                    className={`h-8 sm:h-9 pl-10 text-sm border ${emailDuplicate ? 'border-destructive/40 bg-destructive/5' : 'border-border bg-card'} focus:bg-card shadow-sm hover:shadow-md transition-all`}
                   />
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-600 group-focus-within:text-green-700 transition-all" />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary transition-all" aria-hidden />
                   {emailDuplicate && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      <AlertCircle className="w-5 h-5 text-red-500" />
+                      <AlertCircle className="w-5 h-5 text-destructive" aria-hidden />
                     </div>
                   )}
                 </div>
                 {errors.email && (
-                  <p className="text-sm text-red-600 mt-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.email.message}
                   </p>
                 )}
-                <p className="text-xs text-green-700/80 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   This email will be used for your account
                 </p>
               </div>
             </div>
 
             {/* Right Column - Password Section */}
-            <div className="space-y-3 p-3 bg-gradient-to-br from-white via-blue-50/20 to-white rounded-lg border border-blue-100/60 shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
+            <div className="space-y-3 p-3 bg-card rounded-lg border border-border shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm">
               <div className="space-y-4">
-                <div className="flex items-center gap-3 pb-2 border-b border-blue-100/50">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <Lock className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-3 pb-2 border-b border-border">
+                  <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-lg">
+                    <Lock className="w-5 h-5 text-primary-foreground" aria-hidden />
                   </div>
                   <div>
-                    <Label htmlFor="password" className="text-sm font-bold text-gray-900">Password</Label>
-                    <p className="text-xs text-gray-500">Create a strong password</p>
+                    <Label htmlFor="password" className="text-sm font-bold text-foreground">Password</Label>
+                    <p className="text-xs text-muted-foreground">Create a strong password</p>
                   </div>
                 </div>
                 <div className="relative group">
@@ -952,23 +952,24 @@ export default function SignUpPage() {
                     })}
                     value={password}
                     disabled={isLoading}
-                    className="h-8 sm:h-9 pl-10 pr-10 text-sm border-2 border-gray-200/80 bg-gradient-to-r from-white to-blue-50/20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all duration-300 font-medium rounded-lg"
+                    className="h-8 sm:h-9 pl-10 pr-10 text-sm border-2 border-border bg-card focus:bg-card shadow-sm hover:shadow-md transition-all duration-300 font-medium rounded-lg"
                   />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600 group-focus-within:text-blue-700 transition-all duration-300" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary transition-all duration-300" aria-hidden />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? <EyeOff className="w-5 h-5" aria-hidden /> : <Eye className="w-5 h-5" aria-hidden />}
                   </button>
                 </div>
                 {password && <PasswordStrengthIndicator password={password} />}
                 {passwordValidationErrors.length > 0 && (
                   <div className="space-y-1">
                     {passwordValidationErrors.map((error, index) => (
-                      <p key={index} className="text-sm text-red-600 flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <p key={index} className="text-sm text-destructive flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                         {error}
                       </p>
                     ))}
@@ -977,13 +978,13 @@ export default function SignUpPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="flex items-center gap-3 pb-2 border-b border-blue-100/50">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <Lock className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-3 pb-2 border-b border-border">
+                  <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shadow-lg">
+                    <Lock className="w-5 h-5 text-primary-foreground" aria-hidden />
                   </div>
                   <div>
-                    <Label htmlFor="confirmPassword" className="text-sm font-bold text-gray-900">Confirm Password</Label>
-                    <p className="text-xs text-gray-500">Re-enter your password</p>
+                    <Label htmlFor="confirmPassword" className="text-sm font-bold text-foreground">Confirm Password</Label>
+                    <p className="text-xs text-muted-foreground">Re-enter your password</p>
                   </div>
                 </div>
                 <div className="relative group">
@@ -994,20 +995,21 @@ export default function SignUpPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isLoading}
-                    className="h-8 sm:h-9 pl-10 pr-10 text-sm border-2 border-gray-200/80 bg-gradient-to-r from-white to-blue-50/20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all duration-300 font-medium rounded-lg"
+                    className="h-8 sm:h-9 pl-10 pr-10 text-sm border-2 border-border bg-card focus:bg-card shadow-sm hover:shadow-md transition-all duration-300 font-medium rounded-lg"
                   />
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600 group-focus-within:text-blue-700 transition-all duration-300" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary transition-all duration-300" aria-hidden />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-700 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" aria-hidden /> : <Eye className="w-5 h-5" aria-hidden />}
                   </button>
                 </div>
                 {confirmPassword && password !== confirmPassword && (
-                  <p className="text-sm text-red-600 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     Passwords do not match
                   </p>
                 )}
@@ -1021,11 +1023,11 @@ export default function SignUpPage() {
           <div className="space-y-4 min-h-[280px]">
             {/* Basic Information Section */}
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-green-900 border-b border-green-200 pb-1.5">Basic Information</h3>
+              <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1.5">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="facilityName" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-green-600" />
+                  <Label htmlFor="facilityName" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden />
                     Facility Name
                   </Label>
                   <div className="relative group">
@@ -1035,20 +1037,20 @@ export default function SignUpPage() {
                       placeholder="Health Center Name"
                       {...register("facilityInfo.name")}
                       disabled={isLoading}
-                      className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all"
+                      className="h-9 text-sm border border-border bg-card focus:bg-card shadow-sm hover:shadow-md transition-all"
                     />
                   </div>
                   {errors.facilityInfo?.name && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden />
                       {errors.facilityInfo.name.message}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="category" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-green-600" />
+                  <Label htmlFor="category" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden />
                     Facility Category
                   </Label>
                   <Select
@@ -1057,7 +1059,7 @@ export default function SignUpPage() {
                       setValue('facilityInfo.category', value, { shouldValidate: true })}
                     disabled={isLoading}
                   >
-                    <SelectTrigger className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 shadow-sm hover:shadow-md transition-all">
+                    <SelectTrigger className="h-9 text-sm border border-border bg-card shadow-sm hover:shadow-md transition-all">
                       <SelectValue placeholder="Select facility category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1074,8 +1076,8 @@ export default function SignUpPage() {
                     </SelectContent>
                   </Select>
                   {errors.facilityInfo?.category && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden />
                       {errors.facilityInfo.category.message}
                     </p>
                   )}
@@ -1085,11 +1087,11 @@ export default function SignUpPage() {
 
             {/* Location Information Section */}
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-green-900 border-b border-green-200 pb-1.5">Location Information</h3>
+              <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1.5">Location Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1 md:col-span-2">
-                  <Label htmlFor="address" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-green-600" />
+                  <Label htmlFor="address" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden />
                     P.O BOX Address
                   </Label>
                   <div className="relative group">
@@ -1104,20 +1106,20 @@ export default function SignUpPage() {
                       onKeyDown={handleAddressKeyDown}
                       onFocus={handleAddressFocus}
                       disabled={isLoading}
-                      className="h-9 w-[160px] text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:bg-white shadow-sm hover:shadow-md transition-all"
+                      className="h-9 w-[160px] text-sm border border-border bg-card focus:bg-card shadow-sm hover:shadow-md transition-all"
                     />
                   </div>
                   {errors.facilityInfo?.address && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden />
                       {errors.facilityInfo.address.message}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="region" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-green-600" />
+                  <Label htmlFor="region" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden />
                     Region
                   </Label>
                   <Select
@@ -1125,16 +1127,16 @@ export default function SignUpPage() {
                     onValueChange={handleRegionChange}
                     disabled={isLoading || isLoadingRegions}
                   >
-                    <SelectTrigger className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 shadow-sm hover:shadow-md transition-all">
+                    <SelectTrigger className="h-9 text-sm border border-border bg-card shadow-sm hover:shadow-md transition-all">
                       <SelectValue placeholder={isLoadingRegions ? "Loading regions..." : "Select region"} />
                     </SelectTrigger>
                     <SelectContent>
                       {isLoadingRegions ? (
-                        <div className="p-2 text-center text-sm text-gray-500">
-                          <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                        <div className="p-2 text-center text-sm text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin mx-auto" aria-hidden />
                         </div>
                       ) : regions.length === 0 ? (
-                        <div className="p-2 text-center text-sm text-gray-500">
+                        <div className="p-2 text-center text-sm text-muted-foreground">
                           No regions available
                         </div>
                       ) : (
@@ -1147,16 +1149,16 @@ export default function SignUpPage() {
                     </SelectContent>
                   </Select>
                   {errors.facilityInfo?.region && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden />
                       {errors.facilityInfo.region.message}
                     </p>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="district" className="text-xs font-semibold text-green-800 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-green-600" />
+                  <Label htmlFor="district" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-primary" aria-hidden />
                     District
                   </Label>
                   <Select
@@ -1164,12 +1166,12 @@ export default function SignUpPage() {
                     onValueChange={handleDistrictChange}
                     disabled={isLoading || !selectedRegionId}
                   >
-                    <SelectTrigger className="h-9 text-sm border border-green-200/80 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 shadow-sm hover:shadow-md transition-all">
+                    <SelectTrigger className="h-9 text-sm border border-border bg-card shadow-sm hover:shadow-md transition-all">
                       <SelectValue placeholder={!selectedRegionId ? "Select region first" : districts.length === 0 ? "No districts available" : "Select district"} />
                     </SelectTrigger>
                     <SelectContent>
                       {districts.length === 0 ? (
-                        <div className="p-2 text-center text-sm text-gray-500">
+                        <div className="p-2 text-center text-sm text-muted-foreground">
                           {!selectedRegionId ? "Please select a region first" : "No districts available"}
                         </div>
                       ) : (
@@ -1182,8 +1184,8 @@ export default function SignUpPage() {
                     </SelectContent>
                   </Select>
                   {errors.facilityInfo?.districtId && (
-                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden />
                       {errors.facilityInfo.districtId.message}
                     </p>
                   )}
@@ -1194,12 +1196,12 @@ export default function SignUpPage() {
             {/* Location Coordinates Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-green-900 border-b border-green-200 pb-1.5">GPS Location</h3>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                <h3 className="text-xs font-semibold text-foreground border-b border-border pb-1.5">GPS Location</h3>
+                <Badge variant="secondary" className="text-xs">
                   Recommended
                 </Badge>
               </div>
-              <p className="text-xs text-gray-600 -mt-2">
+              <p className="text-xs text-muted-foreground -mt-2">
                 Provide GPS coordinates to enable map display and location services. Click "Use Current Location" for automatic detection.
               </p>
               <LocationPicker
@@ -1220,8 +1222,8 @@ export default function SignUpPage() {
         const renderEditableField = (label: string, value: string, fieldKey: string, isEmail = false) => {
           const isEditing = editingField === fieldKey
           return (
-            <div className="flex justify-between items-start gap-3 p-2.5 bg-white/50 rounded-md">
-              <span className="text-green-700 font-medium text-xs flex-shrink-0">{label}:</span>
+            <div className="flex justify-between items-start gap-3 p-2.5 bg-card/50 rounded-md">
+              <span className="text-muted-foreground font-medium text-xs flex-shrink-0">{label}:</span>
               {isEditing ? (
                 <div className="flex-1 flex items-center gap-2">
                   <Input
@@ -1242,22 +1244,24 @@ export default function SignUpPage() {
                     type="button"
                     size="sm"
                     onClick={() => setEditingField(null)}
-                    className="h-8 px-2 bg-green-600 hover:bg-green-700"
+                    className="h-8 px-2"
+                    aria-label={`Save ${label}`}
                   >
-                    <CheckCircle2 className="w-3 h-3" />
+                    <CheckCircle2 className="w-3 h-3" aria-hidden />
                   </Button>
                 </div>
               ) : (
                 <div className="flex-1 flex items-center justify-end gap-2">
-                  <span className="text-gray-900 font-semibold text-xs sm:text-sm text-right break-words flex-1">
+                  <span className="text-foreground font-semibold text-xs sm:text-sm text-right break-words flex-1">
                     {value || 'N/A'}
                   </span>
                   <button
                     type="button"
                     onClick={() => setEditingField(fieldKey)}
-                    className="text-green-600 hover:text-green-700 transition-colors"
+                    className="text-primary hover:text-primary/80 transition-colors"
+                    aria-label={`Edit ${label}`}
                   >
-                    <Edit2 className="w-3 h-3" />
+                    <Edit2 className="w-3 h-3" aria-hidden />
                   </button>
                 </div>
               )}
@@ -1268,10 +1272,10 @@ export default function SignUpPage() {
         return (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 min-h-[280px]">
-              <div className="p-4 sm:p-5 bg-gradient-to-br from-green-50/60 to-emerald-50/60 border border-green-200/80 rounded-xl shadow-sm hover:shadow-md transition-all">
-                <h3 className="text-sm font-bold text-green-900 mb-4 flex items-center gap-2">
-                  <div className="w-7 h-7 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm">
-                    <Mail className="w-3.5 h-3.5 text-white" />
+              <div className="p-4 sm:p-5 bg-muted border border-border rounded-lg shadow-sm hover:shadow-md transition-all">
+                <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+                  <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                    <Mail className="w-3.5 h-3.5 text-primary-foreground" aria-hidden />
                   </div>
                   Account Information
                 </h3>
@@ -1281,10 +1285,10 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              <div className="p-4 sm:p-5 bg-gradient-to-br from-green-50/80 to-emerald-50/80 border-2 border-green-200/60 rounded-lg shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
-                <h3 className="text-sm sm:text-base font-bold text-green-900 mb-3 sm:mb-4 flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center shadow-sm"> 
-                    <Building2 className="w-4 h-4 text-white" />
+              <div className="p-4 sm:p-5 bg-muted border-2 border-border rounded-lg shadow-md hover:shadow-lg transition-all backdrop-blur-sm">
+                <h3 className="text-sm sm:text-base font-bold text-foreground mb-3 sm:mb-4 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+                    <Building2 className="w-4 h-4 text-primary-foreground" aria-hidden />
                   </div>
                   Facility Information
                 </h3>
@@ -1298,7 +1302,7 @@ export default function SignUpPage() {
             </div>
 
             {/* Terms and Conditions Section */}
-            <div className="mt-6 p-4 bg-gradient-to-br from-green-50/80 to-emerald-50/80 border border-green-200/80 rounded-xl shadow-sm">
+            <div className="mt-6 p-4 bg-muted border border-border rounded-lg shadow-sm">
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <Checkbox
@@ -1306,18 +1310,18 @@ export default function SignUpPage() {
                     checked={acceptedTerms}
                     onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
                     disabled={isLoading}
-                    className="mt-0.5 border-green-300 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    className="mt-0.5"
                   />
                   <div className="flex-1">
-                    <Label htmlFor="terms" className="text-sm font-semibold text-green-900 cursor-pointer hover:text-green-800">
+                    <Label htmlFor="terms" className="text-sm font-semibold text-foreground cursor-pointer hover:text-foreground/90">
                       I agree to the Terms and Conditions
                     </Label>
-                    <p className="text-xs text-green-800 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       By creating an account, you agree to our{' '}
                       <Link
                         href="/terms"
                         target="_blank"
-                        className="text-green-600 hover:text-green-700 font-semibold underline underline-offset-2"
+                        className="text-primary hover:underline font-semibold underline-offset-2"
                       >
                         Terms of Service
                       </Link>{' '}
@@ -1325,7 +1329,7 @@ export default function SignUpPage() {
                       <Link
                         href="/privacy-policy"
                         target="_blank"
-                        className="text-green-600 hover:text-green-700 font-semibold underline underline-offset-2"
+                        className="text-primary hover:underline font-semibold underline-offset-2"
                       >
                         Privacy Policy
                       </Link>
@@ -1334,8 +1338,8 @@ export default function SignUpPage() {
                   </div>
                 </div>
                 {!acceptedTerms && (
-                  <p className="text-xs text-green-600 flex items-center gap-2 ml-7">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground flex items-center gap-2 ml-7">
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" aria-hidden />
                     You must accept the terms and conditions to create an account
                   </p>
                 )}
@@ -1352,51 +1356,51 @@ export default function SignUpPage() {
   const currentStepData = steps.find(s => s.number === currentStep)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/30 relative overflow-hidden">
       {/* Enhanced animated background gradients */}
-      <div 
+      <div
         className="fixed inset-0 -z-10 opacity-60"
         style={{
           background: `radial-gradient(circle at ${mousePosition.x}% ${mousePosition.y}%, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.10) 40%, transparent 70%)`,
         }}
       />
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
-      
+
       {/* Multiple animated gradient orbs */}
-      <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-to-br from-emerald-300/30 via-teal-200/20 to-green-300/25 rounded-full blur-3xl -z-10 animate-pulse" />
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-teal-200/25 via-emerald-100/30 to-green-200/20 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '1.5s' }} />
-      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-green-100/40 to-emerald-100/35 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '0.8s' }} />
-      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-gradient-to-l from-teal-100/30 to-green-100/25 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: '2s' }} />
-      
+      <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-gradient-to-tr from-primary/10 to-primary/15 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" style={{ animationDelay: '1.5s' }} />
+      <div className="absolute top-1/3 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" style={{ animationDelay: '0.8s' }} />
+      <div className="absolute bottom-1/4 left-1/3 w-[400px] h-[400px] bg-gradient-to-l from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" style={{ animationDelay: '2s' }} />
+
       {/* Subtle floating particles effect */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute top-10 left-10 w-2 h-2 bg-emerald-400/20 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }} />
-        <div className="absolute top-20 right-20 w-3 h-3 bg-green-400/15 rounded-full animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }} />
-        <div className="absolute bottom-20 left-20 w-2 h-2 bg-teal-400/20 rounded-full animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }} />
-        <div className="absolute bottom-10 right-10 w-4 h-4 bg-emerald-300/10 rounded-full animate-bounce" style={{ animationDelay: '1.5s', animationDuration: '5s' }} />
+        <div className="absolute top-10 left-10 w-2 h-2 bg-primary/20 rounded-full animate-bounce motion-reduce:animate-none" style={{ animationDelay: '0s', animationDuration: '3s' }} />
+        <div className="absolute top-20 right-20 w-3 h-3 bg-primary/15 rounded-full animate-bounce motion-reduce:animate-none" style={{ animationDelay: '1s', animationDuration: '4s' }} />
+        <div className="absolute bottom-20 left-20 w-2 h-2 bg-primary/20 rounded-full animate-bounce motion-reduce:animate-none" style={{ animationDelay: '2s', animationDuration: '3.5s' }} />
+        <div className="absolute bottom-10 right-10 w-4 h-4 bg-primary/10 rounded-full animate-bounce motion-reduce:animate-none" style={{ animationDelay: '1.5s', animationDuration: '5s' }} />
       </div>
       
       <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-2 sm:py-3 max-w-5xl relative z-10">
         {/* Enhanced Header */}
         <div className="mb-3 sm:mb-4">
           <div className="flex items-center justify-between mb-3">
-            <Link 
-              href="/auth/signin" 
-              className="inline-flex items-center gap-2 text-xs sm:text-sm text-emerald-700 hover:text-emerald-600 font-semibold transition-all group px-2.5 py-1 rounded-lg hover:bg-emerald-50/80 backdrop-blur-sm border border-emerald-200/50 shadow-sm hover:shadow-md"
+            <Link
+              href="/auth/signin"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm text-primary hover:text-primary/80 font-semibold transition-all group px-2.5 py-1 rounded-lg hover:bg-primary/5 backdrop-blur-sm border border-border shadow-sm hover:shadow-md"
             >
-              <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="w-3 h-3 sm:w-3.5 sm:h-3.5 group-hover:-translate-x-1 transition-transform" aria-hidden />
               <span>Back to Sign In</span>
             </Link>
-            
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-gradient-to-r from-emerald-50/90 to-teal-50/90 border border-emerald-200/60 text-emerald-700 rounded-full text-xs font-bold shadow-lg backdrop-blur-md">
-              <Sparkles className="w-2.5 h-2.5 animate-pulse" />
+
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-secondary border border-border text-secondary-foreground rounded-full text-xs font-bold shadow-lg backdrop-blur-md">
+              <Sparkles className="w-2.5 h-2.5 text-primary animate-pulse motion-reduce:animate-none" aria-hidden />
               <span className="hidden sm:inline">Join 500+ Facilities</span>
-              <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+              <Star className="w-2.5 h-2.5 fill-solar text-solar" aria-hidden />
             </div>
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-            <div className="relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border-2 border-emerald-300/60 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-md">
+            <div className="relative flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border-2 border-primary/20 bg-secondary shadow-md">
               <Image
                 src="/images/services/logo.png"
                 alt="Ubuntu Afya Link logo"
@@ -1406,19 +1410,19 @@ export default function SignUpPage() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-black text-gray-900 mb-0.5 leading-tight">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-green-600 drop-shadow-sm">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-0.5 leading-tight">
+                <span className="text-primary drop-shadow-sm">
                   Facility Registration
                 </span>
               </h1>
               <div className="flex items-center gap-1.5">
-                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-gradient-to-r from-emerald-100/80 to-teal-100/80 rounded-full border border-emerald-200/50">
-                  <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
-                  <span className="text-xs font-bold text-emerald-700">
+                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-primary/10 rounded-full border border-primary/20">
+                  <div className="w-1 h-1 bg-primary rounded-full animate-pulse motion-reduce:animate-none" />
+                  <span className="text-xs font-bold text-primary">
                     Step {currentStep} of {steps.length}
                   </span>
                 </div>
-                <span className="text-xs text-gray-600 font-medium">
+                <span className="text-xs text-muted-foreground font-medium">
                   • {currentStepData?.title}
                 </span>
               </div>
@@ -1428,20 +1432,19 @@ export default function SignUpPage() {
 
         {/* Enhanced Progress Indicator */}
         <div className="mb-3 sm:mb-4">
-          <Card className="border-0 shadow-xl bg-white/98 backdrop-blur-2xl overflow-hidden relative rounded-xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/50 via-white/90 to-teal-50/50" />
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500/20 via-teal-500/30 to-emerald-500/20" />
+          <Card className="border border-border shadow-xl bg-card/95 backdrop-blur-2xl overflow-hidden relative rounded-lg">
+            <div className="absolute top-0 left-0 w-full h-0.5 bg-primary/30" />
             <CardContent className="p-3 sm:p-4 relative z-10">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 animate-pulse shadow-lg shadow-emerald-500/30" />
-                  <span className="text-xs font-bold text-gray-800 tracking-wide">Registration Progress</span>
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse motion-reduce:animate-none shadow-lg shadow-primary/30" />
+                  <span className="text-xs font-bold text-foreground tracking-wide">Registration Progress</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                  <div className="text-sm font-bold text-primary">
                     {Math.round((currentStep / steps.length) * 100)}%
                   </div>
-                  <span className="text-xs font-medium text-gray-500">Complete</span>
+                  <span className="text-xs font-medium text-muted-foreground">Complete</span>
                 </div>
               </div>
               
@@ -1458,44 +1461,44 @@ export default function SignUpPage() {
                       <div className="flex items-center gap-1.5 sm:gap-2">
                         <div className={`
                           relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center transition-all duration-500 transform
-                          ${isActive 
-                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/40 scale-105 ring-2 ring-emerald-500/20' 
-                            : isCompleted 
-                            ? 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-md scale-100' 
-                            : 'bg-gray-100/80 border-2 border-gray-200/60 scale-100'
+                          ${isActive
+                            ? 'bg-primary shadow-lg shadow-primary/40 scale-105 ring-2 ring-ring/30'
+                            : isCompleted
+                            ? 'bg-primary/80 shadow-md scale-100'
+                            : 'bg-muted border-2 border-border scale-100'
                           }
                         `}>
                           {isCompleted ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white drop-shadow-sm" />
+                            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground drop-shadow-sm" aria-hidden />
                           ) : (
                             <StepIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${
-                              isActive ? 'text-white drop-shadow-sm' : 'text-gray-400'
-                            }`} />
+                              isActive ? 'text-primary-foreground drop-shadow-sm' : 'text-muted-foreground'
+                            }`} aria-hidden />
                           )}
-                          
+
                           {/* Active step pulse effect */}
                           {isActive && (
-                            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 animate-ping opacity-20" />
+                            <div className="absolute inset-0 rounded-lg bg-primary animate-ping motion-reduce:animate-none opacity-20" />
                           )}
                         </div>
-                        
+
                         <div className="hidden sm:block">
                           <div className={`text-xs font-bold transition-colors ${
-                            isActive ? 'text-emerald-700' : isCompleted ? 'text-emerald-600' : 'text-gray-500'
+                            isActive ? 'text-primary' : isCompleted ? 'text-primary' : 'text-muted-foreground'
                           }`}>
                             {step.title}
                           </div>
                           <div className={`text-xs font-medium transition-colors ${
-                            isActive ? 'text-emerald-600' : isCompleted ? 'text-emerald-500' : 'text-gray-400'
+                            isActive ? 'text-primary/80' : isCompleted ? 'text-primary/80' : 'text-muted-foreground'
                           }`}>
                             {step.description}
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Connector line */}
                       {!isLast && (
-                        <div className="hidden sm:block w-6 h-0.5 bg-gradient-to-r from-emerald-200 to-teal-200 rounded-full mx-1" />
+                        <div className="hidden sm:block w-6 h-0.5 bg-primary/20 rounded-full mx-1" />
                       )}
                     </div>
                   )
@@ -1503,9 +1506,9 @@ export default function SignUpPage() {
               </div>
               
               {/* Progress bar */}
-              <div className="mt-3 relative h-1 bg-gray-100/60 rounded-full overflow-hidden">
-                <div 
-                  className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700 ease-out shadow-lg shadow-emerald-500/30"
+              <div className="mt-3 relative h-1 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-700 ease-out shadow-lg shadow-primary/30"
                   style={{ width: `${(currentStep / steps.length) * 100}%` }}
                 />
               </div>
@@ -1514,8 +1517,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Enhanced Main Content Card */}
-        <Card className="border-0 shadow-xl bg-white/98 backdrop-blur-2xl overflow-hidden relative rounded-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/30 via-white/95 to-teal-50/30" />
+        <Card className="border border-border shadow-xl bg-card/95 backdrop-blur-2xl overflow-hidden relative rounded-lg">
           <CardContent className="p-3 sm:p-4 relative z-10">
             <form onSubmit={handleSubmit(async (data) => {
               await onSubmit(data)
@@ -1528,52 +1530,53 @@ export default function SignUpPage() {
               </div>
 
               {/* Enhanced Navigation Buttons */}
-              <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-emerald-100/50">
+              <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-border">
                 <div>
                   {currentStep > 1 && (
                     <Button
                       type="button"
+                      variant="outline"
                       onClick={handleBack}
                       disabled={isLoading}
-                      className="group bg-white/80 hover:bg-gray-50 border-2 border-emerald-200/60 text-emerald-700 hover:text-emerald-600 h-8 px-4 text-sm font-bold shadow-sm hover:shadow-md transition-all rounded-lg backdrop-blur-sm"
+                      className="group h-9 px-4 text-sm font-semibold transition-all"
                     >
-                      <ChevronLeft className="w-3.5 h-3.5 mr-1.5 group-hover:-translate-x-1 transition-transform" />
+                      <ChevronLeft className="w-3.5 h-3.5 mr-1.5 group-hover:-translate-x-1 transition-transform" aria-hidden />
                       Previous
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   {currentStep < 3 ? (
                     <Button
                       type="button"
                       onClick={handleNext}
                       disabled={isLoading}
-                      className="group bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 h-8 px-5 text-sm text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg"
+                      className="group h-9 px-5 text-sm font-semibold transition-all"
                     >
                       Next
-                      <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" aria-hidden />
                     </Button>
                   ) : (
                     <Button
                       type="submit"
                       disabled={
-                        isLoading || 
-                        !acceptedTerms || 
-                        phoneDuplicate || 
+                        isLoading ||
+                        !acceptedTerms ||
+                        phoneDuplicate ||
                         emailDuplicate
                       }
-                      className="group bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 h-8 px-5 text-sm text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg disabled:opacity-50"
+                      className="group h-9 px-5 text-sm font-semibold transition-all"
                     >
                       {isLoading ? (
                         <>
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden />
                           Creating Account...
                         </>
                       ) : (
                         <>
                           Create Account
-                          <CheckCircle2 className="w-3.5 h-3.5 ml-1.5" />
+                          <CheckCircle2 className="w-3.5 h-3.5 ml-1.5" aria-hidden />
                         </>
                       )}
                     </Button>
@@ -1586,35 +1589,35 @@ export default function SignUpPage() {
 
         {/* Enhanced Footer */}
         <div className="mt-3 sm:mt-4 text-center space-y-2">
-          <div className="flex items-center justify-center gap-3 text-xs text-gray-600">
-            <Link 
-              href="/auth/signin" 
-              className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-semibold transition-colors group"
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+            <Link
+              href="/auth/signin"
+              className="flex items-center gap-1 text-primary hover:underline font-semibold transition-colors group"
             >
-              <ArrowLeft className="w-2.5 h-2.5 group-hover:-translate-x-1 transition-transform" />
+              <ArrowLeft className="w-2.5 h-2.5 group-hover:-translate-x-1 transition-transform" aria-hidden />
               Already have an account?
             </Link>
-            <span className="text-gray-400">•</span>
+            <span className="text-muted-foreground">•</span>
             <div className="flex items-center gap-2">
               <Link
                 href="/terms"
-                className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors underline underline-offset-2"
+                className="text-primary hover:underline font-semibold transition-colors underline-offset-2"
               >
                 Terms
               </Link>
               <Link
                 href="/privacy-policy"
-                className="text-emerald-600 hover:text-emerald-700 font-semibold transition-colors underline underline-offset-2"
+                className="text-primary hover:underline font-semibold transition-colors underline-offset-2"
               >
                 Privacy
               </Link>
             </div>
           </div>
-          
-          <div className="flex items-center justify-center gap-1 px-2 py-1 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 border border-emerald-200/50 rounded-full text-xs font-medium text-emerald-700 backdrop-blur-sm">
-            <Shield className="w-2 h-2" />
+
+          <div className="flex items-center justify-center gap-1 px-2 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-medium text-primary backdrop-blur-sm">
+            <Shield className="w-2 h-2" aria-hidden />
             <span>Secure & HIPAA Compliant</span>
-            <Lock className="w-2 h-2" />
+            <Lock className="w-2 h-2" aria-hidden />
           </div>
         </div>
       </div>

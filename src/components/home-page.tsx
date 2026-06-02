@@ -166,7 +166,7 @@ export function HomePage() {
               
               <p className="text-base md:text-lg text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed font-medium">
                 The smartest way to manage power needs for Tanzanian healthcare facilities. Monitor consumption, make
-                payments, and switch to solar—all in one easy app.
+                payments, and switch to solarall in one easy app.
               </p>
               
               {/* Quick Value Proposition - Modern Pills */}
@@ -229,10 +229,10 @@ export function HomePage() {
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[
-                { icon: Activity, title: "Live Monitoring", desc: "Real-time power usage tracking—no more surprise bills", gradient: "from-green-500 to-emerald-500", bg: "from-green-50 to-emerald-50" },
+                { icon: Activity, title: "Live Monitoring", desc: "Real-time power usage trackingno more surprise bills", gradient: "from-green-500 to-emerald-500", bg: "from-green-50 to-emerald-50" },
                 { icon: Smartphone, title: "Instant Top-Up", desc: "Pay electricity bills quickly via mobile money", gradient: "from-blue-500 to-cyan-500", bg: "from-blue-50 to-cyan-50" },
                 { icon: Sun, title: "Solar Solutions", desc: "Customized solar energy systems designed specifically for your healthcare facility's needs", gradient: "from-yellow-500 to-orange-500", bg: "from-yellow-50 to-orange-50" },
-                { icon: CreditCard, title: "Payment Flexibility", desc: "Wallet, card, bank transfer, mobile money—all supported", gradient: "from-purple-500 to-pink-500", bg: "from-purple-50 to-pink-50" },
+                { icon: CreditCard, title: "Payment Flexibility", desc: "Wallet, card, bank transfer, mobile moneyall supported", gradient: "from-purple-500 to-pink-500", bg: "from-purple-50 to-pink-50" },
                 { icon: Headphones, title: "Priority Support", desc: "Dispute bills, report faults, request services instantly", gradient: "from-indigo-500 to-purple-500", bg: "from-indigo-50 to-purple-50" },
                 { icon: Lightbulb, title: "Smart Tips", desc: "AI-powered usage recommendations for maximum savings", gradient: "from-green-500 to-teal-500", bg: "from-green-50 to-teal-50" },
               ].map((feature, index) => (

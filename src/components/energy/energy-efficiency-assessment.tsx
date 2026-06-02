@@ -197,7 +197,7 @@ export function EnergyEfficiencyAssessment() {
       <CardHeader>
         <CardTitle>Energy Efficiency Assessment Tool (EEAT)</CardTitle>
         <CardDescription className="text-xs sm:text-sm">
-          Comprehensive assessment aligned with ISO 50001:2018 and Tanzania NEES 2024–2034.
+          Comprehensive assessment aligned with ISO 50001:2018 and Tanzania NEES 20242034.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -326,7 +326,7 @@ export function EnergyEfficiencyAssessment() {
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs sm:text-sm">
-                    Which 3–5 items account for the highest energy consumption?
+                    Which 35 items account for the highest energy consumption?
                   </Label>
                   <Textarea
                     placeholder="List top consumers and their estimated contribution"
@@ -406,11 +406,11 @@ export function EnergyEfficiencyAssessment() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs sm:text-sm">Peak energy demand hours</Label>
-                  <Input placeholder="e.g. 8am–12pm, 5pm–9pm" className="text-xs sm:text-sm" />
+                  <Input placeholder="e.g. 8am12pm, 5pm9pm" className="text-xs sm:text-sm" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs sm:text-sm">Recorded blackouts/shortages frequency</Label>
-                  <Input placeholder="e.g. 2–3 times per week" className="text-xs sm:text-sm" />
+                  <Input placeholder="e.g. 23 times per week" className="text-xs sm:text-sm" />
                 </div>
               </div>
 
@@ -422,9 +422,9 @@ export function EnergyEfficiencyAssessment() {
                     {(() => {
                       const before = parseNumber(baselineBeforeSolar)
                       const current = parseNumber(baselineCurrentConsumption)
-                      if (!(before > 0) || !(current > 0)) return "—"
+                      if (!(before > 0) || !(current > 0)) return ""
                       const reduction = ((before - current) / before) * 100
-                      if (!Number.isFinite(reduction)) return "—"
+                      if (!Number.isFinite(reduction)) return ""
                       return `${reduction.toFixed(1)}%`
                     })()}
                   </span>
@@ -543,7 +543,7 @@ export function EnergyEfficiencyAssessment() {
           <div className="space-y-6">
             <section className="space-y-4">
               <h3 className="text-sm sm:text-base font-semibold">
-                Section 1: Power Reliability (Score: 0–10)
+                Section 1: Power Reliability (Score: 010)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -553,8 +553,8 @@ export function EnergyEfficiencyAssessment() {
                       <SelectValue placeholder="Select answer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="0-2">0–2 hours</SelectItem>
-                      <SelectItem value="3-6">3–6 hours</SelectItem>
+                      <SelectItem value="0-2">02 hours</SelectItem>
+                      <SelectItem value="3-6">36 hours</SelectItem>
                       <SelectItem value="7-plus">&gt; 6 hours</SelectItem>
                     </SelectContent>
                   </Select>
@@ -577,7 +577,7 @@ export function EnergyEfficiencyAssessment() {
 
             <section className="space-y-4">
               <h3 className="text-sm sm:text-base font-semibold">
-                Section 2: Energy Wastage (Score: 0–10)
+                Section 2: Energy Wastage (Score: 010)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -588,7 +588,7 @@ export function EnergyEfficiencyAssessment() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">&lt; 50%</SelectItem>
-                      <SelectItem value="medium">50–80%</SelectItem>
+                      <SelectItem value="medium">5080%</SelectItem>
                       <SelectItem value="high">&gt; 80%</SelectItem>
                     </SelectContent>
                   </Select>
@@ -611,7 +611,7 @@ export function EnergyEfficiencyAssessment() {
 
             <section className="space-y-4">
               <h3 className="text-sm sm:text-base font-semibold">
-                Section 3: Thermal Efficiency (Score: 0–10)
+                Section 3: Thermal Efficiency (Score: 010)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -646,7 +646,7 @@ export function EnergyEfficiencyAssessment() {
 
             <section className="space-y-4">
               <h3 className="text-sm sm:text-base font-semibold">
-                Section 4: Staff Behavior (Score: 0–10)
+                Section 4: Staff Behavior (Score: 010)
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -719,7 +719,7 @@ export function EnergyEfficiencyAssessment() {
                   }
                   setAssessmentError(null)
                   setIsCalculating(true)
-                  // Simple scoring rules per answer (0–10 per section)
+                  // Simple scoring rules per answer (010 per section)
                   const s1 =
                     (outageHours === "0-2" ? 5 : outageHours === "3-6" ? 3 : outageHours === "7-plus" ? 1 : 0) +
                     (batteryBackup === "all" ? 5 : batteryBackup === "partial" ? 3 : batteryBackup === "none" ? 1 : 0)

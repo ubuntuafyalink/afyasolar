@@ -7,7 +7,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-gradient-to-b from-green-50/30 via-white to-green-50/20 py-10 px-4">
       <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg border border-green-100 p-6 sm:p-8">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
-          UBUNTU AFYALINK COMPANY LIMITED – TERMS &amp; CONDITIONS
+          UBUNTU AFYALINK COMPANY LIMITED TERMS &amp; CONDITIONS
         </h1>
         <p className="text-sm text-gray-500 mb-1">Effective Date: 01 th November 2025</p>
         <p className="text-sm text-gray-500 mb-6">Last Updated: 10th December 2025</p>
