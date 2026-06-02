@@ -24,6 +24,13 @@ export const NORMALIZATION_VERSION = "v1"
 export const NASA_POWER_PARAMETERS = ["T2M_MAX", "PRECTOTCORR", "WS10M"] as const
 export type NasaPowerParam = (typeof NASA_POWER_PARAMETERS)[number]
 
+/**
+ * Solar resource parameter: all-sky surface shortwave downward irradiance.
+ * NASA POWER reports this daily value in kWh/m^2/day, which equals the site's
+ * peak-sun-hours (PSH) - the standard input for solar-generation estimates.
+ */
+export const SOLAR_PARAMETERS = ["ALLSKY_SFC_SW_DWN"] as const
+
 export type Temporal = "daily" | "monthly"
 
 // ---------------------------------------------------------------------------
@@ -343,6 +350,33 @@ export function toCvi(resp: NasaPowerResponse): ResiHealthCvi {
     (byHazard.flood + byHazard.drought + byHazard.heat + byHazard.storm) / 4,
   )
   return { composite, byHazard }
+}
+
+// ---------------------------------------------------------------------------
+// Solar resource (for the Power page)
+// ---------------------------------------------------------------------------
+
+export type SkyClass = "sunny" | "partly" | "cloudy"
+export type SolarResource = { peakSunHours: number; sky: SkyClass }
+
+/** Classify the day's solar availability from peak-sun-hours (kWh/m^2/day). */
+export function skyFromPsh(psh: number): SkyClass {
+  if (psh >= 5.5) return "sunny"
+  if (psh >= 4) return "partly"
+  return "cloudy"
+}
+
+/**
+ * Reduce a fetched ALLSKY_SFC_SW_DWN series to a representative peak-sun-hours
+ * value (mean of the daily kWh/m^2/day samples) plus a sky classification.
+ * Returns null when no usable solar samples are present.
+ */
+export function toSolarResource(resp: NasaPowerResponse): SolarResource | null {
+  const points = resp.series["ALLSKY_SFC_SW_DWN"] ?? []
+  const values = points.map((p) => p.value).filter((v) => v > 0)
+  if (!values.length) return null
+  const peakSunHours = Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100
+  return { peakSunHours, sky: skyFromPsh(peakSunHours) }
 }
 
 /** Index points added per hazard for the 2050 projection (documented model). */

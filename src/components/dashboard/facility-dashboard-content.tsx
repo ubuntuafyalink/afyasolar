@@ -1141,7 +1141,13 @@ export function FacilityDashboardContent({
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'power' && (
-              <PowerSection facilityId={facilityId} batteryLevel={liveData?.batteryLevel} />
+              <PowerSection
+                facilityId={facilityId}
+                batteryLevel={liveData?.batteryLevel}
+                meuSummary={meuSummary}
+                sizingSummary={sizingSummary}
+                region={facility?.region ?? null}
+              />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'reports' && (

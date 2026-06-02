@@ -13,10 +13,11 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { get24hPowerBySource } from "@/lib/dashboard/facility-demo-data"
+import type { PowerInputs } from "@/lib/dashboard/power-model"
 
 /** Spec 8.2 "Umeme detail": a 24-hour stacked-area chart of power by source. */
-export function Power24hArea({ facilityId }: { facilityId?: string }) {
-  const data = get24hPowerBySource(facilityId)
+export function Power24hArea({ facilityId, inputs }: { facilityId?: string; inputs?: PowerInputs | null }) {
+  const data = get24hPowerBySource(facilityId, inputs ?? undefined)
 
   return (
     <Card>

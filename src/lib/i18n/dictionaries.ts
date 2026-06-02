@@ -237,6 +237,16 @@ const en: Messages = {
   // Power & Fridge section headers
   "power.title": "Power",
   "power.subtitle": "Where your power is coming from now and what to expect today.",
+  "power.readoutTitle": "Current power readout",
+  "power.basedOnEnergy": "Based on your Energy Efficiency assessment",
+  "power.basedOnBoth": "Based on Energy Efficiency + Climate Outlook",
+  "power.basedOnClimate": "Based on Climate Outlook",
+  "power.aiSummaryTitle": "What this means",
+  "power.autoInterpret": "Auto",
+  "power.interpretNow": "Interpret now",
+  "power.interpreting": "Interpreting...",
+  "power.aiSummaryHint": "A plain-language read of your power situation appears here.",
+  "power.explainUnavailable": "Interpretation is unavailable right now.",
   "fridge.title": "Fridge",
   "fridge.subtitle": "Cold-chain status and history for your vaccine fridge.",
 
@@ -695,6 +705,16 @@ const sw: Messages = {
   // Vichwa vya sehemu za Umeme na Friji
   "power.title": "Umeme",
   "power.subtitle": "Umeme wako unatoka wapi sasa na nini cha kutarajia leo.",
+  "power.readoutTitle": "Usomaji wa umeme wa sasa",
+  "power.basedOnEnergy": "Kulingana na tathmini yako ya Ufanisi wa Nishati",
+  "power.basedOnBoth": "Kulingana na Ufanisi wa Nishati + Mtazamo wa Hali ya Hewa",
+  "power.basedOnClimate": "Kulingana na Mtazamo wa Hali ya Hewa",
+  "power.aiSummaryTitle": "Maana yake",
+  "power.autoInterpret": "Otomatiki",
+  "power.interpretNow": "Fafanua sasa",
+  "power.interpreting": "Inafafanua...",
+  "power.aiSummaryHint": "Ufafanuzi wa lugha rahisi wa hali ya umeme wako utaonekana hapa.",
+  "power.explainUnavailable": "Ufafanuzi haupatikani kwa sasa.",
   "fridge.title": "Friji",
   "fridge.subtitle": "Hali ya mnyororo baridi na historia ya friji yako ya chanjo.",
 
