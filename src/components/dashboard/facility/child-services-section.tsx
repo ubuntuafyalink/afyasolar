@@ -1,9 +1,10 @@
 "use client"
 
 import { useMemo } from "react"
-import { ShieldCheck, TriangleAlert, OctagonAlert, Baby } from "lucide-react"
+import { ShieldCheck, TriangleAlert, OctagonAlert, Baby, Satellite } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
 import {
@@ -11,6 +12,13 @@ import {
   getChildServicesSummary,
   type ChildServiceStatus,
 } from "@/lib/dashboard/facility-demo-data"
+import {
+  resolveCoords,
+  rangeForPreset,
+  toCvi,
+  NASA_POWER_PARAMETERS,
+} from "@/lib/climate/nasa-power"
+import { useNasaPower } from "@/hooks/use-nasa-power"
 import type { NavSection } from "@/lib/dashboard/facility-nav"
 import { useFacilityPreferences } from "./facility-preferences-provider"
 import { OfflineReadyBadge } from "./offline-ready-badge"
@@ -29,18 +37,40 @@ const STATUS_RANK: Record<ChildServiceStatus, number> = { failing: 0, "at-risk":
  */
 export function ChildServicesSection({
   facilityId,
+  region,
   onNavigate,
 }: {
   facilityId?: string
+  region?: string | null
   onNavigate?: (section: NavSection) => void
 }) {
   const { t } = useFacilityPreferences()
+
+  // Real climate: the two climate-sensitive services (cold-chain via heat,
+  // water-pumping via drought/flood) are driven by the facility's measured
+  // Climate Outlook hazards. Same pipeline as the Climate Outlook / RCS pages.
+  const coords = useMemo(() => resolveCoords({ facilityId, region }), [facilityId, region])
+  const range = useMemo(() => rangeForPreset("10y"), [])
+  const climate = useNasaPower({
+    lat: coords.lat,
+    lon: coords.lon,
+    temporal: range.temporal,
+    start: range.start,
+    end: range.end,
+    parameters: NASA_POWER_PARAMETERS,
+  })
+  const byHazard = useMemo(() => (climate.data ? toCvi(climate.data).byHazard : null), [climate.data])
+  const isLive = byHazard != null
+
   const services = useMemo(() => {
-    return [...getChildServicesAtRisk(facilityId)].sort(
+    return [...getChildServicesAtRisk(facilityId, byHazard ? { byHazard } : undefined)].sort(
       (a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status],
     )
-  }, [facilityId])
-  const summary = useMemo(() => getChildServicesSummary(facilityId), [facilityId])
+  }, [facilityId, byHazard])
+  const summary = useMemo(
+    () => getChildServicesSummary(facilityId, byHazard ? { byHazard } : undefined),
+    [facilityId, byHazard],
+  )
 
   return (
     <LazyMotionProvider>
@@ -74,9 +104,32 @@ export function ChildServicesSection({
               }
             />
             <OfflineReadyBadge />
-            <DemoDataBadge />
+            {isLive ? (
+              <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+                <Satellite className="size-3" aria-hidden /> {t("childServices.liveFromClimate")}
+              </span>
+            ) : (
+              <DemoDataBadge />
+            )}
           </div>
         </div>
+
+        {/* Relationship to Climate Outlook */}
+        {isLive ? (
+          <p className="flex flex-wrap items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs text-foreground">
+            <Satellite className="size-3.5 shrink-0" aria-hidden />
+            <span>{t("childServices.climateNote")}</span>
+            {onNavigate ? (
+              <button
+                type="button"
+                onClick={() => onNavigate("climate-outlook")}
+                className={cn("font-medium underline", FOCUS_RING)}
+              >
+                {t("childServices.openClimateOutlook")}
+              </button>
+            ) : null}
+          </p>
+        ) : null}
 
         {/* Summary chips */}
         <div className="grid grid-cols-3 gap-2 sm:max-w-xl">
@@ -112,7 +165,7 @@ export function ChildServicesSection({
             <ChildServiceCard
               key={service.key}
               service={service}
-              onViewPlan={onNavigate ? () => onNavigate("climate-resilience") : undefined}
+              onViewPlan={onNavigate ? () => onNavigate("climate-outlook") : undefined}
               onViewScore={onNavigate ? () => onNavigate("rcs") : undefined}
             />
           ))}

@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { GlobalAsyncStatus } from '@/components/global-async-status'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { ResponsiveAppToaster } from '@/components/responsive-app-toaster'
+import { AssistantWidget } from '@/components/assistant/assistant-widget'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -32,6 +33,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <NavigationProgress />
           <GlobalAsyncStatus />
           {children}
+          <AssistantWidget />
           <ResponsiveAppToaster />
         </ThemeProvider>
       </QueryClientProvider>

@@ -43,6 +43,7 @@ const handler = withAuth(
           path.startsWith('/api/facilities') ||
           path.startsWith('/api/regions') ||
           path.startsWith('/api/districts') ||
+          path.startsWith('/api/climate') ||
           path.startsWith('/privacy-policy') ||
           path.startsWith('/terms') ||
           path.startsWith('/_next') ||

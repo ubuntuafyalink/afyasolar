@@ -1,26 +1,29 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { Bot, SendHorizonal, User } from "lucide-react"
+import { Bot, Mic, SendHorizonal, User } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { COPILOT_SUGGESTIONS, answerCopilot } from "@/lib/dashboard/facility-demo-data"
+import { streamAssistant, type AssistantTurn } from "@/hooks/use-assistant"
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
+import { TypingCursor } from "@/components/assistant/typing-cursor"
+import { useFacilityPreferences } from "./facility-preferences-provider"
 
 type Message = { role: "user" | "assistant"; text: string }
 
 /**
- * Spec 11.3: the GenAI co-pilot chat surface (English). Answers are canned and
- * grounded in the demo data.
- *
- * [data] TODO: wire the real co-pilot (Whisper transcription + GenAI) per
- * spec Part 11 & 15.4. Nothing is sent over the network here.
+ * Spec 11.3: the GenAI co-pilot chat surface. Answers come from the real AI
+ * assistant route (OpenAI, GROQ fallback); if that fails or the device is
+ * offline it falls back to the canned demo answers so it always responds.
+ * Supports voice input via the browser Web Speech API.
  */
 export function CopilotChat({ facilityId }: { facilityId?: string }) {
+  const { locale } = useFacilityPreferences()
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -28,18 +31,55 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
     },
   ])
   const [input, setInput] = useState("")
+  const [busy, setBusy] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const recognition = useSpeechRecognition({
+    lang: locale === "sw" ? "sw-TZ" : "en-US",
+    onResult: setInput,
+  })
 
-  function send(text: string) {
-    const trimmed = text.trim()
-    if (!trimmed) return
-    const reply = answerCopilot(trimmed, facilityId)
-    setMessages((prev) => [...prev, { role: "user", text: trimmed }, { role: "assistant", text: reply }])
-    setInput("")
-    // Scroll to the latest message after it renders.
+  function scrollToEnd() {
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
     })
+  }
+
+  async function send(text: string) {
+    const trimmed = text.trim()
+    if (!trimmed || busy) return
+    const history: AssistantTurn[] = [
+      ...messages.map((m) => ({ role: m.role, content: m.text })),
+      { role: "user", content: trimmed },
+    ]
+    setMessages((prev) => [...prev, { role: "user", text: trimmed }, { role: "assistant", text: "" }])
+    setInput("")
+    setBusy(true)
+    scrollToEnd()
+
+    const setLastAssistant = (txt: string) => {
+      setMessages((prev) => {
+        const copy = [...prev]
+        copy[copy.length - 1] = { role: "assistant", text: txt }
+        return copy
+      })
+      scrollToEnd()
+    }
+
+    try {
+      await streamAssistant(
+        { messages: history, context: facilityId ? `Facility id: ${facilityId}` : undefined, mode: "chat" },
+        setLastAssistant,
+      )
+    } catch {
+      setLastAssistant(answerCopilot(trimmed, facilityId))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function toggleMic() {
+    if (recognition.listening) recognition.stop()
+    else recognition.start()
   }
 
   return (
@@ -49,11 +89,10 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
           <CardTitle className="flex items-center gap-2 text-base">
             <Bot className="size-5 text-primary" aria-hidden /> AfyaSolar assistant
           </CardTitle>
-          <DemoDataBadge label="Demo responses" />
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <div ref={scrollRef} className="max-h-80 min-h-48 flex-1 space-y-3 overflow-y-auto pr-1">
+        <div ref={scrollRef} className="max-h-80 min-h-48 flex-1 space-y-3 overflow-y-auto pr-1" aria-live="polite">
           {messages.map((m, i) => (
             <div
               key={i}
@@ -79,6 +118,7 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
                 )}
               >
                 {m.text}
+                {m.role === "assistant" && busy && i === messages.length - 1 ? <TypingCursor /> : null}
               </p>
             </div>
           ))}
@@ -108,13 +148,24 @@ export function CopilotChat({ facilityId }: { facilityId?: string }) {
             send(input)
           }}
         >
+          {recognition.supported ? (
+            <Button
+              type="button"
+              size="icon"
+              variant={recognition.listening ? "default" : "outline"}
+              onClick={toggleMic}
+              aria-label={recognition.listening ? "Stop voice input" : "Start voice input"}
+            >
+              <Mic className="size-4" aria-hidden />
+            </Button>
+          ) : null}
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a question…"
+            placeholder="Ask a question..."
             aria-label="Ask the assistant"
           />
-          <Button type="submit" size="icon" aria-label="Send" disabled={!input.trim()}>
+          <Button type="submit" size="icon" aria-label="Send" disabled={!input.trim() || busy}>
             <SendHorizonal className="size-4" aria-hidden />
           </Button>
         </form>
