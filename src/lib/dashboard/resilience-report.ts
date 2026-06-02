@@ -15,6 +15,7 @@ import {
   getChildServicesAtRisk,
   getChildServicesSummary,
   type Bilingual,
+  type CviByHazard,
 } from "@/lib/dashboard/facility-demo-data"
 
 type Translate = (key: string, vars?: Record<string, string | number>) => string
@@ -25,6 +26,10 @@ export interface ResilienceReportOptions {
   region?: string | null
   locale: Locale
   t: Translate
+  /** Real Hazard Exposure capacity (from Climate Outlook); drives HES when set. */
+  hesScore?: number
+  /** Real per-hazard climate indices (from Climate Outlook); drives the climate-sensitive child services when set. */
+  hazardByHazard?: CviByHazard
   /** Injectable for testing; defaults to the current date. */
   now?: Date
 }
@@ -129,7 +134,7 @@ export async function generateResilienceReport(opts: ResilienceReportOptions): P
   y += 22
 
   // ---- RCS headline --------------------------------------------------------
-  const model = getRcsExplainer(facilityId)
+  const model = getRcsExplainer(facilityId, opts.hesScore != null ? { hesScore: opts.hesScore } : undefined)
   heading(t("report.rcsHeading"))
   doc.setFont("helvetica", "bold")
   doc.setFontSize(36)
@@ -184,7 +189,8 @@ export async function generateResilienceReport(opts: ResilienceReportOptions): P
 
   // ---- Child services at risk ---------------------------------------------
   heading(t("report.childHeading"))
-  const summary = getChildServicesSummary(facilityId)
+  const childOverrides = opts.hazardByHazard ? { byHazard: opts.hazardByHazard } : undefined
+  const summary = getChildServicesSummary(facilityId, childOverrides)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
   doc.setTextColor(...C.muted)
@@ -199,7 +205,7 @@ export async function generateResilienceReport(opts: ResilienceReportOptions): P
   )
   y += 16
 
-  const services = [...getChildServicesAtRisk(facilityId)].sort((a, b) => {
+  const services = [...getChildServicesAtRisk(facilityId, childOverrides)].sort((a, b) => {
     const rank = { failing: 0, "at-risk": 1, ok: 2 } as const
     return rank[a.status] - rank[b.status]
   })

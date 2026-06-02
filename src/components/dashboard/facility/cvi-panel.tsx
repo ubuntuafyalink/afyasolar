@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
-import { getResiHealthCvi } from "@/lib/dashboard/facility-demo-data"
+import { getResiHealthCvi, type ResiHealthCvi } from "@/lib/dashboard/facility-demo-data"
+import { projectCvi } from "@/lib/climate/nasa-power"
 
 const HAZARD_META: { key: keyof ReturnType<typeof getResiHealthCvi>["byHazard"]; label: string; icon: LucideIcon }[] = [
   { key: "flood", label: "Flood", icon: Droplets },
@@ -31,16 +32,31 @@ function cviColor(v: number): string {
  * [data] fed by the local demo module. TODO: wire the real Resi-Health Grid
  * (NASA POWER, ERA5, CHIRPS, flood layers, Bayesian model) per spec Part 10.5.
  */
-export function CviPanel({ facilityId }: { facilityId?: string }) {
+export function CviPanel({
+  facilityId,
+  baseCvi,
+  live = false,
+}: {
+  facilityId?: string
+  /** Real historical CVI baseline (2030); 2050 is projected from it. */
+  baseCvi?: ResiHealthCvi
+  live?: boolean
+}) {
   const [year, setYear] = useState<2030 | 2050>(2030)
-  const cvi = getResiHealthCvi(facilityId, year)
+  const cvi = baseCvi ? projectCvi(baseCvi, year) : getResiHealthCvi(facilityId, year)
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">Climate Vulnerability Index</CardTitle>
-          <DemoDataBadge />
+          {live ? (
+            <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+              NASA POWER · real baseline
+            </span>
+          ) : (
+            <DemoDataBadge />
+          )}
         </div>
         <div className="flex items-center gap-2 pt-1">
           {([2030, 2050] as const).map((y) => (
@@ -81,6 +97,12 @@ export function CviPanel({ facilityId }: { facilityId?: string }) {
             {cvi.composite >= 66 ? "High" : cvi.composite >= 40 ? "Moderate" : "Lower"} vulnerability
           </Badge>
         </div>
+
+        {live && year === 2050 ? (
+          <p className="text-[11px] text-muted-foreground">
+            2050 is a modeled projection of the real historical baseline (+12 per hazard), not a climate forecast.
+          </p>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           {HAZARD_META.map((h) => {
