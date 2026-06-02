@@ -1,14 +1,26 @@
 "use client"
 
-import { CopilotChat } from "./copilot-chat"
+import { AssistantChat } from "./assistant-chat"
 import { WhatIfSimulator } from "./what-if-simulator"
+import type { MeuSummary, SizingSummary } from "@/components/solar/afya-solar-sizing-tool"
 
 /**
- * Spec 11.3 (J47J48) → the Assistant section. A GenAI co-pilot chat and a
- * what-if simulator. New flag-gated facility section; all [data] (demo).
- * Desktop-first.
+ * Spec 11.3 (J47-J48) -> the Assistant section: a saved-history GenAI chat
+ * (conversation rail + thread) on top, and a what-if simulator full-width below.
+ * Both are grounded in the facility's real assessed energy + Climate Outlook
+ * data with streaming AI responses.
  */
-export function AssistantSection({ facilityId }: { facilityId?: string }) {
+export function AssistantSection({
+  facilityId,
+  meuSummary,
+  sizingSummary,
+  region,
+}: {
+  facilityId?: string
+  meuSummary?: MeuSummary | null
+  sizingSummary?: SizingSummary | null
+  region?: string | null
+}) {
   return (
     <div className="space-y-4">
       <div>
@@ -17,10 +29,8 @@ export function AssistantSection({ facilityId }: { facilityId?: string }) {
           Ask questions in plain language, or simulate a change before you make it.
         </p>
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <CopilotChat facilityId={facilityId} />
-        <WhatIfSimulator facilityId={facilityId} />
-      </div>
+      <AssistantChat facilityId={facilityId} meuSummary={meuSummary} sizingSummary={sizingSummary} region={region} />
+      <WhatIfSimulator facilityId={facilityId} meuSummary={meuSummary} sizingSummary={sizingSummary} region={region} />
     </div>
   )
 }

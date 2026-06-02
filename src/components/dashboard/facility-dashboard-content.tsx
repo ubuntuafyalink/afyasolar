@@ -1155,7 +1155,12 @@ export function FacilityDashboardContent({
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'assistant' && (
-              <AssistantSection facilityId={facilityId} />
+              <AssistantSection
+                facilityId={facilityId}
+                meuSummary={meuSummary}
+                sizingSummary={sizingSummary}
+                region={facility?.region ?? null}
+              />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'channels' && (
@@ -1397,31 +1402,19 @@ export function FacilityDashboardContent({
                     {facilityId && (
                       <FacilityMeterEfficiencyDashboard facilityId={facilityId} preferMock={false} />
                     )}
-                    <Card className={panelCardClass}>
-                      <CardHeader>
-                        <CardTitle className={sectionTitleClass}>
-                          AfyaSolar Intelligence Platform
-                        </CardTitle>
-                        <CardDescription className={metaTextClass}>
-                          Overview, guided assessment, analysis charts, action plan, and reports in one workflow (v2.0).
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-2 sm:p-4">
-                        <FacilityIntelligencePlatform
-                          facilityId={facility?.id}
-                          facilityName={facility?.name ?? undefined}
-                          platformScope="energy"
-                          sizingSummary={sizingSummary}
-                          meuSummary={meuSummary}
-                          bmiSummary={bmiSummary}
-                          sectionScores={sectionScores}
-                          onSizingSummaryChange={setSizingSummary}
-                          onMeuSummaryChange={setMeuSummary}
-                          onBmiSummaryChange={setBmiSummary}
-                          onSectionScoresChange={setSectionScores}
-                        />
-                      </CardContent>
-                    </Card>
+                    <FacilityIntelligencePlatform
+                      facilityId={facility?.id}
+                      facilityName={facility?.name ?? undefined}
+                      platformScope="energy"
+                      sizingSummary={sizingSummary}
+                      meuSummary={meuSummary}
+                      bmiSummary={bmiSummary}
+                      sectionScores={sectionScores}
+                      onSizingSummaryChange={setSizingSummary}
+                      onMeuSummaryChange={setMeuSummary}
+                      onBmiSummaryChange={setBmiSummary}
+                      onSectionScoresChange={setSectionScores}
+                    />
 
                     {/* Additive (CEO spec Part 7 & 9.6): MVA audit, three-output
                         report, bill OCR, Eco-Pulse. Mounted below existing content. */}

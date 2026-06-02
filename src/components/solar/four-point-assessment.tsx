@@ -293,33 +293,43 @@ export function FourPointAssessment({
   ) => {
     const expanded = openCard === id
     return (
-      <Card className="border-emerald-100 overflow-hidden">
+      <Card className="overflow-hidden rounded-2xl border-border transition-shadow hover:shadow-md">
         <button
           type="button"
-          className="w-full text-left"
+          className="w-full cursor-pointer text-left"
           onClick={() => setOpenCard(expanded ? "" : id)}
+          aria-expanded={expanded}
         >
-          <CardHeader className="py-3 px-4 bg-emerald-50/50 hover:bg-emerald-50/80 transition-colors">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-card px-4 py-3 transition-colors hover:from-primary/10">
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="rounded-lg bg-white border border-emerald-100 p-2 text-emerald-700">{icon}</div>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                  {icon}
+                </span>
                 <div>
-                  <CardTitle className="text-sm font-semibold text-emerald-950">{title}</CardTitle>
+                  <CardTitle className="text-sm font-semibold text-foreground">{title}</CardTitle>
                   <CardDescription className="text-xs">{subtitle}</CardDescription>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-sm font-bold text-emerald-800 tabular-nums">
-                  {score}/10
+                <span
+                  className="relative flex size-9 items-center justify-center rounded-full"
+                  style={{ background: `conic-gradient(var(--color-primary) ${score * 36}deg, var(--color-muted) 0deg)` }}
+                  aria-hidden
+                >
+                  <span className="flex size-7 items-center justify-center rounded-full bg-card text-[11px] font-bold tabular-nums text-foreground">
+                    {score}
+                  </span>
                 </span>
-                {expanded ? <ChevronUp className="h-4 w-4 text-emerald-700" /> : <ChevronDown className="h-4 w-4 text-emerald-700" />}
+                <span className="sr-only">{score} out of 10</span>
+                {expanded ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
               </div>
             </div>
           </CardHeader>
         </button>
         <div className={cn("grid transition-[grid-template-rows] duration-200", expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
           <div className="overflow-hidden">
-            <CardContent className="pt-0 pb-4 px-4 border-t border-emerald-100/80">{children}</CardContent>
+            <CardContent className="pt-0 pb-4 px-4 border-t border-border">{children}</CardContent>
           </div>
         </div>
       </Card>
@@ -331,7 +341,7 @@ export function FourPointAssessment({
       disabled={readOnly}
       className="min-w-0 space-y-4 border-0 p-0 m-0 disabled:opacity-[0.88]"
     >
-      <Card className="border-emerald-100">
+      <Card className="border-border">
         <CardHeader>
           <CardTitle>Operational efficiency &amp; management</CardTitle>
           <CardDescription>
@@ -489,9 +499,9 @@ export function FourPointAssessment({
         )}
       </div>
 
-      <div className="rounded-lg border border-emerald-100 bg-white p-4 space-y-2">
-        <p className="text-xs font-semibold text-emerald-900">Live summary</p>
-        <ul className="text-xs text-emerald-900/90 space-y-1">
+      <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+        <p className="text-xs font-semibold text-foreground">Live summary</p>
+        <ul className="text-xs text-muted-foreground space-y-1">
           <li>
             BMI (when calculated):{" "}
             <span className="font-semibold">
@@ -508,23 +518,23 @@ export function FourPointAssessment({
         </ul>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-t border-emerald-100">
-        <div className="text-xs text-gray-600">
-          {assessmentError && <span className="text-red-600">{assessmentError}</span>}
-          {!assessmentError && saveStatus === "saved" && <span className="text-emerald-700">BMI saved to database.</span>}
-          {!assessmentError && saveStatus === "error" && <span className="text-red-600">Failed to save BMI.</span>}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1 border-t border-border">
+        <div className="text-xs text-muted-foreground">
+          {assessmentError && <span className="text-destructive">{assessmentError}</span>}
+          {!assessmentError && saveStatus === "saved" && <span className="text-primary">BMI saved to database.</span>}
+          {!assessmentError && saveStatus === "error" && <span className="text-destructive">Failed to save BMI.</span>}
         </div>
         <div className="flex items-center gap-2">
           <Button
             size="sm"
             variant="outline"
-            className="border-emerald-200"
+            className="border-border"
             onClick={() => void persistOperationsData(true)}
             disabled={saveStatus === "saving" || !assessmentCycleId}
           >
             {saveStatus === "saving" ? "Saving..." : "Save BMI to Database"}
           </Button>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleCalculate} disabled={isCalculating}>
+          <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={handleCalculate} disabled={isCalculating}>
             {isCalculating ? (
               <span className="flex items-center gap-1.5">
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -545,16 +555,16 @@ export function FourPointAssessment({
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div className="text-center">
-              <p className="text-4xl font-bold text-emerald-700">
+              <p className="text-4xl font-bold text-primary">
                 {assessmentScore !== null && bmiPercent !== null ? `${assessmentScore}/40` : ""}
               </p>
-              {bmiPercent !== null && <p className="text-xs text-gray-600 mt-1">{bmiPercent}% of best-practice checklist</p>}
+              {bmiPercent !== null && <p className="text-xs text-muted-foreground mt-1">{bmiPercent}% of best-practice checklist</p>}
             </div>
             <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div className="rounded border border-emerald-100 p-2">Reliability: {sectionScoresLive.reliability}/10</div>
-              <div className="rounded border border-emerald-100 p-2">Wastage: {sectionScoresLive.wastage}/10</div>
-              <div className="rounded border border-emerald-100 p-2">Thermal: {sectionScoresLive.thermal}/10</div>
-              <div className="rounded border border-emerald-100 p-2">Behavior: {sectionScoresLive.behavior}/10</div>
+              <div className="rounded border border-border p-2">Reliability: {sectionScoresLive.reliability}/10</div>
+              <div className="rounded border border-border p-2">Wastage: {sectionScoresLive.wastage}/10</div>
+              <div className="rounded border border-border p-2">Thermal: {sectionScoresLive.thermal}/10</div>
+              <div className="rounded border border-border p-2">Behavior: {sectionScoresLive.behavior}/10</div>
             </div>
             <div className="flex justify-end">
               <Button size="sm" variant="outline" onClick={() => setShowScoreDialog(false)}>

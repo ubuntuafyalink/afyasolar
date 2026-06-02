@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { AnimatedNumber } from "@/components/ui/animated-number"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,6 +45,7 @@ import { notifyError, notifySuccess } from "@/lib/toast-feedback"
 import { formatCurrency } from "@/lib/utils"
 import {
   Activity,
+  Check,
   ClipboardList,
   LayoutDashboard,
   LineChart,
@@ -65,7 +67,7 @@ type AssessmentCycleRow = {
 }
 
 const tabTriggerClass =
-  "text-xs sm:text-sm rounded-md data-[state=active]:bg-white data-[state=active]:text-emerald-800 data-[state=active]:shadow-sm"
+  "text-xs sm:text-sm rounded-md data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm"
 
 type StepStatus = "complete" | "in_progress" | "blocked"
 
@@ -641,12 +643,12 @@ export function FacilityIntelligencePlatform({
   }) => {
     const active = mainTab === id
     const base =
-      "w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 rounded-xl border px-3 py-2 text-xs sm:text-sm transition-colors"
+      "group w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 rounded-xl border px-3 py-2 text-xs sm:text-sm transition-[color,background-color,box-shadow,transform] duration-200"
     const styles = active
-      ? "border-emerald-300 bg-white shadow-sm text-emerald-950"
+      ? "border-primary bg-primary/10 text-foreground shadow-sm ring-1 ring-primary/25"
       : status === "blocked"
-        ? "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
-        : "border-emerald-100 bg-emerald-50/40 text-emerald-900 hover:bg-emerald-50"
+        ? "border-border bg-muted/30 text-muted-foreground cursor-not-allowed opacity-70"
+        : "border-border bg-muted/40 text-foreground hover:bg-muted/60 hover:-translate-y-0.5 cursor-pointer"
     return (
       <button
         type="button"
@@ -656,15 +658,15 @@ export function FacilityIntelligencePlatform({
       >
         <span className="font-medium">{label}</span>
         {status === "complete" ? (
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-900 text-[10px]">
-            Done
+          <Badge variant="secondary" className="bg-success/15 text-success text-[10px]">
+            <Check className="mr-0.5 size-3" aria-hidden /> Done
           </Badge>
         ) : status === "blocked" ? (
-          <Badge variant="outline" className="text-[10px] border-slate-200">
+          <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">
             Locked
           </Badge>
         ) : (
-          <Badge variant="outline" className="text-[10px] border-emerald-200 text-emerald-800">
+          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
             In progress
           </Badge>
         )}
@@ -674,27 +676,35 @@ export function FacilityIntelligencePlatform({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-emerald-950 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-emerald-600" />
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-solar/10 p-5 shadow-sm duration-300 animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none">
+        <div
+          className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-30 [mask-image:radial-gradient(ellipse_at_top_right,black,transparent_70%)]"
+          aria-hidden
+        />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+              <Sparkles className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
               {isClimateOnly
                 ? "Climate resilience & adaptation"
                 : isEnergyOnly
                   ? "Energy efficiency & planning"
                   : "AfyaSolar Intelligence"}
             </h2>
-            <p className="text-xs sm:text-sm text-emerald-900/80 max-w-2xl">
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl">
               {isClimateOnly
                 ? "Guided climate readiness (CRiPHC-aligned), hazard context, adaptation tracking, and saved risk drivers for your facility."
                 : isEnergyOnly
                   ? "Guided devices & loads sizing, operational efficiency (BMI), and analysis chartswithout mixing in the climate questionnaire here."
                   : "Guided assessment, analysis, and actions in one workflow. Energy, meter efficiency, and climate resilience scoring are integrated below."}
             </p>
+            </div>
           </div>
           {facilityName && (
-            <Badge variant="outline" className="border-emerald-200 text-emerald-800 w-fit">
+            <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary w-fit">
               {facilityName}
             </Badge>
           )}
@@ -711,11 +721,11 @@ export function FacilityIntelligencePlatform({
             <StepPill id="action" label="Action plan" status={stepStatus.action} />
             <StepPill id="reports" label="Reports & portfolio" status={stepStatus.reports} />
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-emerald-50/40 px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-muted/40 px-3 py-2">
             <div className="min-w-0">
-              <p className="text-xs text-emerald-900/80">
+              <p className="text-xs text-muted-foreground">
                 Next recommended:{" "}
-                <span className="font-semibold text-emerald-950">
+                <span className="font-semibold text-foreground">
                   {nextRecommendedStep === "assess"
                     ? "Assess"
                     : nextRecommendedStep === "analyze"
@@ -723,7 +733,7 @@ export function FacilityIntelligencePlatform({
                       : "Overview"}
                 </span>
                 {nextRecommendedStep === "assess" && (
-                  <span className="text-emerald-900/70">
+                  <span className="text-muted-foreground">
                     {" "}
                     {isClimateOnly
                       ? " complete the climate readiness questionnaire."
@@ -737,12 +747,12 @@ export function FacilityIntelligencePlatform({
             <div className="flex gap-2">
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-primary hover:bg-primary/90"
                 onClick={() => onNavigate(nextRecommendedStep)}
               >
                 Continue
               </Button>
-              <Button size="sm" variant="outline" className="border-emerald-200" onClick={() => onNavigate("reports")}>
+              <Button size="sm" variant="outline" className="border-border" onClick={() => onNavigate("reports")}>
                 View report
               </Button>
             </div>
@@ -752,130 +762,130 @@ export function FacilityIntelligencePlatform({
         <TabsContent value="overview" className="space-y-4 mt-4">
           {isClimateOnly ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Resilience capacity score (RCS)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {assessmentDbLoading ? (
-                      <span className="inline-block h-8 w-20 animate-pulse rounded bg-emerald-100" />
+                      <span className="inline-block h-8 w-20 animate-pulse rounded bg-primary/10" />
                     ) : (
                       persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")
                     )}
                   </CardTitle>
-                  {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
+                  {assessmentDbLoading && <p className="text-[11px] text-primary">Loading from database...</p>}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Tier &amp; attention</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {persistedClimateScore ? `Tier ${persistedClimateScore.tier}` : ""}
                   </CardTitle>
                   {persistedClimateScore?.criticalAttention && (
-                    <p className="text-[11px] text-amber-800 font-medium">Critical attention</p>
+                    <p className="text-[11px] text-warning-foreground font-medium">Critical attention</p>
                   )}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Top risk drivers (saved)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
-                    {assessmentDbLoading ? <span className="inline-block h-8 w-10 animate-pulse rounded bg-emerald-100" /> : persistedTopRisks.length}
+                  <CardTitle className="text-2xl text-foreground">
+                    {assessmentDbLoading ? <span className="inline-block h-8 w-10 animate-pulse rounded bg-primary/10" /> : persistedTopRisks.length}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Follow-up tasks (saved)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">{persistedTasks.length}</CardTitle>
+                  <CardTitle className="text-2xl text-foreground">{persistedTasks.length}</CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Assessment progress</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">{assessProgress}%</CardTitle>
-                  <Progress value={assessProgress} className="h-2 mt-2 bg-emerald-100" />
+                  <CardTitle className="text-2xl text-foreground">{assessProgress}%</CardTitle>
+                  <Progress value={assessProgress} className="h-2 mt-2 bg-primary/10" />
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Facility</CardDescription>
-                  <CardTitle className="text-lg text-emerald-900 line-clamp-2">{facilityName ?? facilityId ?? ""}</CardTitle>
+                  <CardTitle className="text-lg text-foreground line-clamp-2">{facilityName ?? facilityId ?? ""}</CardTitle>
                   <p className="text-[11px] text-muted-foreground">Cycle auto-saved to your assessment record.</p>
                 </CardHeader>
               </Card>
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <Card className="border-emerald-100">
+            <div className="grid gap-4 duration-300 animate-in fade-in motion-reduce:animate-none sm:grid-cols-2 lg:grid-cols-3">
+              <Card className="rounded-2xl border-border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Daily demand (est.)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground tabular-nums">
                     {assessmentDbLoading ? (
-                      <span className="inline-block h-8 w-28 animate-pulse rounded bg-emerald-100" />
+                      <span className="inline-block h-8 w-28 animate-pulse rounded bg-primary/10" />
                     ) : resolvedSizingSummary ? (
-                      `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d`
+                      <AnimatedNumber value={resolvedSizingSummary.totalDailyLoad} decimals={1} suffix=" kWh/d" />
                     ) : (
                       ""
                     )}
                   </CardTitle>
-                  {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
+                  {assessmentDbLoading && <p className="text-[11px] text-primary">Loading from database...</p>}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="rounded-2xl border-border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Indicative solar size</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground tabular-nums">
                     {assessmentDbLoading ? (
-                      <span className="inline-block h-8 w-24 animate-pulse rounded bg-emerald-100" />
+                      <span className="inline-block h-8 w-24 animate-pulse rounded bg-primary/10" />
                     ) : resolvedSizingSummary ? (
-                      `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW`
+                      <AnimatedNumber value={resolvedSizingSummary.solarArraySize} decimals={1} suffix=" kW" />
                     ) : (
                       ""
                     )}
                   </CardTitle>
-                  {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
+                  {assessmentDbLoading && <p className="text-[11px] text-primary">Loading from database...</p>}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="rounded-2xl border-border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Annual savings (slider model)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-success tabular-nums">
                     {assessmentDbLoading ? (
-                      <span className="inline-block h-8 w-32 animate-pulse rounded bg-emerald-100" />
+                      <span className="inline-block h-8 w-32 animate-pulse rounded bg-primary/10" />
                     ) : resolvedSizingSummary ? (
                       formatCurrency(resolvedSizingSummary.annualSavings)
                     ) : (
                       ""
                     )}
                   </CardTitle>
-                  {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
+                  {assessmentDbLoading && <p className="text-[11px] text-primary">Loading from database...</p>}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="rounded-2xl border-border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Operational score (BMI)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground tabular-nums">
                     {assessmentDbLoading ? (
-                      <span className="inline-block h-8 w-20 animate-pulse rounded bg-emerald-100" />
+                      <span className="inline-block h-8 w-20 animate-pulse rounded bg-primary/10" />
                     ) : efficiencyScore !== null ? (
-                      `${efficiencyScore}%`
+                      <AnimatedNumber value={efficiencyScore} suffix="%" />
                     ) : (
                       ""
                     )}
                   </CardTitle>
-                  {assessmentDbLoading && <p className="text-[11px] text-emerald-700">Loading from database...</p>}
+                  {assessmentDbLoading && <p className="text-[11px] text-primary">Loading from database...</p>}
                 </CardHeader>
               </Card>
               {!isEnergyOnly && (
-                <Card className="border-emerald-100">
+                <Card className="rounded-2xl border-border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                   <CardHeader className="pb-2">
                     <CardDescription className="text-xs">Climate resilience score</CardDescription>
-                    <CardTitle className="text-2xl text-emerald-900">
+                    <CardTitle className="text-2xl text-foreground tabular-nums">
                       {assessmentDbLoading ? (
-                        <span className="inline-block h-8 w-20 animate-pulse rounded bg-emerald-100" />
+                        <span className="inline-block h-8 w-20 animate-pulse rounded bg-primary/10" />
                       ) : climateResilienceScore !== null ? (
-                        climateResilienceScore
+                        <AnimatedNumber value={climateResilienceScore} />
                       ) : (
                         ""
                       )}
@@ -888,35 +898,37 @@ export function FacilityIntelligencePlatform({
                   </CardHeader>
                 </Card>
               )}
-              <Card className="border-emerald-100">
+              <Card className="rounded-2xl border-border transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Assessment progress</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">{assessProgress}%</CardTitle>
-                  <Progress value={assessProgress} className="h-2 mt-2 bg-emerald-100" />
+                  <CardTitle className="text-2xl text-foreground tabular-nums">
+                    <AnimatedNumber value={assessProgress} suffix="%" />
+                  </CardTitle>
+                  <Progress value={assessProgress} className="h-2 mt-2 bg-primary/10" />
                 </CardHeader>
               </Card>
             </div>
           )}
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-emerald-100">
+            <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-sm">Top recommended actions</CardTitle>
                 <CardDescription className="text-xs">From your latest inputs</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 {recommendations.slice(0, 5).map((r) => (
-                  <div key={r.id} className="rounded-lg border border-emerald-50 bg-white px-3 py-2 text-xs">
+                  <div key={r.id} className="rounded-lg border border-border bg-card px-3 py-2 text-xs">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-emerald-950">{r.title}</span>
+                      <span className="font-semibold text-foreground">{r.title}</span>
                       <Badge
                         variant="outline"
                         className={
                           r.priority === "high"
-                            ? "border-red-200 text-red-800"
+                            ? "border-destructive/30 text-destructive"
                             : r.priority === "medium"
-                              ? "border-amber-200 text-amber-900"
-                              : "border-slate-200 text-slate-700"
+                              ? "border-warning/30 text-warning-foreground"
+                              : "border-border text-muted-foreground"
                         }
                       >
                         {r.priority}
@@ -927,7 +939,7 @@ export function FacilityIntelligencePlatform({
                 ))}
               </CardContent>
             </Card>
-            <Card className="border-emerald-100">
+            <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-sm">
                   {isClimateOnly
@@ -957,18 +969,18 @@ export function FacilityIntelligencePlatform({
                 <p className="text-xs text-muted-foreground">
                   {isClimateOnly ? (
                     <>
-                      Charts in <span className="font-medium text-emerald-900">Analyze</span>; saved drivers and tasks in{" "}
-                      <span className="font-medium text-emerald-900">Reports &amp; portfolio</span>.
+                      Charts in <span className="font-medium text-foreground">Analyze</span>; saved drivers and tasks in{" "}
+                      <span className="font-medium text-foreground">Reports &amp; portfolio</span>.
                     </>
                   ) : isEnergyOnly ? (
                     <>
-                      Use the <span className="font-medium text-emerald-900">Climate resilience</span> sidebar entry for
+                      Use the <span className="font-medium text-foreground">Climate resilience</span> sidebar entry for
                       hazards, adaptation tracking, and saved climate risk drivers.
                     </>
                   ) : (
                     <>
-                      Use <span className="font-medium text-emerald-900">Energy Efficiency</span> for meter-based yield vs
-                      expected, and <span className="font-medium text-emerald-900">Climate resilience</span> for hazards
+                      Use <span className="font-medium text-foreground">Energy Efficiency</span> for meter-based yield vs
+                      expected, and <span className="font-medium text-foreground">Climate resilience</span> for hazards
                       and adaptation tracking.
                     </>
                   )}
@@ -978,16 +990,16 @@ export function FacilityIntelligencePlatform({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => onNavigate("assess")}>
+            <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => onNavigate("assess")}>
               Continue assessment
             </Button>
-            <Button size="sm" variant="outline" className="border-emerald-200" onClick={() => onNavigate("analyze")}>
+            <Button size="sm" variant="outline" className="border-border" onClick={() => onNavigate("analyze")}>
               View charts
             </Button>
             <Button
               size="sm"
               variant="outline"
-              className="border-emerald-200"
+              className="border-border"
               loading={saveSnapshotBusy}
               disabled={!assessmentCycleId}
               onClick={() => void handleSaveSnapshot()}
@@ -999,7 +1011,7 @@ export function FacilityIntelligencePlatform({
 
         <TabsContent value="assess" className="space-y-4 mt-4">
           {(facilityId || isAdmin) && assessmentCyclesList.length > 0 && (
-            <Card className="border-emerald-100 bg-white/90">
+            <Card className="border-border bg-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Assessment record</CardTitle>
                 <CardDescription className="text-xs">
@@ -1057,7 +1069,7 @@ export function FacilityIntelligencePlatform({
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="border-emerald-200"
+                      className="border-border"
                       loading={saveSnapshotBusy}
                       disabled={!assessmentCycleId}
                       onClick={() => void handleSaveSnapshot()}
@@ -1070,7 +1082,7 @@ export function FacilityIntelligencePlatform({
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="border-emerald-200"
+                      className="border-border"
                       loading={reassessBusy}
                       onClick={() => setReassessDialogOpen(true)}
                     >
@@ -1084,14 +1096,14 @@ export function FacilityIntelligencePlatform({
             </Card>
           )}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-emerald-900/90">
+            <p className="text-sm text-muted-foreground">
               {isClimateOnly
                 ? "Complete the guided climate readiness questionnaire; scores and risk drivers save to your assessment cycle."
                 : isEnergyOnly
                   ? "Start with devices & loads, then operational efficiency (BMI). Use Climate resilience in the sidebar for hazards and adaptation."
                   : "Step through devices, operational practice, then climate readiness."}
             </p>
-            <Progress value={assessProgress} className="h-2 w-full sm:w-48 bg-emerald-100" />
+            <Progress value={assessProgress} className="h-2 w-full sm:w-48 bg-primary/10" />
           </div>
           {isClimateOnly ? (
             <div className="mt-4 space-y-4">
@@ -1103,7 +1115,7 @@ export function FacilityIntelligencePlatform({
                     onCapacityScoreChange={(score) => setClimateResilienceScore(score)}
                     readOnly={assessmentReadOnly}
                   />
-                  <Card className="border-emerald-100">
+                  <Card className="border-border">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm">Climate dashboard (facility profile)</CardTitle>
                       <CardDescription className="text-xs">
@@ -1121,7 +1133,7 @@ export function FacilityIntelligencePlatform({
             </div>
           ) : (
             <Tabs value={assessSub} onValueChange={(v) => setAssessSub(v as typeof assessSub)}>
-              <TabsList className="bg-emerald-50/80 border border-emerald-100 rounded-lg p-1 w-full sm:w-auto">
+              <TabsList className="bg-muted/50 border border-border rounded-lg p-1 w-full sm:w-auto">
                 <TabsTrigger value="devices" className={tabTriggerClass}>
                   Devices &amp; loads
                 </TabsTrigger>
@@ -1171,7 +1183,7 @@ export function FacilityIntelligencePlatform({
                       onCapacityScoreChange={(score) => setClimateResilienceScore(score)}
                       readOnly={assessmentReadOnly}
                     />
-                    <Card className="border-emerald-100">
+                    <Card className="border-border">
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm">Existing climate dashboard (seeded)</CardTitle>
                         <CardDescription className="text-xs">
@@ -1206,7 +1218,7 @@ export function FacilityIntelligencePlatform({
               <FacilityMeterEfficiencyDashboard facilityId={facilityId} preferMock={false} />
             )}
             {!isEnergyOnly && (
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader>
                   <CardTitle className="text-sm">Climate resilience &amp; adaptation</CardTitle>
                   <CardDescription className="text-xs">
@@ -1229,7 +1241,7 @@ export function FacilityIntelligencePlatform({
             <Button
               size="sm"
               variant="outline"
-              className="border-emerald-200"
+              className="border-border"
               loading={saveSnapshotBusy}
               disabled={!assessmentCycleId}
               onClick={() => void handleSaveSnapshot()}
@@ -1238,7 +1250,7 @@ export function FacilityIntelligencePlatform({
             </Button>
             <Button
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-primary hover:bg-primary/90"
               loading={actionPlanStatus === "saving"}
               disabled={!assessmentCycleId || assessmentReadOnly}
               onClick={async () => {
@@ -1311,7 +1323,7 @@ export function FacilityIntelligencePlatform({
             )}
           </div>
           {recommendations.map((r) => (
-            <Card key={r.id} className="border-emerald-100">
+            <Card key={r.id} className="border-border">
               <CardHeader className="pb-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <CardTitle className="text-base">{r.title}</CardTitle>
@@ -1319,7 +1331,7 @@ export function FacilityIntelligencePlatform({
                     <Badge variant="outline" className="text-[10px]">
                       {r.horizon}
                     </Badge>
-                    <Badge variant="secondary" className="text-[10px] bg-emerald-100 text-emerald-900">
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-foreground">
                       {r.moduleSource}
                     </Badge>
                   </div>
@@ -1327,22 +1339,22 @@ export function FacilityIntelligencePlatform({
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <p>
-                  <span className="font-medium text-emerald-900">Issue: </span>
+                  <span className="font-medium text-foreground">Issue: </span>
                   {r.issue}
                 </p>
                 <p>
-                  <span className="font-medium text-emerald-900">Why it matters: </span>
+                  <span className="font-medium text-foreground">Why it matters: </span>
                   {r.whyItMatters}
                 </p>
                 <p>
-                  <span className="font-medium text-emerald-900">Recommended action: </span>
+                  <span className="font-medium text-foreground">Recommended action: </span>
                   {r.action}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  <span className="font-medium text-emerald-800">Expected impact: </span>
+                  <span className="font-medium text-primary">Expected impact: </span>
                   {r.expectedImpact}
                 </p>
-                <div className="grid gap-3 pt-2 border-t border-emerald-50 sm:grid-cols-2">
+                <div className="grid gap-3 pt-2 border-t border-border sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label className="text-xs">Owner</Label>
                     <Input
@@ -1383,35 +1395,35 @@ export function FacilityIntelligencePlatform({
           {/* Executive summary strip (v2.0) */}
           {isClimateOnly ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Resilience capacity (RCS)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Tier &amp; attention</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {persistedClimateScore ? `Tier ${persistedClimateScore.tier}` : ""}
                   </CardTitle>
                   {persistedClimateScore?.criticalAttention && (
-                    <p className="text-[11px] text-amber-800 font-medium">Critical attention</p>
+                    <p className="text-[11px] text-warning-foreground font-medium">Critical attention</p>
                   )}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Risk drivers (saved)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">{persistedTopRisks.length}</CardTitle>
+                  <CardTitle className="text-2xl text-foreground">{persistedTopRisks.length}</CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Operational BMI (if captured)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {efficiencyScore !== null ? `${efficiencyScore}%` : ""}
                   </CardTitle>
                 </CardHeader>
@@ -1419,34 +1431,34 @@ export function FacilityIntelligencePlatform({
             </div>
           ) : isEnergyOnly ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="border-emerald-100 lg:col-span-2">
+              <Card className="border-border lg:col-span-2">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Total daily energy</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {resolvedSizingSummary ? `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Indicative solar</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {resolvedSizingSummary ? `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Annual savings</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {resolvedSizingSummary ? formatCurrency(resolvedSizingSummary.annualSavings) : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Efficiency score (BMI)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {efficiencyScore !== null ? `${efficiencyScore}%` : ""}
                   </CardTitle>
                 </CardHeader>
@@ -1454,34 +1466,34 @@ export function FacilityIntelligencePlatform({
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-              <Card className="border-emerald-100 lg:col-span-2">
+              <Card className="border-border lg:col-span-2">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Total daily energy</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {resolvedSizingSummary ? `${resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/d` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Indicative solar</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {resolvedSizingSummary ? `${resolvedSizingSummary.solarArraySize.toFixed(1)} kW` : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Annual savings</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {resolvedSizingSummary ? formatCurrency(resolvedSizingSummary.annualSavings) : ""}
                   </CardTitle>
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Resilience status</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {persistedClimateScore?.rcs ?? (climateResilienceScore !== null ? climateResilienceScore : "")}
                   </CardTitle>
                   {persistedClimateScore && (
@@ -1492,10 +1504,10 @@ export function FacilityIntelligencePlatform({
                   )}
                 </CardHeader>
               </Card>
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader className="pb-2">
                   <CardDescription className="text-xs">Efficiency score (BMI)</CardDescription>
-                  <CardTitle className="text-2xl text-emerald-900">
+                  <CardTitle className="text-2xl text-foreground">
                     {efficiencyScore !== null ? `${efficiencyScore}%` : ""}
                   </CardTitle>
                 </CardHeader>
@@ -1503,12 +1515,12 @@ export function FacilityIntelligencePlatform({
             </div>
           )}
 
-          <Card className="border-emerald-100">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="text-base">Executive summary</CardTitle>
               <CardDescription className="text-xs">Text snapshot pair with charts in Analyze and PDF from design engine</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-gray-700">
+            <CardContent className="space-y-3 text-sm text-foreground">
               {resolvedSizingSummary && (
                 <p>
                   Estimated demand <span className="font-semibold">{resolvedSizingSummary.totalDailyLoad.toFixed(1)} kWh/day</span>
@@ -1543,7 +1555,7 @@ export function FacilityIntelligencePlatform({
           {!isEnergyOnly &&
             (isClimateOnly || persistedTopRisks.length > 0 || persistedTasks.length > 0) && (
             <div className="grid gap-4 lg:grid-cols-2">
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader>
                   <CardTitle className="text-base">Top climate risk drivers (saved)</CardTitle>
                   <CardDescription className="text-xs">From your persisted climate assessment scoring.</CardDescription>
@@ -1553,14 +1565,14 @@ export function FacilityIntelligencePlatform({
                     <p className="text-sm text-muted-foreground">No saved climate risk drivers yet.</p>
                   ) : (
                     persistedTopRisks.slice(0, 5).map((r) => (
-                      <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-emerald-50 bg-white px-3 py-2 text-sm">
+                      <div key={r.id} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2 text-sm">
                         <div className="min-w-0">
-                          <p className="font-medium text-emerald-950 truncate">
+                          <p className="font-medium text-foreground truncate">
                             {r.rank ? `${r.rank}. ` : ""}{r.title}
                           </p>
                           <p className="text-[11px] text-muted-foreground truncate">{r.riskType}</p>
                         </div>
-                        <Badge variant="outline" className="border-amber-200 text-amber-900">
+                        <Badge variant="outline" className="border-warning/30 text-warning-foreground">
                           {Number(r.severity ?? 0)}%
                         </Badge>
                       </div>
@@ -1569,7 +1581,7 @@ export function FacilityIntelligencePlatform({
                 </CardContent>
               </Card>
 
-              <Card className="border-emerald-100">
+              <Card className="border-border">
                 <CardHeader>
                   <CardTitle className="text-base">Assigned tasks (saved)</CardTitle>
                   <CardDescription className="text-xs">Owners and due dates saved from your Action plan.</CardDescription>
@@ -1579,12 +1591,12 @@ export function FacilityIntelligencePlatform({
                     <p className="text-sm text-muted-foreground">No saved tasks yet. Assign owners in Action plan and save.</p>
                   ) : (
                     persistedTasks.slice(0, 8).map((t) => (
-                      <div key={t.id} className="rounded-lg border border-emerald-50 bg-white px-3 py-2 text-sm">
+                      <div key={t.id} className="rounded-lg border border-border bg-card px-3 py-2 text-sm">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span className="font-medium text-emerald-950">
+                          <span className="font-medium text-foreground">
                             {t.ownerName ? t.ownerName : "Unassigned"}
                           </span>
-                          <Badge variant="outline" className="border-slate-200 text-slate-700 text-[10px]">
+                          <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">
                             {t.status}
                           </Badge>
                         </div>
@@ -1607,19 +1619,19 @@ export function FacilityIntelligencePlatform({
             recommendations={recommendations}
             bmiTrend={bmiTrend}
           />
-          <Card className="border-emerald-100">
+          <Card className="border-border">
             <CardHeader>
               <CardTitle className="text-base">What to do next</CardTitle>
               <CardDescription className="text-xs">Turn insights into assigned, trackable actions.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => onNavigate("action")}>
+              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={() => onNavigate("action")}>
                 Assign owners &amp; due dates
               </Button>
-              <Button size="sm" variant="outline" className="border-emerald-200" onClick={() => onNavigate("assess")}>
+              <Button size="sm" variant="outline" className="border-border" onClick={() => onNavigate("assess")}>
                 Update assessment inputs
               </Button>
-              <Button size="sm" variant="outline" className="border-emerald-200" onClick={() => window.print()}>
+              <Button size="sm" variant="outline" className="border-border" onClick={() => window.print()}>
                 Export / Print
               </Button>
             </CardContent>

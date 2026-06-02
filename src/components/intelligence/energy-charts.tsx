@@ -22,14 +22,14 @@ import type { MeuSummary, SizingSummary } from "@/components/solar/afya-solar-si
 import { formatCurrency } from "@/lib/utils"
 import type { IntelligenceRecommendation } from "@/lib/intelligence/recommendations"
 
-const GREEN = "#16a34a"
-const GREEN_LIGHT = "#86efac"
-const EMERALD = "#059669"
-const MUTED = "#e5e7eb"
+const GREEN = "var(--color-primary)"
+const GREEN_LIGHT = "var(--color-chart-3)"
+const EMERALD = "var(--color-primary)"
+const MUTED = "var(--color-border)"
 
 export function ChartFallback({ message }: { message: string }) {
   return (
-    <div className="flex h-[220px] items-center justify-center rounded-lg border border-dashed border-emerald-200 bg-emerald-50/30 text-sm text-emerald-800/80">
+    <div className="flex h-[220px] items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 text-sm text-primary">
       {message}
     </div>
   )
@@ -49,7 +49,7 @@ export function LoadBreakdownBarChart({ meu }: { meu: MeuSummary | null }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis type="number" unit=" kWh" className="text-xs" />
         <YAxis type="category" dataKey="name" width={100} className="text-[10px]" tick={{ fontSize: 10 }} />
         <Tooltip formatter={(v: number) => [`${v} kWh/day`, "Demand"]} />
@@ -63,7 +63,7 @@ export function LoadBreakdownBarChart({ meu }: { meu: MeuSummary | null }) {
   )
 }
 
-const DONUT_COLORS = ["#16a34a", "#059669", "#34d399", "#6ee7b7", "#a7f3d0", "#86efac", "#bbf7d0", "#d1fae5"]
+const DONUT_COLORS = ["var(--color-primary)", "var(--color-primary)", "var(--color-chart-1)", "var(--color-chart-2)", "var(--color-chart-4)", "var(--color-chart-3)", "var(--color-chart-5)", "var(--color-muted)"]
 
 export function EnergyMixDonutChart({ meu }: { meu: MeuSummary | null }) {
   const raw = meu?.categoryBreakdown ?? []
@@ -116,12 +116,12 @@ export function CriticalLoadStackedBar({ meu }: { meu: MeuSummary | null }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="label" />
         <YAxis unit=" kWh" className="text-xs" />
         <Tooltip />
         <Legend wrapperStyle={{ fontSize: 11 }} />
-        <Bar dataKey="critical" stackId="a" fill="#14532d" name="Critical" />
+        <Bar dataKey="critical" stackId="a" fill="var(--color-foreground)" name="Critical" />
         <Bar dataKey="essential" stackId="a" fill={EMERALD} name="Essential" />
         <Bar dataKey="nonEssential" stackId="a" fill={GREEN_LIGHT} name="Non-essential" />
       </BarChart>
@@ -159,7 +159,7 @@ export function CostCompositionChart({
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 40 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="name" interval={0} angle={-18} textAnchor="end" height={70} tick={{ fontSize: 10 }} />
         <YAxis tickFormatter={(v) => formatCurrency(v)} className="text-[10px]" width={72} />
         <Tooltip formatter={(v: number) => formatCurrency(v)} />
@@ -186,7 +186,7 @@ export function SavingsWaterfallSimplified({
 
   const after = Math.max(0, currentAnnual - savingsAnnual)
   const data = [
-    { name: "Current annual (est.)", value: Number(currentAnnual.toFixed(0)), fill: "#dc2626" },
+    { name: "Current annual (est.)", value: Number(currentAnnual.toFixed(0)), fill: "var(--color-destructive)" },
     { name: "After solar (est.)", value: Number(after.toFixed(0)), fill: EMERALD },
     { name: "Modelled savings / yr", value: Number(Math.min(currentAnnual, savingsAnnual).toFixed(0)), fill: GREEN },
   ]
@@ -194,7 +194,7 @@ export function SavingsWaterfallSimplified({
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="name" interval={0} tick={{ fontSize: 9 }} angle={-12} textAnchor="end" height={56} />
         <YAxis tickFormatter={(v) => formatCurrency(v)} className="text-[10px]" width={68} />
         <Tooltip formatter={(v: number) => formatCurrency(v)} />
@@ -235,13 +235,13 @@ export function OutageExposureTimeline({
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="label" tick={{ fontSize: 10 }} />
         <YAxis unit=" h" tick={{ fontSize: 10 }} domain={[0, 24]} />
         <Tooltip />
         <Legend wrapperStyle={{ fontSize: 11 }} />
         <Bar dataKey="backup" stackId="a" fill={EMERALD} name="Backup covered" />
-        <Bar dataKey="unprotected" stackId="a" fill="#dc2626" name="Unprotected outage" />
+        <Bar dataKey="unprotected" stackId="a" fill="var(--color-destructive)" name="Unprotected outage" />
       </BarChart>
     </ResponsiveContainer>
   )
@@ -264,16 +264,16 @@ export function SolarCoverageSimulationChart({
   const remaining = Math.max(0, demand - solar - battery)
 
   const data = [
-    { name: "Daily demand", value: Number(demand.toFixed(2)), fill: "#0f172a" },
+    { name: "Daily demand", value: Number(demand.toFixed(2)), fill: "var(--color-foreground)" },
     { name: "Solar daytime offset (est.)", value: Number(solar.toFixed(2)), fill: GREEN },
     { name: "Battery backup (est.)", value: Number(battery.toFixed(2)), fill: EMERALD },
-    { name: "Grid/diesel remainder (est.)", value: Number(remaining.toFixed(2)), fill: "#f59e0b" },
+    { name: "Grid/diesel remainder (est.)", value: Number(remaining.toFixed(2)), fill: "var(--color-solar)" },
   ]
 
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 40 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="name" interval={0} angle={-14} textAnchor="end" height={62} tick={{ fontSize: 10 }} />
         <YAxis unit=" kWh" tick={{ fontSize: 10 }} />
         <Tooltip formatter={(v: number) => [`${v} kWh/day`, ""]} />
@@ -306,7 +306,7 @@ export function OpportunityMatrix({
   return (
     <ResponsiveContainer width="100%" height={240}>
       <ScatterChart margin={{ top: 8, right: 16, left: 8, bottom: 28 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis
           type="number"
           dataKey="x"
@@ -355,14 +355,14 @@ export function ActionPriorityChart({
       score,
       priority: r.priority,
       horizon: r.horizon,
-      fill: r.priority === "high" ? "#dc2626" : r.priority === "medium" ? "#f59e0b" : EMERALD,
+      fill: r.priority === "high" ? "var(--color-destructive)" : r.priority === "medium" ? "var(--color-solar)" : EMERALD,
     }
   })
 
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 36 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="name" interval={0} angle={-14} textAnchor="end" height={64} tick={{ fontSize: 10 }} />
         <YAxis tick={{ fontSize: 10 }} />
         <Tooltip
@@ -397,7 +397,7 @@ export function ImprovementTimelineChart({
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-emerald-100" />
+        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis dataKey="date" tick={{ fontSize: 10 }} />
         <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} />
         <Tooltip />
@@ -452,7 +452,7 @@ export function IntelligenceChartGrid({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Card className="border-emerald-100">
+      <Card className="border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Load breakdown</CardTitle>
           <CardDescription className="text-xs">Top equipment by daily kWh</CardDescription>
@@ -461,7 +461,7 @@ export function IntelligenceChartGrid({
           <LoadBreakdownBarChart meu={meu} />
         </CardContent>
       </Card>
-      <Card className="border-emerald-100">
+      <Card className="border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Energy mix by category</CardTitle>
           <CardDescription className="text-xs">Share of consumption</CardDescription>
@@ -470,7 +470,7 @@ export function IntelligenceChartGrid({
           <EnergyMixDonutChart meu={meu} />
         </CardContent>
       </Card>
-      <Card className="border-emerald-100">
+      <Card className="border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Critical vs other load</CardTitle>
           <CardDescription className="text-xs">Continuity-oriented view</CardDescription>
@@ -479,7 +479,7 @@ export function IntelligenceChartGrid({
           <CriticalLoadStackedBar meu={meu} />
         </CardContent>
       </Card>
-      <Card className="border-emerald-100">
+      <Card className="border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Cost composition (indicative)</CardTitle>
           <CardDescription className="text-xs">Grid, diesel, rough outage exposure</CardDescription>
@@ -495,7 +495,7 @@ export function IntelligenceChartGrid({
       </Card>
       {variant === "full" && (
         <>
-          <Card className="border-emerald-100 lg:col-span-2">
+          <Card className="border-border lg:col-span-2">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Savings bridge (simplified)</CardTitle>
               <CardDescription className="text-xs">Current vs estimated after solar offset slider</CardDescription>
@@ -505,7 +505,7 @@ export function IntelligenceChartGrid({
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-100">
+          <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Outage exposure timeline</CardTitle>
               <CardDescription className="text-xs">Outage hours vs backup covered vs unprotected</CardDescription>
@@ -515,7 +515,7 @@ export function IntelligenceChartGrid({
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-100">
+          <Card className="border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Solar coverage simulation</CardTitle>
               <CardDescription className="text-xs">Illustrative: demand vs solar + battery contribution</CardDescription>
@@ -525,7 +525,7 @@ export function IntelligenceChartGrid({
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-100 lg:col-span-2">
+          <Card className="border-border lg:col-span-2">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Energyresilience opportunity matrix</CardTitle>
               <CardDescription className="text-xs">Cost savings potential vs resilience score</CardDescription>
@@ -535,7 +535,7 @@ export function IntelligenceChartGrid({
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-100 lg:col-span-2">
+          <Card className="border-border lg:col-span-2">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Action priority chart</CardTitle>
               <CardDescription className="text-xs">Ranked actions by risk + impact + feasibility (proxy)</CardDescription>
@@ -545,7 +545,7 @@ export function IntelligenceChartGrid({
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-100 lg:col-span-2">
+          <Card className="border-border lg:col-span-2">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Efficiency score trend</CardTitle>
               <CardDescription className="text-xs">Before/after over reassessments (local history)</CardDescription>
