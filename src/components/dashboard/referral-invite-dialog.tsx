@@ -209,7 +209,7 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
       <DialogTrigger asChild suppressHydrationWarning>
         {trigger || (
           <Button variant="outline" className="gap-2">
-            <Gift className="h-4 w-4" />
+            <Gift className="h-4 w-4" aria-hidden="true" />
             Invite Facility
           </Button>
         )}
@@ -217,7 +217,7 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" suppressHydrationWarning>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-green-600" />
+            <Gift className="h-5 w-5 text-primary" aria-hidden="true" />
             Referral Program - Invite a Facility
           </DialogTitle>
           <DialogDescription>
@@ -227,12 +227,12 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
 
         {/* Referral Code Display */}
         {referralCode && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4 mb-4">
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-gray-700 mb-1">Your Referral Code</p>
-                <p className="text-2xl font-bold text-green-600 font-mono">{referralCode}</p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-sm font-semibold text-foreground mb-1">Your Referral Code</p>
+                <p className="text-2xl font-bold text-primary font-mono">{referralCode}</p>
+                <p className="text-xs text-muted-foreground mt-1">
                   Share this code with facilities you invite. They'll get free Afya Booking for the next month upon admin approval!
                 </p>
               </div>
@@ -244,12 +244,12 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
               >
                 {copied ? (
                   <>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
                     Copied!
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-4 w-4" aria-hidden="true" />
                     Copy
                   </>
                 )}
@@ -262,8 +262,8 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email <span className="text-red-500">*</span>
+                <Mail className="h-4 w-4" aria-hidden="true" />
+                Email <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="email"
@@ -274,12 +274,12 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                   setFormData({ ...formData, email: e.target.value })
                   setErrors({ ...errors, email: "" })
                 }}
-                className={errors.email ? "border-red-500" : ""}
+                className={errors.email ? "border-destructive" : ""}
                 required
               />
               {errors.email && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.email}
                 </p>
               )}
@@ -287,8 +287,8 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
 
             <div className="space-y-2">
               <Label htmlFor="name" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
-                Facility Name <span className="text-red-500">*</span>
+                <Building2 className="h-4 w-4" aria-hidden="true" />
+                Facility Name <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
@@ -298,12 +298,12 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                   setFormData({ ...formData, name: e.target.value })
                   setErrors({ ...errors, name: "" })
                 }}
-                className={errors.name ? "border-red-500" : ""}
+                className={errors.name ? "border-destructive" : ""}
                 required
               />
               {errors.name && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.name}
                 </p>
               )}
@@ -312,8 +312,8 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
 
           <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Phone Number <span className="text-red-500">*</span>
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              Phone Number <span className="text-destructive">*</span>
             </Label>
             <Input
               id="phone"
@@ -323,12 +323,12 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                 setFormData({ ...formData, phone: e.target.value })
                 setErrors({ ...errors, phone: "" })
               }}
-              className={errors.phone ? "border-red-500" : ""}
+              className={errors.phone ? "border-destructive" : ""}
               required
             />
             {errors.phone && (
-              <p className="text-sm text-red-600 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" aria-hidden="true" />
                 {errors.phone}
               </p>
             )}
@@ -336,10 +336,10 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="region">Region <span className="text-red-500">*</span></Label>
+              <Label htmlFor="region">Region <span className="text-destructive">*</span></Label>
               {isLoadingRegions ? (
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   Loading regions...
                 </div>
               ) : (
@@ -354,7 +354,7 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                     setErrors({ ...errors, region: "" })
                   }}
                 >
-                  <SelectTrigger className={errors.region ? "border-red-500" : ""}>
+                  <SelectTrigger className={errors.region ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select region" />
                   </SelectTrigger>
                   <SelectContent>
@@ -367,15 +367,15 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                 </Select>
               )}
               {errors.region && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.region}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="district">District <span className="text-red-500">*</span></Label>
+              <Label htmlFor="district">District <span className="text-destructive">*</span></Label>
               <Select
                 value={selectedDistrictId}
                 onValueChange={(value) => {
@@ -388,12 +388,12 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                 }}
                 disabled={!selectedRegionId || districts.length === 0}
               >
-                <SelectTrigger className={errors.district ? "border-red-500" : ""}>
+                <SelectTrigger className={errors.district ? "border-destructive" : ""}>
                   <SelectValue placeholder={!selectedRegionId ? "Select region first" : districts.length === 0 ? "No districts available" : "Select district"} />
                 </SelectTrigger>
                 <SelectContent>
                   {districts.length === 0 ? (
-                    <div className="p-2 text-center text-sm text-gray-500">
+                    <div className="p-2 text-center text-sm text-muted-foreground">
                       {!selectedRegionId ? "Please select a region first" : "No districts available"}
                     </div>
                   ) : (
@@ -406,8 +406,8 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
                 </SelectContent>
               </Select>
               {errors.district && (
-                <p className="text-sm text-red-600 flex items-center gap-1">
-                  <AlertCircle className="h-4 w-4" />
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
                   {errors.district}
                 </p>
               )}
@@ -436,16 +436,15 @@ export function ReferralInviteDialog({ onSuccess, trigger }: ReferralInviteDialo
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-green-600 hover:bg-green-700"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Gift className="mr-2 h-4 w-4" />
+                  <Gift className="mr-2 h-4 w-4" aria-hidden="true" />
                   Send Invitation
                 </>
               )}

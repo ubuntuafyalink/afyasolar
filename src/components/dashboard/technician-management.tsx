@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Wrench, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, UserCheck, UserX, Trash2 } from "lucide-react"
+import { Wrench, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, UserCheck, UserX, Trash2, Star } from "lucide-react"
 import { toast } from "sonner"
 import { DeleteTechnicianDialog } from "./delete-technician-dialog"
+import { EmptyState } from "@/components/ui/empty-state"
+import { cn } from "@/lib/utils"
 
 interface Technician {
   id: string
@@ -37,23 +40,23 @@ function getInvitationStatus(technician: Technician): { label: string; color: st
   if (!technician.user) {
     return {
       label: 'Not Invited',
-      color: 'bg-gray-100 text-gray-700',
-      icon: <Clock className="w-3 h-3" />,
+      color: 'bg-muted text-muted-foreground',
+      icon: <Clock className="w-3 h-3" aria-hidden="true" />,
     }
   }
 
   if (technician.user.emailVerified) {
     return {
       label: 'Registered',
-      color: 'bg-green-100 text-green-700',
-      icon: <CheckCircle2 className="w-3 h-3" />,
+      color: 'bg-success/15 text-success',
+      icon: <CheckCircle2 className="w-3 h-3" aria-hidden="true" />,
     }
   }
 
   return {
     label: 'Pending',
-    color: 'bg-yellow-100 text-yellow-700',
-    icon: <Mail className="w-3 h-3" />,
+    color: 'bg-warning/15 text-warning',
+    icon: <Mail className="w-3 h-3" aria-hidden="true" />,
   }
 }
 
@@ -186,9 +189,7 @@ export function TechnicianManagement() {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-green-600" />
-          </div>
+          <CardListSkeleton rows={5} />
         </CardContent>
       </Card>
     )
@@ -200,7 +201,7 @@ export function TechnicianManagement() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Wrench className="w-4 h-4 text-green-600" />
+              <Wrench className="w-4 h-4 text-primary" aria-hidden="true" />
               Technician Management
             </CardTitle>
             <CardDescription className="text-xs">
@@ -209,8 +210,8 @@ export function TechnicianManagement() {
           </div>
           <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-green-600 hover:bg-green-700 text-xs h-8 px-3">
-                <Plus className="w-3 h-3 mr-1.5" />
+              <Button className="text-xs h-8 px-3">
+                <Plus className="w-3 h-3 mr-1.5" aria-hidden="true" />
                 Invite Technician
               </Button>
             </DialogTrigger>
@@ -248,16 +249,16 @@ export function TechnicianManagement() {
                     size="sm"
                     onClick={handleInvite}
                     disabled={isInviting || !inviteFormData.email}
-                    className="bg-green-600 hover:bg-green-700 text-xs"
+                    className="text-xs"
                   >
                     {isInviting ? (
                       <>
-                        <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                        <Loader2 className="w-3 h-3 mr-1.5 animate-spin" aria-hidden="true" />
                         Sending...
                       </>
                     ) : (
                       <>
-                        <Mail className="w-3 h-3 mr-1.5" />
+                        <Mail className="w-3 h-3 mr-1.5" aria-hidden="true" />
                         Send Invitation
                       </>
                     )}
@@ -273,7 +274,7 @@ export function TechnicianManagement() {
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search by name, email, or phone..."
                 value={searchQuery}
@@ -292,7 +293,7 @@ export function TechnicianManagement() {
                 setStatusFilter(e.target.value)
                 setCurrentPage(1)
               }}
-              className="text-xs border rounded px-2 py-1 h-8"
+              className="text-xs border border-border rounded-lg bg-background px-2 py-1 h-8 outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -305,7 +306,7 @@ export function TechnicianManagement() {
                 setAvailabilityFilter(e.target.value)
                 setCurrentPage(1)
               }}
-              className="text-xs border rounded px-2 py-1 h-8"
+              className="text-xs border border-border rounded-lg bg-background px-2 py-1 h-8 outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="all">All Availability</option>
               <option value="available">Available</option>
@@ -325,38 +326,40 @@ export function TechnicianManagement() {
               return (
                 <div
                   key={technician.id}
-                  className="flex items-center justify-between p-3 border rounded text-xs hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-3 border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-gray-900 truncate">{fullName}</p>
-                      <Badge className={invitationStatus.color} style={{ fontSize: '10px', padding: '2px 6px' }}>
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <p className="font-medium text-foreground truncate">{fullName}</p>
+                      <Badge className={cn("text-[10px] px-1.5 py-0.5", invitationStatus.color)}>
                         <span className="flex items-center gap-1">
                           {invitationStatus.icon}
                           {invitationStatus.label}
                         </span>
                       </Badge>
                       <Badge
-                        variant={technician.status === 'active' ? 'default' : 'secondary'}
-                        style={{ fontSize: '10px', padding: '2px 6px' }}
+                        variant={technician.status === 'active' ? 'success' : 'secondary'}
+                        className="text-[10px] px-1.5 py-0.5 capitalize"
                       >
                         {technician.status}
                       </Badge>
                       <Badge
                         variant="outline"
-                        style={{ fontSize: '10px', padding: '2px 6px' }}
+                        className="text-[10px] px-1.5 py-0.5 capitalize"
                       >
                         {technician.availabilityStatus}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-600">
+                    <div className="flex items-center gap-3 text-muted-foreground flex-wrap">
                       <span className="truncate">{technician.email}</span>
                       {technician.phone && <span>• {technician.phone}</span>}
                       {technician.yearsExperience !== null && technician.yearsExperience !== undefined && (
                         <span>• {technician.yearsExperience} years exp.</span>
                       )}
                       {technician.averageRating !== null && technician.averageRating !== undefined && (
-                        <span>• ⭐ {Number(technician.averageRating).toFixed(1)}</span>
+                        <span className="flex items-center gap-1">
+                          • <Star className="w-3 h-3 fill-solar text-solar" aria-hidden="true" /> {Number(technician.averageRating).toFixed(1)}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -370,10 +373,10 @@ export function TechnicianManagement() {
                         className="text-xs h-7 px-2"
                       >
                         {resendingUserId === technician.user!.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />
                         ) : (
                           <>
-                            <Mail className="w-3 h-3 mr-1" />
+                            <Mail className="w-3 h-3 mr-1" aria-hidden="true" />
                             Resend
                           </>
                         )}
@@ -384,8 +387,9 @@ export function TechnicianManagement() {
                       size="sm"
                       onClick={() => handleDeleteTechnician(technician)}
                       className="text-xs h-7 px-2"
+                      aria-label={`Delete ${fullName}`}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3 h-3" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
@@ -393,29 +397,30 @@ export function TechnicianManagement() {
             })}
           </div>
         ) : (
-          <div className="text-center py-6">
-            <Wrench className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-600">
-              {searchQuery || statusFilter !== 'all' || availabilityFilter !== 'all'
+          <EmptyState
+            icon={<Wrench aria-hidden="true" />}
+            title={
+              searchQuery || statusFilter !== 'all' || availabilityFilter !== 'all'
                 ? 'No technicians match your filters'
-                : 'No technicians yet'}
-            </p>
+                : 'No technicians yet'
+            }
+          >
             {!searchQuery && statusFilter === 'all' && availabilityFilter === 'all' && (
               <Button
                 onClick={() => setIsInviteDialogOpen(true)}
-                className="mt-3 bg-green-600 hover:bg-green-700 text-xs h-8 px-3"
+                className="text-xs h-8 px-3"
               >
-                <Plus className="w-3 h-3 mr-1.5" />
+                <Plus className="w-3 h-3 mr-1.5" aria-hidden="true" />
                 Invite First Technician
               </Button>
             )}
-          </div>
+          </EmptyState>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 pt-4 border-t">
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-muted-foreground">
               Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredTechnicians.length)} of {filteredTechnicians.length}
             </p>
             <div className="flex items-center gap-2">
@@ -425,10 +430,11 @@ export function TechnicianManagement() {
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="text-xs h-7 px-2"
+                aria-label="Previous page"
               >
-                <ChevronLeft className="w-3 h-3" />
+                <ChevronLeft className="w-3 h-3" aria-hidden="true" />
               </Button>
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-muted-foreground">
                 Page {currentPage} of {totalPages}
               </span>
               <Button
@@ -437,8 +443,9 @@ export function TechnicianManagement() {
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="text-xs h-7 px-2"
+                aria-label="Next page"
               >
-                <ChevronRight className="w-3 h-3" />
+                <ChevronRight className="w-3 h-3" aria-hidden="true" />
               </Button>
             </div>
           </div>

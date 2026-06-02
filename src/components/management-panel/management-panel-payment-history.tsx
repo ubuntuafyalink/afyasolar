@@ -11,6 +11,7 @@ import {
   ManagementPanelTableSkeleton,
   ManagementPanelErrorState,
 } from '@/components/management-panel/management-panel-loading'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface Payment {
   id: string
@@ -97,8 +98,8 @@ export function ManagementPanelPaymentHistory() {
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Payment History</h1>
-          <p className="text-sm text-gray-500 mt-1">Recent PAYG and payment records across all sites</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Payment History</h1>
+          <p className="text-sm text-muted-foreground mt-1">Recent PAYG and payment records across all sites</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -108,7 +109,7 @@ export function ManagementPanelPaymentHistory() {
             disabled={refreshing}
             className="gap-2"
           >
-            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} aria-hidden />
             {refreshing ? 'Refreshing…' : 'Refresh'}
           </Button>
           <Button
@@ -118,34 +119,34 @@ export function ManagementPanelPaymentHistory() {
             disabled={exporting || payments.length === 0}
             className="gap-2"
           >
-            <Download className={cn('w-4 h-4', exporting && 'animate-pulse')} />
+            <Download className={cn('w-4 h-4', exporting && 'animate-pulse')} aria-hidden />
             {exporting ? 'Exporting…' : 'Export'}
           </Button>
         </div>
       </div>
-    <Card className="rounded-xl border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <CardHeader className="flex flex-row items-center justify-between border-b bg-gray-50/30">
+    <Card className="rounded-lg border-border shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-muted/30">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Receipt className="w-5 h-5" />
+            <Receipt className="w-5 h-5" aria-hidden />
             Recent Payments
           </CardTitle>
-          <p className="text-sm text-gray-500 mt-1">All payments from the database</p>
+          <p className="text-sm text-muted-foreground mt-1">All payments from the database</p>
         </div>
       </CardHeader>
       <CardContent>
         {payments.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <Receipt className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No payments in the database yet.</p>
-            <p className="text-sm mt-1">Run the management panel seed to load payment history.</p>
-          </div>
+          <EmptyState
+            icon={<Receipt />}
+            title="No payments in the database yet."
+            description="Run the management panel seed to load payment history."
+          />
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-gray-600">
+                  <tr className="border-b border-border text-left text-muted-foreground">
                     <th className="pb-3 font-medium">Facility</th>
                     <th className="pb-3 font-medium">Date</th>
                     <th className="pb-3 font-medium">Amount (TZS)</th>
@@ -155,34 +156,34 @@ export function ManagementPanelPaymentHistory() {
                 </thead>
                 <tbody>
                   {payments.map((p) => (
-                    <tr key={p.id} className="border-b last:border-0">
+                    <tr key={p.id} className="border-b border-border last:border-0">
                       <td className="py-3">
                         <span className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400" />
+                          <Building2 className="w-4 h-4 text-muted-foreground" aria-hidden />
                           {p.facilityName}
                         </span>
                       </td>
                       <td className="py-3 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <Calendar className="w-4 h-4 text-muted-foreground" aria-hidden />
                         {typeof p.paymentDate === 'string' ? p.paymentDate : format(new Date(p.paymentDate), 'yyyy-MM-dd')}
                       </td>
                       <td className="py-3">
                         <span className="flex items-center gap-2 font-medium">
-                          <DollarSign className="w-4 h-4 text-green-600" />
+                          <DollarSign className="w-4 h-4 text-primary" aria-hidden />
                           {Number(p.amount).toLocaleString()}
                         </span>
                       </td>
                       <td className="py-3">{p.paymentType}</td>
                       <td className="py-3">
-                        <Badge className="bg-green-100 text-green-800">{p.status}</Badge>
+                        <Badge variant="success">{p.status}</Badge>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-500 mt-4">
-              Summary: Total collected this period — TZS {totalAmount.toLocaleString()}
+            <p className="text-xs text-muted-foreground mt-4">
+              Summary: Total collected this period TZS {totalAmount.toLocaleString()}
             </p>
           </>
         )}

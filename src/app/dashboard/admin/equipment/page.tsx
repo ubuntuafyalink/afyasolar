@@ -55,21 +55,21 @@ export default function AdminEquipmentPage() {
   )
 
   const getStatusBadge = (status: string) => {
-    const statusMap = {
-      draft: "bg-gray-100 text-gray-800",
-      published: "bg-green-100 text-green-800",
-      sold_out: "bg-red-100 text-red-800",
-      archived: "bg-gray-200 text-gray-600",
+    const variantMap: Record<string, "secondary" | "success" | "destructive" | "outline"> = {
+      draft: "secondary",
+      published: "success",
+      sold_out: "destructive",
+      archived: "outline",
     }
-    return <Badge className={statusMap[status as keyof typeof statusMap]}>{status.replace("_", " ")}</Badge>
+    return <Badge variant={variantMap[status] ?? "secondary"}>{status.replace("_", " ")}</Badge>
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold">Equipment Listings</h1>
-          <p className="text-muted-foreground">Manage equipment available for resale</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Equipment Listings</h1>
+          <p className="text-sm text-muted-foreground">Manage equipment available for resale</p>
         </div>
         <Button 
           onClick={() => {
@@ -96,7 +96,7 @@ export default function AdminEquipmentPage() {
           />
         </div>
 
-        <div className="rounded-md border">
+        <div className="rounded-lg border border-border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -152,7 +152,7 @@ export default function AdminEquipmentPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={7} className="h-24 text-center text-sm text-muted-foreground">
                     No equipment found
                   </TableCell>
                 </TableRow>

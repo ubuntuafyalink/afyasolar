@@ -250,34 +250,34 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-sm text-gray-600">Loading settings...</p>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" aria-hidden></div>
+          <p className="text-sm text-muted-foreground">Loading settings...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex overflow-hidden">
+    <div className="h-screen bg-muted/30 flex overflow-hidden">
       {/* Sidebar */}
       <aside
         className={cn(
-          "bg-white border-r shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
+          "bg-card border-r border-border shadow-sm transition-all duration-300 fixed lg:static inset-y-0 left-0 z-50 flex flex-col",
           sidebarOpen ? "w-60" : "w-16",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="p-4 border-b flex items-center justify-between">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             {sidebarOpen && (
               <div className="flex items-center gap-3">
-                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-emerald-100">
+                <div className="relative w-9 h-9 flex-shrink-0 rounded-full overflow-hidden border border-primary/20">
                   <img src="/images/services/logo.png" alt="Afya Link" className="w-full h-full object-contain p-2" />
                 </div>
-                <span className="text-base font-semibold text-gray-900">Afya Link</span>
+                <span className="text-base font-semibold text-foreground">Afya Link</span>
               </div>
             )}
             <Button
@@ -285,8 +285,9 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="h-8 w-8 p-0 hidden lg:flex"
+              aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4" aria-hidden />
             </Button>
           </div>
 
@@ -305,13 +306,14 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                   key={item.id}
                   onClick={() => setActiveTab(item.id as any)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded transition-colors",
+                    "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                     isActive
-                      ? "bg-green-600 text-white shadow-sm"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
+                  aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
                   {sidebarOpen && <span>{item.label}</span>}
                 </button>
               )
@@ -319,13 +321,13 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
           </nav>
 
           {/* Sidebar Footer */}
-          <div className="p-3 border-t mt-auto space-y-2">
+          <div className="p-3 border-t border-border mt-auto space-y-2">
             <Button
               variant="ghost"
               className={cn("w-full justify-center text-xs", sidebarOpen && "justify-start")}
               onClick={() => router.push('/dashboard/technician')}
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" aria-hidden />
               {sidebarOpen && <span>Back to Dashboard</span>}
             </Button>
             <LogoutButton
@@ -341,7 +343,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-gradient-to-br from-emerald-900/30 via-slate-900/35 to-black/30 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
@@ -349,7 +351,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white border-b shadow-sm sticky top-0 z-30">
+        <header className="bg-card border-b border-border shadow-sm sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -358,14 +360,15 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                   size="icon"
                   onClick={() => setMobileMenuOpen(true)}
                   className="lg:hidden"
+                  aria-label="Open menu"
                 >
-                  <Settings className="w-5 h-5" />
+                  <Settings className="w-5 h-5" aria-hidden />
                 </Button>
                 <div className="min-w-0">
-                  <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate">
+                  <h1 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
                     Settings
                   </h1>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate hidden sm:block">
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate hidden sm:block">
                     Manage your account preferences
                   </p>
                 </div>
@@ -382,7 +385,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
+                    <User className="h-5 w-5" aria-hidden />
                     Profile Information
                   </CardTitle>
                   <CardDescription>
@@ -461,7 +464,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <Label htmlFor="bio">Bio</Label>
                     <textarea
                       id="bio"
-                      className="w-full p-3 border rounded-md resize-none"
+                      className="w-full p-3 border border-border rounded-lg resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       rows={4}
                       value={profileForm.bio}
                       onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
@@ -490,7 +493,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Key className="h-5 w-5" />
+                    <Key className="h-5 w-5" aria-hidden />
                     Password
                   </CardTitle>
                   <CardDescription>
@@ -512,12 +515,13 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility('currentPassword')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={passwordVisibility.currentPassword ? 'Hide current password' : 'Show current password'}
                       >
                         {passwordVisibility.currentPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4" aria-hidden />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4" aria-hidden />
                         )}
                       </button>
                     </div>
@@ -536,16 +540,17 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility('newPassword')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={passwordVisibility.newPassword ? 'Hide new password' : 'Show new password'}
                       >
                         {passwordVisibility.newPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4" aria-hidden />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4" aria-hidden />
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Must be at least 6 characters long
                     </p>
                   </div>
@@ -563,17 +568,18 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility('confirmPassword')}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={passwordVisibility.confirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                       >
                         {passwordVisibility.confirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="h-4 w-4" aria-hidden />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4" aria-hidden />
                         )}
                       </button>
                     </div>
                     {passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                      <p className="text-xs text-red-500 mt-1">
+                      <p className="text-xs text-destructive mt-1">
                         Passwords do not match
                       </p>
                     )}
@@ -600,7 +606,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
+                    <Bell className="h-5 w-5" aria-hidden />
                     Notification Preferences
                   </CardTitle>
                   <CardDescription>
@@ -612,7 +618,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Email Notifications</Label>
-                        <p className="text-sm text-gray-600">Receive notifications via email</p>
+                        <p className="text-sm text-muted-foreground">Receive notifications via email</p>
                       </div>
                       <Switch
                         checked={notificationForm.emailNotifications}
@@ -623,7 +629,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">SMS Notifications</Label>
-                        <p className="text-sm text-gray-600">Receive notifications via SMS</p>
+                        <p className="text-sm text-muted-foreground">Receive notifications via SMS</p>
                       </div>
                       <Switch
                         checked={notificationForm.smsNotifications}
@@ -634,7 +640,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Job Alerts</Label>
-                        <p className="text-sm text-gray-600">Get notified about new job opportunities</p>
+                        <p className="text-sm text-muted-foreground">Get notified about new job opportunities</p>
                       </div>
                       <Switch
                         checked={notificationForm.jobAlerts}
@@ -645,7 +651,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Payment Alerts</Label>
-                        <p className="text-sm text-gray-600">Get notified about payments and commissions</p>
+                        <p className="text-sm text-muted-foreground">Get notified about payments and commissions</p>
                       </div>
                       <Switch
                         checked={notificationForm.paymentAlerts}
@@ -656,7 +662,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Marketing Emails</Label>
-                        <p className="text-sm text-gray-600">Receive marketing and promotional emails</p>
+                        <p className="text-sm text-muted-foreground">Receive marketing and promotional emails</p>
                       </div>
                       <Switch
                         checked={notificationForm.marketingEmails}
@@ -686,7 +692,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
+                    <Shield className="h-5 w-5" aria-hidden />
                     Privacy Settings
                   </CardTitle>
                   <CardDescription>
@@ -698,7 +704,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Show Profile</Label>
-                        <p className="text-sm text-gray-600">Make your profile visible to other users</p>
+                        <p className="text-sm text-muted-foreground">Make your profile visible to other users</p>
                       </div>
                       <Switch
                         checked={privacyForm.showProfile}
@@ -709,7 +715,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Show Contact Information</Label>
-                        <p className="text-sm text-gray-600">Display your contact details in your profile</p>
+                        <p className="text-sm text-muted-foreground">Display your contact details in your profile</p>
                       </div>
                       <Switch
                         checked={privacyForm.showContactInfo}
@@ -720,7 +726,7 @@ export function TechnicianSettings({ technicianId }: TechnicianSettingsProps) {
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label className="text-base">Allow Direct Messages</Label>
-                        <p className="text-sm text-gray-600">Let other users send you direct messages</p>
+                        <p className="text-sm text-muted-foreground">Let other users send you direct messages</p>
                       </div>
                       <Switch
                         checked={privacyForm.allowDirectMessages}

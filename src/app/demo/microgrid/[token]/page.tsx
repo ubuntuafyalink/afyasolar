@@ -6,7 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { BarChart3, DollarSign, Home, Plug, Zap } from 'lucide-react'
+import { StatCard } from '@/components/ui/stat-card'
+import { AlertCircle, BarChart3, DollarSign, Home, Plug, Zap } from 'lucide-react'
 
 const MICROGRID_CONSUMERS = {
   'afx-worker-house-001': {
@@ -68,14 +69,15 @@ export default function MicrogridConsumerPage({ params }: { params: { token: str
 
   if (!consumer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-600">Access Denied</CardTitle>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-border">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-destructive" aria-hidden />
+            </div>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>Invalid microgrid consumer token. Please check your access link.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Invalid microgrid consumer token. Please check your access link.</p>
-          </CardContent>
         </Card>
       </div>
     )
@@ -84,23 +86,21 @@ export default function MicrogridConsumerPage({ params }: { params: { token: str
   const isBusiness = consumer.type === 'nearby_business'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div
-        className={`bg-gradient-to-r ${isBusiness ? 'from-blue-600 to-blue-700' : 'from-indigo-600 to-indigo-700'} text-white p-6`}
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border p-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              {isBusiness ? <Plug className="w-6 h-6" /> : <Home className="w-6 h-6" />}
-              <h1 className="text-3xl font-bold">{consumer.name}</h1>
+              {isBusiness ? <Plug className="w-6 h-6 text-primary" aria-hidden /> : <Home className="w-6 h-6 text-primary" aria-hidden />}
+              <h1 className="text-2xl font-semibold text-foreground">{consumer.name}</h1>
             </div>
-            <p className={`${isBusiness ? 'text-blue-100' : 'text-indigo-100'} mt-1`}>
+            <p className="text-muted-foreground mt-1">
               {consumer.address} • Powered by {consumer.parentFacility}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-sm opacity-75">Connection Status</p>
-            <Badge className={`mt-1 ${isBusiness ? 'bg-blue-400 text-blue-900' : 'bg-indigo-400 text-indigo-900'}`}>
+            <p className="text-sm text-muted-foreground">Connection Status</p>
+            <Badge variant={consumer.status === 'active' ? 'success' : 'destructive'} className="mt-1">
               {consumer.status === 'active' ? '✓ Connected' : 'Disconnected'}
             </Badge>
           </div>
@@ -108,112 +108,89 @@ export default function MicrogridConsumerPage({ params }: { params: { token: str
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-slate-300">Today's Usage</CardDescription>
-                <Zap className="w-5 h-5 text-yellow-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-white">{consumer.dailyUsage.toFixed(1)} kWh</p>
-              <p className="text-xs text-yellow-400 mt-1">TSh {consumer.dailyCost.toLocaleString()}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-slate-300">Monthly Usage</CardDescription>
-                <BarChart3 className="w-5 h-5 text-blue-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-white">{consumer.monthlyUsage} kWh</p>
-              <p className="text-xs text-blue-400 mt-1">Avg {(consumer.monthlyUsage / 30).toFixed(1)} kWh/day</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-slate-300">Available Balance</CardDescription>
-                <DollarSign className="w-5 h-5 text-green-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-white">TSh {consumer.balance.toLocaleString()}</p>
-              <p className="text-xs text-green-400 mt-1">Days remaining: {Math.floor(consumer.balance / consumer.dailyCost)}</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-slate-300">Tariff Rate</CardDescription>
-                <Plug className="w-5 h-5 text-purple-400" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-white">TSh {consumer.tariffPerKwh}</p>
-              <p className="text-xs text-purple-400 mt-1">per kWh</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            title="Today's Usage"
+            value={`${consumer.dailyUsage.toFixed(1)} kWh`}
+            icon={<Zap />}
+            accent="solar"
+            meta={`TSh ${consumer.dailyCost.toLocaleString()}`}
+          />
+          <StatCard
+            title="Monthly Usage"
+            value={`${consumer.monthlyUsage} kWh`}
+            icon={<BarChart3 />}
+            accent="primary"
+            meta={`Avg ${(consumer.monthlyUsage / 30).toFixed(1)} kWh/day`}
+          />
+          <StatCard
+            title="Available Balance"
+            value={`TSh ${consumer.balance.toLocaleString()}`}
+            icon={<DollarSign />}
+            accent="success"
+            meta={`Days remaining: ${Math.floor(consumer.balance / consumer.dailyCost)}`}
+          />
+          <StatCard
+            title="Tariff Rate"
+            value={`TSh ${consumer.tariffPerKwh}`}
+            icon={<Plug />}
+            accent="muted"
+            meta="per kWh"
+          />
         </div>
 
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="bg-slate-800 border-slate-700">
-            <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white">Overview</TabsTrigger>
-            <TabsTrigger value="appliances" className="text-slate-300 data-[state=active]:text-white">Appliances</TabsTrigger>
-            <TabsTrigger value="consumption" className="text-slate-300 data-[state=active]:text-white">Usage History</TabsTrigger>
-            <TabsTrigger value="billing" className="text-slate-300 data-[state=active]:text-white">Billing</TabsTrigger>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="appliances">Appliances</TabsTrigger>
+            <TabsTrigger value="consumption">Usage History</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="bg-slate-800 border-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Connection Details</CardTitle>
+                  <CardTitle>Connection Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-sm text-slate-400">Meter ID</label>
-                    <p className="text-lg font-bold text-white">{consumer.meterId}</p>
+                    <label className="text-sm text-muted-foreground">Meter ID</label>
+                    <p className="text-lg font-semibold text-foreground">{consumer.meterId}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400">Meter Serial</label>
-                    <p className="text-lg font-bold text-white font-mono">{consumer.meterSerial}</p>
+                    <label className="text-sm text-muted-foreground">Meter Serial</label>
+                    <p className="text-lg font-semibold text-foreground font-mono">{consumer.meterSerial}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400">Connection Date</label>
-                    <p className="text-lg font-bold text-white">{consumer.registeredAt}</p>
+                    <label className="text-sm text-muted-foreground">Connection Date</label>
+                    <p className="text-lg font-semibold text-foreground">{consumer.registeredAt}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400">Contact</label>
-                    <p className="text-lg font-bold text-white">{consumer.phone}</p>
+                    <label className="text-sm text-muted-foreground">Contact</label>
+                    <p className="text-lg font-semibold text-foreground">{consumer.phone}</p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Parent Facility</CardTitle>
+                  <CardTitle>Parent Facility</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-sm text-slate-400">Facility Name</label>
-                    <p className="text-lg font-bold text-white">{consumer.parentFacility}</p>
+                    <label className="text-sm text-muted-foreground">Facility Name</label>
+                    <p className="text-lg font-semibold text-foreground">{consumer.parentFacility}</p>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400">Power Source</label>
-                    <p className="text-lg font-bold text-white">Solar Microgrid (10kW)</p>
+                    <label className="text-sm text-muted-foreground">Power Source</label>
+                    <p className="text-lg font-semibold text-foreground">Solar Microgrid (10kW)</p>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400">Grid Status</label>
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mt-2">
-                      Online & Supplying Power
-                    </Badge>
+                    <label className="text-sm text-muted-foreground">Grid Status</label>
+                    <div className="mt-2">
+                      <Badge variant="success">Online & Supplying Power</Badge>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -221,25 +198,25 @@ export default function MicrogridConsumerPage({ params }: { params: { token: str
           </TabsContent>
 
           <TabsContent value="appliances">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white">Active Appliances</CardTitle>
-                <CardDescription className="text-slate-400">Device power consumption breakdown</CardDescription>
+                <CardTitle>Active Appliances</CardTitle>
+                <CardDescription>Device power consumption breakdown</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {consumer.appliances.map((appliance, idx) => (
-                    <div key={idx} className="bg-slate-700/50 rounded-lg p-4">
+                    <div key={idx} className="bg-muted rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <p className="font-bold text-white">{appliance.name}</p>
-                          <p className="text-xs text-slate-400">
+                          <p className="font-semibold text-foreground">{appliance.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             {appliance.power}W × {appliance.usage}h/day
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-white">{(appliance.power * appliance.usage / 1000).toFixed(2)} kWh/day</p>
-                          <p className="text-xs text-slate-400">
+                          <p className="font-semibold text-foreground">{(appliance.power * appliance.usage / 1000).toFixed(2)} kWh/day</p>
+                          <p className="text-xs text-muted-foreground">
                             TSh {((appliance.power * appliance.usage / 1000) * consumer.tariffPerKwh).toLocaleString()}
                           </p>
                         </div>
@@ -253,68 +230,68 @@ export default function MicrogridConsumerPage({ params }: { params: { token: str
           </TabsContent>
 
           <TabsContent value="consumption">
-            <Card className="bg-slate-800 border-slate-700">
+            <Card>
               <CardHeader>
-                <CardTitle className="text-white">Usage Trends</CardTitle>
+                <CardTitle>Usage Trends</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <Alert className="bg-blue-900/20 border-blue-700">
-                  <BarChart3 className="h-4 w-4 text-blue-400" />
-                  <AlertDescription className="text-blue-100">
+                <Alert className="bg-primary/5 border-primary/20">
+                  <BarChart3 className="h-4 w-4 text-primary" aria-hidden />
+                  <AlertDescription className="text-foreground">
                     Your usage is {consumer.monthlyUsage > 100 ? 'high' : 'moderate'} compared to similar {consumer.type === 'nearby_business' ? 'businesses' : 'residences'} on this microgrid.
                   </AlertDescription>
                 </Alert>
 
-                <div className="bg-slate-700/50 rounded-lg p-6">
-                  <p className="text-sm text-slate-300 mb-4">Last 7 Days Average</p>
-                  <p className="text-4xl font-bold text-white">{(consumer.monthlyUsage / 30 * 7).toFixed(1)} kWh</p>
-                  <p className="text-sm text-slate-400 mt-2">≈ {(consumer.dailyUsage * 7).toFixed(1)} kWh for this week</p>
+                <div className="bg-muted rounded-lg p-6">
+                  <p className="text-sm text-muted-foreground mb-4">Last 7 Days Average</p>
+                  <p className="text-4xl font-bold text-foreground">{(consumer.monthlyUsage / 30 * 7).toFixed(1)} kWh</p>
+                  <p className="text-sm text-muted-foreground mt-2">≈ {(consumer.dailyUsage * 7).toFixed(1)} kWh for this week</p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="billing">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="bg-slate-800 border-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Current Bill</CardTitle>
+                  <CardTitle>Current Bill</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-slate-700/50 rounded-lg p-4">
+                  <div className="bg-muted rounded-lg p-4">
                     <div className="flex justify-between mb-2">
-                      <span className="text-slate-300">Monthly Usage</span>
-                      <span className="text-white font-bold">{consumer.monthlyUsage} kWh</span>
+                      <span className="text-muted-foreground">Monthly Usage</span>
+                      <span className="text-foreground font-semibold">{consumer.monthlyUsage} kWh</span>
                     </div>
                     <div className="flex justify-between mb-2">
-                      <span className="text-slate-300">Rate</span>
-                      <span className="text-white font-bold">TSh {consumer.tariffPerKwh}/kWh</span>
+                      <span className="text-muted-foreground">Rate</span>
+                      <span className="text-foreground font-semibold">TSh {consumer.tariffPerKwh}/kWh</span>
                     </div>
-                    <div className="border-t border-slate-600 pt-2 mt-2">
+                    <div className="border-t border-border pt-2 mt-2">
                       <div className="flex justify-between">
-                        <span className="text-emerald-400 font-bold">Total Due</span>
-                        <span className="text-2xl font-bold text-emerald-400">TSh {consumer.monthlyCost.toLocaleString()}</span>
+                        <span className="text-primary font-semibold">Total Due</span>
+                        <span className="text-2xl font-bold text-primary">TSh {consumer.monthlyCost.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800 border-slate-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-white">Account Balance</CardTitle>
+                  <CardTitle>Account Balance</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-900/10 rounded-lg p-6 border border-emerald-700/30">
-                    <p className="text-sm text-slate-300 mb-2">Available Credit</p>
-                    <p className="text-4xl font-bold text-emerald-400">TSh {consumer.balance.toLocaleString()}</p>
-                    <p className="text-xs text-emerald-300 mt-3">
+                  <div className="bg-primary/5 rounded-lg p-6 border border-primary/20">
+                    <p className="text-sm text-muted-foreground mb-2">Available Credit</p>
+                    <p className="text-4xl font-bold text-primary">TSh {consumer.balance.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground mt-3">
                       Sufficient for {Math.floor(consumer.balance / consumer.dailyCost)} more days
                     </p>
                   </div>
 
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
-                    <DollarSign className="w-4 h-4 mr-2" />
+                  <Button className="w-full">
+                    <DollarSign className="w-4 h-4 mr-2" aria-hidden />
                     Add Credit / Top Up
                   </Button>
                 </CardContent>

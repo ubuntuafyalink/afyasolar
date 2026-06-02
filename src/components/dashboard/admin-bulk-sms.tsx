@@ -23,6 +23,7 @@ import {
 import { useFacilities } from "@/hooks/use-facilities"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 interface CSVRow {
   phoneNumber: string
@@ -331,18 +332,18 @@ export function AdminBulkSMS() {
               className={cn(
                 "p-4 border-2 rounded-lg transition-all text-left h-full",
                 selectedMethod === 'facilities'
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
               )}
             >
               <div className="flex items-center gap-2 mb-2">
                 <Building2 className={cn(
                   "w-5 h-5",
-                  selectedMethod === 'facilities' ? "text-green-600" : "text-gray-400"
-                )} />
+                  selectedMethod === 'facilities' ? "text-primary" : "text-muted-foreground"
+                )} aria-hidden="true" />
                 <span className="font-medium text-sm">Select from Facilities</span>
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Choose from registered facilities
               </p>
             </button>
@@ -355,18 +356,18 @@ export function AdminBulkSMS() {
               className={cn(
                 "p-4 border-2 rounded-lg transition-all text-left h-full",
                 selectedMethod === 'csv'
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
               )}
             >
               <div className="flex items-center gap-2 mb-2">
                 <Upload className={cn(
                   "w-5 h-5",
-                  selectedMethod === 'csv' ? "text-green-600" : "text-gray-400"
-                )} />
+                  selectedMethod === 'csv' ? "text-primary" : "text-muted-foreground"
+                )} aria-hidden="true" />
                 <span className="font-medium text-sm">Upload CSV File</span>
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Upload phone numbers via CSV
               </p>
             </button>
@@ -383,18 +384,18 @@ export function AdminBulkSMS() {
               className={cn(
                 "p-4 border-2 rounded-lg transition-all text-left h-full",
                 selectedMethod === 'manual'
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200 hover:border-gray-300"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
               )}
             >
               <div className="flex items-center gap-2 mb-2">
                 <UserPlus className={cn(
                   "w-5 h-5",
-                  selectedMethod === 'manual' ? "text-green-600" : "text-gray-400"
-                )} />
+                  selectedMethod === 'manual' ? "text-primary" : "text-muted-foreground"
+                )} aria-hidden="true" />
                 <span className="font-medium text-sm">Enter Manually</span>
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 Type phone numbers directly
               </p>
             </button>
@@ -405,7 +406,7 @@ export function AdminBulkSMS() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Search className="w-4 h-4 text-gray-400" />
+                  <Search className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                   <Input
                     placeholder="Search facilities..."
                     value={searchQuery}
@@ -430,36 +431,36 @@ export function AdminBulkSMS() {
 
               {facilitiesLoading ? (
                 <div className="text-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-gray-400" />
-                  <p className="text-xs text-gray-500">Loading facilities...</p>
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-muted-foreground" aria-hidden="true" />
+                  <p className="text-xs text-muted-foreground">Loading facilities...</p>
                 </div>
               ) : filteredFacilities.length === 0 ? (
-                <div className="text-center py-8 border rounded-lg">
-                  <Building2 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                  <p className="text-xs text-gray-500">No facilities found</p>
-                </div>
+                <EmptyState
+                  icon={<Building2 aria-hidden="true" />}
+                  title="No facilities found"
+                />
               ) : (
-                <div className="border rounded-lg max-h-96 overflow-y-auto">
-                  <div className="divide-y">
+                <div className="border border-border rounded-lg max-h-96 overflow-y-auto">
+                  <div className="divide-y divide-border">
                     {filteredFacilities.map((facility) => (
                       <label
                         key={facility.id}
-                        className="flex items-center gap-3 p-3 hover:bg-gray-50 cursor-pointer"
+                        className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
                       >
                         <Checkbox
                           checked={selectedFacilities.has(facility.id)}
                           onCheckedChange={() => toggleFacility(facility.id)}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {facility.name}
                           </p>
                           <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                              <Phone className="w-3 h-3" />
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="w-3 h-3" aria-hidden="true" />
                               {facility.phone}
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               {facility.city}, {facility.region}
                             </span>
                           </div>
@@ -512,8 +513,8 @@ export function AdminBulkSMS() {
               </div>
 
               {manualRecipients.length > 0 && (
-                <div className="border rounded-lg">
-                  <div className="p-3 bg-gray-50 border-b flex items-center justify-between">
+                <div className="border border-border rounded-lg">
+                  <div className="p-3 bg-muted border-b border-border flex items-center justify-between">
                     <p className="text-sm font-medium">
                       {manualRecipients.length} recipient(s) added
                     </p>
@@ -523,27 +524,27 @@ export function AdminBulkSMS() {
                       onClick={() => setManualRecipients([])}
                       className="text-xs h-7"
                     >
-                      <X className="w-3 h-3 mr-1" />
+                      <X className="w-3 h-3 mr-1" aria-hidden="true" />
                       Clear All
                     </Button>
                   </div>
-                  <div className="max-h-64 overflow-y-auto divide-y">
+                  <div className="max-h-64 overflow-y-auto divide-y divide-border">
                     {manualRecipients.map((recipient) => (
                       <div key={recipient.id} className="p-3 text-sm flex justify-between items-center">
                         <div>
-                          <p className="font-medium text-gray-900">{recipient.facilityName}</p>
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                            <Phone className="w-3 h-3" />
+                          <p className="font-medium text-foreground">{recipient.facilityName}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <Phone className="w-3 h-3" aria-hidden="true" />
                             {recipient.phoneNumber}
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-gray-400 hover:text-red-500"
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
                           onClick={() => removeManualRecipient(recipient.id)}
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <X className="h-3.5 w-3.5" aria-hidden="true" />
                           <span className="sr-only">Remove</span>
                         </Button>
                       </div>
@@ -557,12 +558,12 @@ export function AdminBulkSMS() {
           {/* CSV Upload */}
           {selectedMethod === 'csv' && (
             <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-700 mb-1">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" aria-hidden="true" />
+                <p className="text-sm font-medium text-foreground mb-1">
                   Upload CSV File
                 </p>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-xs text-muted-foreground mb-4">
                   CSV should have columns: phone number, facility name
                 </p>
                 <input
@@ -586,8 +587,8 @@ export function AdminBulkSMS() {
               </div>
 
               {csvData.length > 0 && (
-                <div className="border rounded-lg">
-                  <div className="p-3 bg-gray-50 border-b flex items-center justify-between">
+                <div className="border border-border rounded-lg">
+                  <div className="p-3 bg-muted border-b border-border flex items-center justify-between">
                     <p className="text-sm font-medium">
                       {csvData.length} phone number(s) loaded
                     </p>
@@ -602,16 +603,16 @@ export function AdminBulkSMS() {
                       }}
                       className="text-xs h-7"
                     >
-                      <X className="w-3 h-3 mr-1" />
+                      <X className="w-3 h-3 mr-1" aria-hidden="true" />
                       Clear
                     </Button>
                   </div>
-                  <div className="max-h-64 overflow-y-auto divide-y">
+                  <div className="max-h-64 overflow-y-auto divide-y divide-border">
                     {csvData.map((row, index) => (
                       <div key={index} className="p-3 text-sm">
-                        <p className="font-medium text-gray-900">{row.facilityName}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                          <Phone className="w-3 h-3" />
+                        <p className="font-medium text-foreground">{row.facilityName}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                          <Phone className="w-3 h-3" aria-hidden="true" />
                           {row.phoneNumber}
                         </p>
                       </div>
@@ -632,7 +633,7 @@ export function AdminBulkSMS() {
               className="min-h-[120px] text-sm"
               maxLength={1000}
             />
-            <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Each SMS will include the facility name</span>
               <span>{message.length}/1000</span>
             </div>
@@ -646,12 +647,12 @@ export function AdminBulkSMS() {
           >
             {isSending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                 Sending SMS...
               </>
             ) : (
               <>
-                <Send className="w-4 h-4 mr-2" />
+                <Send className="w-4 h-4 mr-2" aria-hidden="true" />
                 Send SMS to {selectedCount} recipient{selectedCount !== 1 ? 's' : ''}
               </>
             )}
@@ -659,17 +660,17 @@ export function AdminBulkSMS() {
 
           {/* Results */}
           {sendResults && (
-            <div className="border rounded-lg p-4 space-y-3">
+            <div className="border border-border rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">Send Results</h3>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1 text-green-600">
-                    <CheckCircle2 className="w-4 h-4" />
+                  <div className="flex items-center gap-1 text-primary">
+                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                     <span className="text-xs">{sendResults.success} successful</span>
                   </div>
                   {sendResults.failed > 0 && (
-                    <div className="flex items-center gap-1 text-red-600">
-                      <XCircle className="w-4 h-4" />
+                    <div className="flex items-center gap-1 text-destructive">
+                      <XCircle className="w-4 h-4" aria-hidden="true" />
                       <span className="text-xs">{sendResults.failed} failed</span>
                     </div>
                   )}
@@ -681,21 +682,21 @@ export function AdminBulkSMS() {
                     <div
                       key={index}
                       className={cn(
-                        "p-2 rounded text-xs flex items-center justify-between",
-                        detail.success ? "bg-green-50" : "bg-red-50"
+                        "p-2 rounded-lg text-xs flex items-center justify-between",
+                        detail.success ? "bg-success/10" : "bg-destructive/10"
                       )}
                     >
                       <div>
                         <p className="font-medium">{detail.facilityName}</p>
-                        <p className="text-gray-600">{detail.phone}</p>
+                        <p className="text-muted-foreground">{detail.phone}</p>
                       </div>
                       {detail.success ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <CheckCircle2 className="w-4 h-4 text-success" aria-hidden="true" />
                       ) : (
                         <div className="flex items-center gap-1">
-                          <XCircle className="w-4 h-4 text-red-600" />
+                          <XCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
                           {detail.error && (
-                            <span className="text-red-600 text-[10px]">{detail.error}</span>
+                            <span className="text-destructive text-[10px]">{detail.error}</span>
                           )}
                         </div>
                       )}

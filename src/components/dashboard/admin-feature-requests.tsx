@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardListSkeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -31,6 +32,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/ui/empty-state"
 
 interface FeatureRequest {
   id: string
@@ -55,18 +57,18 @@ const serviceDisplayNames: Record<string, string> = {
 }
 
 const priorityColors: Record<string, string> = {
-  low: "bg-gray-100 text-gray-700 border-gray-300",
-  medium: "bg-yellow-100 text-yellow-700 border-yellow-300",
-  high: "bg-red-100 text-red-700 border-red-300",
+  low: "bg-muted text-muted-foreground border-border",
+  medium: "bg-warning/15 text-warning border-warning/30",
+  high: "bg-destructive/10 text-destructive border-destructive/30",
 }
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700 border-yellow-300",
-  reviewing: "bg-blue-100 text-blue-700 border-blue-300",
-  approved: "bg-green-100 text-green-700 border-green-300",
-  in_progress: "bg-purple-100 text-purple-700 border-purple-300",
-  completed: "bg-emerald-100 text-emerald-700 border-emerald-300",
-  rejected: "bg-red-100 text-red-700 border-red-300",
+  pending: "bg-warning/15 text-warning border-warning/30",
+  reviewing: "bg-primary/10 text-primary border-primary/30",
+  approved: "bg-success/15 text-success border-success/30",
+  in_progress: "bg-primary/10 text-primary border-primary/30",
+  completed: "bg-success/15 text-success border-success/30",
+  rejected: "bg-destructive/10 text-destructive border-destructive/30",
 }
 
 export function AdminFeatureRequests() {
@@ -156,11 +158,7 @@ export function AdminFeatureRequests() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-      </div>
-    )
+    return <CardListSkeleton rows={5} />
   }
 
   if (error) {
@@ -168,8 +166,8 @@ export function AdminFeatureRequests() {
       <Card>
         <CardContent className="py-12">
           <div className="text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-600">Failed to load feature requests</p>
+            <XCircle className="h-12 w-12 text-destructive mx-auto mb-4" aria-hidden="true" />
+            <p className="text-destructive">Failed to load feature requests</p>
           </div>
         </CardContent>
       </Card>
@@ -181,7 +179,7 @@ export function AdminFeatureRequests() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-green-600" />
+            <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
             Feature Requests
           </CardTitle>
           <CardDescription>
@@ -193,7 +191,7 @@ export function AdminFeatureRequests() {
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   placeholder="Search by title, description, or facility..."
                   value={searchQuery}
@@ -204,7 +202,7 @@ export function AdminFeatureRequests() {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-2" aria-hidden="true" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -235,8 +233,8 @@ export function AdminFeatureRequests() {
                 <Card
                   key={request.id}
                   className={cn(
-                    "border-l-4",
-                    selectedRequest === request.id && "border-l-green-500"
+                    "border-l-4 transition-shadow hover:shadow-md",
+                    selectedRequest === request.id ? "border-l-primary" : "border-l-border"
                   )}
                 >
                   <CardContent className="p-4">
@@ -244,7 +242,7 @@ export function AdminFeatureRequests() {
                       <div className="flex-1 space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-base text-gray-900 mb-1">
+                            <h3 className="font-semibold text-base text-foreground mb-1">
                               {request.title}
                             </h3>
                             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -278,19 +276,19 @@ export function AdminFeatureRequests() {
                           </div>
                         </div>
 
-                        <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                           {request.description}
                         </p>
 
-                        <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1.5">
-                            <Building2 className="h-3.5 w-3.5" />
+                            <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>
                               {request.facility?.name || "Unknown Facility"}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5" />
+                            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
                             <span>
                               {format(
                                 new Date(request.createdAt),
@@ -301,20 +299,20 @@ export function AdminFeatureRequests() {
                         </div>
 
                         {request.adminNotes && (
-                          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p className="text-xs font-semibold text-gray-700 mb-1">
+                          <div className="mt-2 p-3 bg-muted rounded-lg border border-border">
+                            <p className="text-xs font-semibold text-foreground mb-1">
                               Admin Notes:
                             </p>
-                            <p className="text-xs text-gray-600 whitespace-pre-wrap">
+                            <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                               {request.adminNotes}
                             </p>
                           </div>
                         )}
 
                         {selectedRequest === request.id && (
-                          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                          <div className="mt-4 p-4 bg-muted rounded-lg border border-border space-y-3">
                             <div>
-                              <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                              <label className="text-xs font-semibold text-foreground mb-1.5 block">
                                 Update Status
                               </label>
                               <Select
@@ -341,7 +339,7 @@ export function AdminFeatureRequests() {
                               </Select>
                             </div>
                             <div>
-                              <label className="text-xs font-semibold text-gray-700 mb-1.5 block">
+                              <label className="text-xs font-semibold text-foreground mb-1.5 block">
                                 Admin Notes
                               </label>
                               <Textarea
@@ -357,16 +355,15 @@ export function AdminFeatureRequests() {
                                 size="sm"
                                 onClick={() => handleUpdate(request.id)}
                                 disabled={updateMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700"
                               >
                                 {updateMutation.isPending ? (
                                   <>
-                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                    <Loader2 className="mr-2 h-3 w-3 animate-spin" aria-hidden="true" />
                                     Updating...
                                   </>
                                 ) : (
                                   <>
-                                    <CheckCircle2 className="mr-2 h-3 w-3" />
+                                    <CheckCircle2 className="mr-2 h-3 w-3" aria-hidden="true" />
                                     Update
                                   </>
                                 )}
@@ -381,7 +378,7 @@ export function AdminFeatureRequests() {
                                 }}
                                 disabled={updateMutation.isPending}
                               >
-                                <X className="mr-2 h-3 w-3" />
+                                <X className="mr-2 h-3 w-3" aria-hidden="true" />
                                 Cancel
                               </Button>
                             </div>
@@ -400,7 +397,7 @@ export function AdminFeatureRequests() {
                           }}
                           className="flex-shrink-0"
                         >
-                          <Edit className="h-4 w-4 mr-2" />
+                          <Edit className="h-4 w-4 mr-2" aria-hidden="true" />
                           Manage
                         </Button>
                       )}
@@ -410,10 +407,10 @@ export function AdminFeatureRequests() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No feature requests found</p>
-            </div>
+            <EmptyState
+              icon={<Sparkles aria-hidden="true" />}
+              title="No feature requests found"
+            />
           )}
         </CardContent>
       </Card>

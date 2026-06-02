@@ -2360,7 +2360,7 @@ export const climateScoreSummaries = mysqlTable('climate_score_summaries', {
   ecpq: int('ecpq').notNull().default(0),
   edc: int('edc').notNull().default(0),
   rrc: int('rrc').notNull().default(0),
-  rcs: int('rcs').notNull().default(0), // 0–100 (capacity score)
+  rcs: int('rcs').notNull().default(0), // 0100 (capacity score)
   tier: int('tier').notNull().default(0),
   criticalAttention: boolean('critical_attention').notNull().default(false),
   createdAt: datetime('created_at', { mode: 'date' }).notNull().default(sql`CURRENT_TIMESTAMP`),

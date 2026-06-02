@@ -109,30 +109,30 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-green-200/50 to-emerald-200/50 rounded-full blur-3xl -z-10 animate-pulse" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
       <div
-        className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-green-200/40 to-emerald-200/40 rounded-full blur-3xl -z-10 animate-pulse"
+        className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none"
         style={{ animationDelay: "1s" }}
       />
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-green-100/30 to-emerald-100/30 rounded-full blur-3xl -z-10 animate-pulse"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-primary/5 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none"
         style={{ animationDelay: "0.5s" }}
       />
 
       {isRedirecting && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="w-6 h-6 animate-spin text-green-600" />
-            <p className="text-sm text-gray-700 font-medium">Opening Afya Solar…</p>
+            <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden />
+            <p className="text-sm text-muted-foreground font-medium">Opening Afya Solar…</p>
           </div>
         </div>
       )}
 
       <div className="w-full max-w-sm relative z-10">
-        <Card className="border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+        <Card className="border border-border shadow-xl bg-card/90 backdrop-blur-sm">
           <CardHeader className="text-center pb-5">
-            <div className="relative mx-auto mb-4 w-20 h-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-emerald-200 bg-white shadow-lg">
+            <div className="relative mx-auto mb-4 w-20 h-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/20 bg-card shadow-lg">
               <Image
                 src="/images/services/logo.png"
                 alt="Afya Solar"
@@ -141,20 +141,20 @@ function SignInContent() {
                 priority
               />
             </div>
-            <div className="flex items-center justify-center gap-2 text-green-800 mb-1">
-              <Sun className="w-5 h-5 text-green-600" aria-hidden />
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Sun className="w-5 h-5 text-primary" aria-hidden />
               <span className="text-xs font-semibold uppercase tracking-wide">Afya Solar</span>
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900 mb-1.5">Sign in</CardTitle>
-            <CardDescription className="text-sm text-gray-600">
+            <CardTitle className="text-2xl font-semibold text-foreground mb-1.5">Sign in</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
               Solar energy dashboards and monitoring for your healthcare facility
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-green-800 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-green-600" />
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-primary" aria-hidden />
                   Email address
                 </Label>
                 <div className="relative">
@@ -164,21 +164,21 @@ function SignInContent() {
                     placeholder="you@example.com"
                     {...register("email")}
                     disabled={isLoading || isRedirecting}
-                    className="h-11 pl-10 border border-green-200/60 bg-green-50/30 focus:border-green-500 focus:ring-green-500/30 focus:bg-green-50/50 transition-all text-sm"
+                    className="h-11 pl-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
                   />
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
                 </div>
                 {errors.email && (
-                  <p className="text-sm text-red-600 mt-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.email.message}
                   </p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-green-800 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-green-600" />
+                <Label htmlFor="password" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" aria-hidden />
                   Password
                 </Label>
                 <div className="relative">
@@ -188,40 +188,40 @@ function SignInContent() {
                     placeholder="Enter your password"
                     {...register("password")}
                     disabled={isLoading || isRedirecting}
-                    className="h-11 pl-10 pr-10 border border-green-200/60 bg-green-50/30 focus:border-green-500 focus:ring-green-500/30 focus:bg-green-50/50 transition-all text-sm"
+                    className="h-11 pl-10 pr-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
                   />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden /> : <Eye className="w-4 h-4" aria-hidden />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-sm text-red-600 mt-1.5 flex items-center gap-1.5">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <Link href="/auth/forgot-password" className="text-green-600 hover:text-green-700 font-medium transition-colors">
+                <Link href="/auth/forgot-password" className="text-primary hover:underline font-medium transition-colors">
                   Forgot password?
                 </Link>
               </div>
 
               <Button
                 type="submit"
-                className="w-full h-11 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+                className="w-full h-11 text-sm font-semibold"
                 disabled={isLoading || isRedirecting}
               >
                 {isLoading || isRedirecting ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
                     {isRedirecting ? "Redirecting…" : "Signing in…"}
                   </>
                 ) : (
@@ -230,25 +230,25 @@ function SignInContent() {
               </Button>
             </form>
 
-            <div className="mt-5 pt-5 border-t border-green-200/60 space-y-2">
-              <p className="text-center text-xs text-green-800">
+            <div className="mt-5 pt-5 border-t border-border space-y-2">
+              <p className="text-center text-xs text-muted-foreground">
                 Need an account?{" "}
                 <Link
                   href="/auth/signup"
-                  className="text-green-600 hover:text-green-700 font-bold underline underline-offset-2"
+                  className="text-primary hover:underline font-bold underline-offset-2"
                 >
                   Register your facility
                 </Link>
               </p>
-              <p className="text-center text-[11px] text-gray-600">
+              <p className="text-center text-[11px] text-muted-foreground">
                 By signing in, you agree to our{" "}
-                <Link href="/terms" className="text-green-600 hover:text-green-700 font-semibold underline underline-offset-2">
+                <Link href="/terms" className="text-primary hover:underline font-semibold underline-offset-2">
                   Terms &amp; Conditions
                 </Link>{" "}
                 and{" "}
                 <Link
                   href="/privacy-policy"
-                  className="text-green-600 hover:text-green-700 font-semibold underline underline-offset-2"
+                  className="text-primary hover:underline font-semibold underline-offset-2"
                 >
                   Privacy Policy
                 </Link>
@@ -266,13 +266,13 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50/50 via-green-50/30 to-emerald-50/40 p-4">
-          <Card className="w-full max-w-sm border border-green-200/60 shadow-xl bg-white/90 backdrop-blur-sm">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4">
+          <Card className="w-full max-w-sm border border-border shadow-xl bg-card/90 backdrop-blur-sm">
             <CardHeader className="text-center">
-              <div className="relative mx-auto mb-4 w-20 h-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-emerald-200 bg-white shadow-lg">
+              <div className="relative mx-auto mb-4 w-20 h-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/20 bg-card shadow-lg">
                 <Image src="/images/services/logo.png" alt="Afya Solar" fill className="object-contain p-2" priority />
               </div>
-              <CardTitle className="text-xl text-green-800">Loading…</CardTitle>
+              <CardTitle className="text-xl text-foreground">Loading…</CardTitle>
             </CardHeader>
           </Card>
         </div>

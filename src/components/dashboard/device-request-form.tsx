@@ -87,15 +87,16 @@ export function DeviceRequestForm({ facility }: DeviceRequestFormProps) {
   if (submitted) {
     return (
       <div className="text-center py-6">
-        <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-green-900 mb-2">Request Submitted!</h3>
-        <p className="text-green-600 mb-4">
+        <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <CheckCircle className="w-6 h-6" aria-hidden />
+        </span>
+        <h3 className="text-lg font-semibold text-foreground mb-2">Request Submitted!</h3>
+        <p className="text-muted-foreground mb-4">
           Your device request has been submitted. We'll review it and contact you soon.
         </p>
         <Button
           onClick={() => setSubmitted(false)}
           variant="outline"
-          className="border-green-200 text-green-700 hover:bg-green-50"
         >
           Submit Another Request
         </Button>
@@ -114,7 +115,7 @@ export function DeviceRequestForm({ facility }: DeviceRequestFormProps) {
             disabled={isSubmitting}
           />
           {errors.name && (
-            <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
+            <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
           )}
         </div>
 
@@ -127,7 +128,7 @@ export function DeviceRequestForm({ facility }: DeviceRequestFormProps) {
             disabled={isSubmitting}
           />
           {errors.email && (
-            <p className="text-sm text-red-600 mt-1">{errors.email.message}</p>
+            <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
           )}
         </div>
       </div>
@@ -143,7 +144,7 @@ export function DeviceRequestForm({ facility }: DeviceRequestFormProps) {
             disabled={isSubmitting}
           />
           {errors.phone && (
-            <p className="text-sm text-red-600 mt-1">{errors.phone.message}</p>
+            <p className="text-sm text-destructive mt-1">{errors.phone.message}</p>
           )}
         </div>
 
@@ -185,7 +186,7 @@ export function DeviceRequestForm({ facility }: DeviceRequestFormProps) {
             disabled={isSubmitting}
           />
           {errors.quantity && (
-            <p className="text-sm text-red-600 mt-1">{errors.quantity.message}</p>
+            <p className="text-sm text-destructive mt-1">{errors.quantity.message}</p>
           )}
         </div>
       </div>
@@ -203,7 +204,7 @@ export function DeviceRequestForm({ facility }: DeviceRequestFormProps) {
 
       <Button
         type="submit"
-        className="w-full bg-green-600 hover:bg-green-700"
+        className="w-full"
         disabled={isSubmitting}
       >
         {isSubmitting ? (

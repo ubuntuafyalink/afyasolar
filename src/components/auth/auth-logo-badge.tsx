@@ -17,7 +17,7 @@ export function AuthLogoBadge({
   return (
     <div
       className={cn(
-        "relative mx-auto rounded-full border-2 border-emerald-200 bg-white shadow-lg overflow-hidden",
+        "relative mx-auto rounded-full border-2 border-primary/20 bg-card shadow-lg overflow-hidden",
         className,
       )}
       style={{ width: dimension, height: dimension }}

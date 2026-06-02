@@ -3,7 +3,9 @@
 import { useState } from "react"
 import { useFacility } from "@/hooks/use-facilities"
 import { useLiveEnergyData } from "@/hooks/use-energy-data"
+import { DashboardSkeleton } from "@/components/ui/skeleton"
 import { FacilityDashboardContent } from "./facility-dashboard-content"
+import { FacilityPreferencesProvider } from "./facility/facility-preferences-provider"
 
 interface FacilityDashboardProps {
   facilityId?: string
@@ -15,15 +17,16 @@ export function FacilityDashboard({ facilityId }: FacilityDashboardProps) {
 
   if (facilityLoading || dataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-muted/30 p-6">
+        <DashboardSkeleton />
       </div>
     )
   }
 
-  return <FacilityDashboardContent facility={facility} liveData={liveData} />
+  return (
+    <FacilityPreferencesProvider>
+      <FacilityDashboardContent facility={facility} liveData={liveData} />
+    </FacilityPreferencesProvider>
+  )
 }
 

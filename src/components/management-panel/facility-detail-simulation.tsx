@@ -18,7 +18,13 @@ const DEVICE_POOL: { name: string; category: string }[] = [
   { name: 'Water pump', category: 'Auxiliary' },
 ]
 
-const COLORS = ['#059669', '#0d9488', '#0891b2', '#2563eb', '#7c3aed', '#c026d3', '#db2777', '#dc2626', '#ea580c', '#ca8a04']
+const COLORS = [
+  'var(--color-chart-1)',
+  'var(--color-chart-2)',
+  'var(--color-chart-3)',
+  'var(--color-chart-4)',
+  'var(--color-chart-5)',
+]
 
 export interface FacilityForSimulation {
   id: string
@@ -65,8 +71,8 @@ export function FacilityDetailSimulation({ facility }: { facility: FacilityForSi
 
   return (
     <div className="space-y-4">
-      <h4 className="text-sm font-semibold text-gray-700">Simulated top consuming equipment (before solar)</h4>
-      <p className="text-xs text-gray-500">Estimated breakdown by device type for this facility</p>
+      <h4 className="text-sm font-semibold text-foreground">Simulated top consuming equipment (before solar)</h4>
+      <p className="text-xs text-muted-foreground">Estimated breakdown by device type for this facility</p>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -84,7 +90,10 @@ export function FacilityDetailSimulation({ facility }: { facility: FacilityForSi
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => [`${value} kWh/month`, 'Consumption']} />
+              <Tooltip
+                formatter={(value: number) => [`${value} kWh/month`, 'Consumption']}
+                contentStyle={{ background: 'var(--color-popover)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)' }}
+              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>
@@ -92,20 +101,23 @@ export function FacilityDetailSimulation({ facility }: { facility: FacilityForSi
         <div className="h-[220px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis type="number" unit=" kWh" tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10 }} />
-              <Tooltip formatter={(value: number) => [`${value} kWh/month`, 'Consumption']} />
-              <Bar dataKey="value" fill="#059669" radius={[0, 4, 4, 0]} name="kWh/month" />
+              <Tooltip
+                formatter={(value: number) => [`${value} kWh/month`, 'Consumption']}
+                contentStyle={{ background: 'var(--color-popover)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius)' }}
+              />
+              <Bar dataKey="value" fill="var(--color-chart-1)" radius={[0, 4, 4, 0]} name="kWh/month" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
-      <ul className="text-sm text-gray-600 space-y-1 border rounded-lg p-3 bg-gray-50/50">
+      <ul className="text-sm text-muted-foreground space-y-1 border border-border rounded-lg p-3 bg-muted/50">
         {data.map((d, i) => (
           <li key={d.name} className="flex justify-between">
             <span>{d.name}</span>
-            <span className="font-medium text-gray-800">{d.value} kWh/mo ({d.share}%)</span>
+            <span className="font-medium text-foreground">{d.value} kWh/mo ({d.share}%)</span>
           </li>
         ))}
       </ul>

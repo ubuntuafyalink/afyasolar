@@ -619,11 +619,11 @@ export async function sendFacilityInvitationEmail({
                     
                     <!-- AfyaSolar Section -->
                     <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin: 24px 0; border-radius: 8px;">
-                      <h3 style="color: #d97706; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">AfyaSolar — Cut Electrical Costs & Power Your Facility Reliably</h3>
+                      <h3 style="color: #d97706; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">AfyaSolar Cut Electrical Costs & Power Your Facility Reliably</h3>
                       <ul style="color: #374151; font-size: 15px; line-height: 1.8; margin: 0; padding-left: 20px;">
                         <li style="margin-bottom: 8px;">Full sustainability & energy efficiency assessment</li>
                         <li style="margin-bottom: 8px;">Solar systems for off-grid and on-grid facilities.</li>
-                        <li style="margin-bottom: 8px;">Reduce energy costs by 30–50%</li>
+                        <li style="margin-bottom: 8px;">Reduce energy costs by 3050%</li>
                         <li style="margin-bottom: 8px;">Flexible financing for energy systems AND medical consumables</li>
                       </ul>
                       <div style="margin: 16px 0 0 0; text-align: center;">
@@ -683,10 +683,10 @@ export async function sendFacilityInvitationEmail({
     ${referralTextMessage}
     This is exclusive invitation for ${facilityName}!
 
-    AfyaSolar — Cut Electrical Costs & Power Your Facility Reliably
+    AfyaSolar Cut Electrical Costs & Power Your Facility Reliably
     • Full sustainability & energy efficiency assessment
     • Solar systems for off-grid and on-grid facilities.
-    • Reduce energy costs by 30–50%
+    • Reduce energy costs by 3050%
     • Flexible financing for energy systems AND medical consumables
     👉Secure reliable power and save money every month.
     Activate your account: ${registrationUrl}
@@ -799,11 +799,11 @@ export async function sendBulkFacilityInvitationEmail({
                     
                     <!-- AfyaSolar Section -->
                     <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; margin: 24px 0; border-radius: 8px;">
-                      <h3 style="color: #d97706; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">AfyaSolar — Cut Electrical Costs & Power Your Facility Reliably</h3>
+                      <h3 style="color: #d97706; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">AfyaSolar Cut Electrical Costs & Power Your Facility Reliably</h3>
                       <ul style="color: #374151; font-size: 15px; line-height: 1.8; margin: 0; padding-left: 20px;">
                         <li style="margin-bottom: 8px;">Full sustainability & energy efficiency assessment</li>
                         <li style="margin-bottom: 8px;">Solar systems for off-grid and on-grid facilities.</li>
-                        <li style="margin-bottom: 8px;">Reduce energy costs by 30–50%</li>
+                        <li style="margin-bottom: 8px;">Reduce energy costs by 3050%</li>
                         <li style="margin-bottom: 8px;">Flexible financing for energy systems AND medical consumables</li>
                       </ul>
                       <div style="margin: 16px 0 0 0; text-align: center;">
@@ -854,10 +854,10 @@ export async function sendBulkFacilityInvitationEmail({
 
     This is exclusive invitation for ${facilityName}!
 
-    AfyaSolar — Cut Electrical Costs & Power Your Facility Reliably
+    AfyaSolar Cut Electrical Costs & Power Your Facility Reliably
     • Full sustainability & energy efficiency assessment
     • Solar systems for off-grid and on-grid facilities.
-    • Reduce energy costs by 30–50%
+    • Reduce energy costs by 3050%
     • Flexible financing for energy systems AND medical consumables
     👉Secure reliable power and save money every month.
     Register now: ${signupUrl}
@@ -1898,13 +1898,13 @@ export async function sendAfyaSolarInvoiceRequestEmail({
           <h1 style="color: white; margin: 0;">Ubuntu Afya Link</h1>
         </div>
         <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-          <h2 style="color: #111827; margin-top: 0;">Afya Solar – Pay By Invoice Request</h2>
+          <h2 style="color: #111827; margin-top: 0;">Afya Solar Pay By Invoice Request</h2>
           <p>A facility has requested to pay by invoice for an Afya Solar package.</p>
           <div style="background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #10b981;">
             <p style="margin: 0 0 10px 0;"><strong>Request ID:</strong> ${requestId}</p>
             <p style="margin: 0 0 10px 0;"><strong>Facility:</strong> ${facilityName}</p>
-            <p style="margin: 0 0 10px 0;"><strong>Facility Email:</strong> ${facilityEmail || '—'}</p>
-            <p style="margin: 0 0 10px 0;"><strong>Facility Phone:</strong> ${facilityPhone || '—'}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Facility Email:</strong> ${facilityEmail || ''}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Facility Phone:</strong> ${facilityPhone || ''}</p>
             <p style="margin: 0 0 10px 0;"><strong>Package:</strong> ${packageName} (ID: ${packageId})</p>
             <p style="margin: 0 0 10px 0;"><strong>Payment Plan:</strong> ${paymentPlan}</p>
             <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> ${currency} ${amount}</p>
@@ -1926,12 +1926,12 @@ export async function sendAfyaSolarInvoiceRequestEmail({
   `
 
   const text = `
-Afya Solar – Pay By Invoice Request
+Afya Solar Pay By Invoice Request
 
 Request ID: ${requestId}
 Facility: ${facilityName}
-Facility Email: ${facilityEmail || '—'}
-Facility Phone: ${facilityPhone || '—'}
+Facility Email: ${facilityEmail || ''}
+Facility Phone: ${facilityPhone || ''}
 Package: ${packageName} (ID: ${packageId})
 Payment Plan: ${paymentPlan}
 Amount: ${currency} ${amount}
@@ -1944,7 +1944,7 @@ Please process this invoice request and send the invoice to the facility.
   const mailOptions = {
     from: `Ubuntu Afya Link <${env.SMTP_USER}>`,
     to: `${COMPANY_EMAIL}, account@ubuntuafyalink.co.tz`,
-    subject: `[Afya Solar] Invoice Request – ${facilityName} – ${packageName} – ${currency} ${amount}`,
+    subject: `[Afya Solar] Invoice Request ${facilityName} ${packageName} ${currency} ${amount}`,
     text,
     html,
     replyTo: facilityEmail || undefined,
@@ -2033,8 +2033,8 @@ export async function sendLegacyInvoiceRequestEmail({
           <div style="background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #10b981;">
             <p style="margin: 0 0 10px 0;"><strong>Request ID:</strong> ${requestId}</p>
             <p style="margin: 0 0 10px 0;"><strong>Facility:</strong> ${facilityName}</p>
-            <p style="margin: 0 0 10px 0;"><strong>Facility Email:</strong> ${facilityEmail || '—'}</p>
-            <p style="margin: 0 0 10px 0;"><strong>Facility Phone:</strong> ${facilityPhone || '—'}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Facility Email:</strong> ${facilityEmail || ''}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Facility Phone:</strong> ${facilityPhone || ''}</p>
             <p style="margin: 0 0 10px 0;"><strong>Package:</strong> ${packageName} (${packageCode})</p>
             <p style="margin: 0 0 10px 0;"><strong>Billing Cycle:</strong> ${billingCycle}</p>
             <p style="margin: 0 0 10px 0;"><strong>Amount:</strong> ${currency} ${amount}</p>
@@ -2060,8 +2060,8 @@ Pay By Invoice Request
 
 Request ID: ${requestId}
 Facility: ${facilityName}
-Facility Email: ${facilityEmail || '—'}
-Facility Phone: ${facilityPhone || '—'}
+Facility Email: ${facilityEmail || ''}
+Facility Phone: ${facilityPhone || ''}
 Package: ${packageName} (${packageCode})
 Billing Cycle: ${billingCycle}
 Amount: ${currency} ${amount}
@@ -2074,7 +2074,7 @@ Please process this invoice request and send the invoice to the facility.
   const mailOptions = {
     from: `Ubuntu Afya Link <${env.SMTP_USER}>`,
     to: `${COMPANY_EMAIL}, account@ubuntuafyalink.co.tz`,
-    subject: `[Invoice] Request – ${facilityName} – ${packageName} – ${currency} ${amount}`,
+    subject: `[Invoice] Request ${facilityName} ${packageName} ${currency} ${amount}`,
     text,
     html,
     replyTo: facilityEmail || undefined,
@@ -2180,10 +2180,10 @@ export async function sendAfyaSolarDesignReportEmail({
   const safeFacilityName = facilityName || 'Unknown facility'
 
   const formatTzs = (value: number | null | undefined): string =>
-    value != null ? 'TZS ' + Number(value).toLocaleString('en-TZ') : '—'
+    value != null ? 'TZS ' + Number(value).toLocaleString('en-TZ') : ''
 
   const formatNumber = (value: number | null | undefined, digits = 1): string =>
-    value != null ? value.toFixed(digits) : '—'
+    value != null ? value.toFixed(digits) : ''
 
   const hasMeu =
     !!meuSummary && meuSummary.totalDailyLoad > 0 && meuSummary.topDevices?.length > 0
@@ -2207,7 +2207,7 @@ export async function sendAfyaSolarDesignReportEmail({
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Afya Solar – Design & Finance Assessment</title>
+        <title>Afya Solar Design & Finance Assessment</title>
       </head>
       <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 640px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -2215,7 +2215,7 @@ export async function sendAfyaSolarDesignReportEmail({
           <h1 style="color: white; margin: 0;">Ubuntu Afya Link</h1>
         </div>
         <div style="background: #f9fafb; padding: 24px 24px 28px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-          <h2 style="color: #111827; margin-top: 0;">Afya Solar – Design & Finance Assessment</h2>
+          <h2 style="color: #111827; margin-top: 0;">Afya Solar Design & Finance Assessment</h2>
           <p style="margin: 4px 0 12px 0;">
             A facility has completed the Afya Solar Design &amp; Finance engine. Below is a quick summary; full details are available in the admin dashboard.
           </p>
@@ -2228,14 +2228,14 @@ export async function sendAfyaSolarDesignReportEmail({
           <div style="background: #ffffff; border-radius: 6px; padding: 16px 18px; border: 1px solid #e5e7eb; margin-bottom: 16px;">
             <p style="margin: 0 0 8px 0; font-weight: bold;">System design summary</p>
             <ul style="margin: 0; padding-left: 18px; font-size: 14px;">
-              <li>PV size: ${summary.pvSizeKw != null ? summary.pvSizeKw.toFixed(2) + ' kW' : '—'}</li>
-              <li>Battery energy: ${summary.batteryKwh != null ? summary.batteryKwh.toFixed(1) + ' kWh' : '—'}</li>
-              <li>Panels: ${summary.numPanels != null ? summary.numPanels + ' x 620 W' : '—'}</li>
+              <li>PV size: ${summary.pvSizeKw != null ? summary.pvSizeKw.toFixed(2) + ' kW' : ''}</li>
+              <li>Battery energy: ${summary.batteryKwh != null ? summary.batteryKwh.toFixed(1) + ' kWh' : ''}</li>
+              <li>Panels: ${summary.numPanels != null ? summary.numPanels + ' x 620 W' : ''}</li>
               <li>Total daily energy (kWh/day): ${
-                summary.totalDailyEnergyKwh != null ? summary.totalDailyEnergyKwh.toFixed(1) : '—'
+                summary.totalDailyEnergyKwh != null ? summary.totalDailyEnergyKwh.toFixed(1) : ''
               }</li>
               <li>Adjusted daily energy (kWh/day): ${
-                summary.adjustedDailyEnergyKwh != null ? summary.adjustedDailyEnergyKwh.toFixed(1) : '—'
+                summary.adjustedDailyEnergyKwh != null ? summary.adjustedDailyEnergyKwh.toFixed(1) : ''
               }</li>
             </ul>
           </div>
@@ -2292,7 +2292,7 @@ export async function sendAfyaSolarDesignReportEmail({
               ${meuSummary!.potentialInefficiencies
                 .map(
                   (d) =>
-                    `<li>${d.name} – ${formatNumber(d.dailyKwh)} kWh/day (${formatNumber(
+                    `<li>${d.name} ${formatNumber(d.dailyKwh)} kWh/day (${formatNumber(
                       d.shareOfTotal,
                     )}% of MEU load)</li>`,
                 )
@@ -2459,18 +2459,18 @@ export async function sendAfyaSolarDesignReportEmail({
   `
 
   const text = `
-Afya Solar – Design & Finance Assessment
+Afya Solar Design & Finance Assessment
 
 Facility: ${safeFacilityName}
 Report ID: ${reportId}
 
 System design:
-- PV size: ${summary.pvSizeKw != null ? summary.pvSizeKw.toFixed(2) + ' kW' : '—'}
-- Battery energy: ${summary.batteryKwh != null ? summary.batteryKwh.toFixed(1) + ' kWh' : '—'}
-- Panels: ${summary.numPanels != null ? summary.numPanels + ' x 620 W' : '—'}
-- Total daily energy: ${summary.totalDailyEnergyKwh != null ? summary.totalDailyEnergyKwh.toFixed(1) + ' kWh/day' : '—'}
+- PV size: ${summary.pvSizeKw != null ? summary.pvSizeKw.toFixed(2) + ' kW' : ''}
+- Battery energy: ${summary.batteryKwh != null ? summary.batteryKwh.toFixed(1) + ' kWh' : ''}
+- Panels: ${summary.numPanels != null ? summary.numPanels + ' x 620 W' : ''}
+- Total daily energy: ${summary.totalDailyEnergyKwh != null ? summary.totalDailyEnergyKwh.toFixed(1) + ' kWh/day' : ''}
 - Adjusted daily energy: ${
-    summary.adjustedDailyEnergyKwh != null ? summary.adjustedDailyEnergyKwh.toFixed(1) + ' kWh/day' : '—'
+    summary.adjustedDailyEnergyKwh != null ? summary.adjustedDailyEnergyKwh.toFixed(1) + ' kWh/day' : ''
   }
 
 Financial snapshot:
@@ -2563,7 +2563,7 @@ Please log into the Afya Solar admin dashboard to review full details.
   const mailOptions = {
     from: `Ubuntu Afya Link <${env.SMTP_USER}>`,
     to: recipients.join(', '),
-    subject: `[Afya Solar] Design & Finance Assessment – ${safeFacilityName}`,
+    subject: `[Afya Solar] Design & Finance Assessment ${safeFacilityName}`,
     text,
     html,
     replyTo: facilityEmail || undefined,

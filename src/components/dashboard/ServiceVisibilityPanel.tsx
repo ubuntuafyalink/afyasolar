@@ -113,7 +113,7 @@ export function ServiceVisibilityPanel({
   }
 
   return (
-    <Card className="border-emerald-100 bg-white/80">
+    <Card className="border-border">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Afya Solar access</CardTitle>
         <CardDescription>
@@ -122,7 +122,7 @@ export function ServiceVisibilityPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <Card className="border-emerald-100 bg-emerald-50/40">
+        <Card className="border-border bg-primary/5">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Visible product</CardTitle>
             <CardDescription className="text-xs">
@@ -131,15 +131,15 @@ export function ServiceVisibilityPanel({
           </CardHeader>
           <CardContent className="space-y-3">
             {loadingVisibility ? (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
                 Loading visibility settings…
               </div>
             ) : (
               ALL_SERVICES.map((service) => (
                 <label
                   key={service.id}
-                  className="flex items-start gap-3 rounded-md border border-emerald-100 bg-white px-3 py-2"
+                  className="flex items-start gap-3 rounded-lg border border-border bg-card px-3 py-2 transition-colors hover:bg-muted/50"
                 >
                   <Checkbox
                     checked={visibleServices.includes(service.id)}
@@ -147,8 +147,8 @@ export function ServiceVisibilityPanel({
                     className="mt-0.5"
                   />
                   <div>
-                    <div className="text-sm font-semibold text-gray-900">{service.label}</div>
-                    <div className="text-xs text-gray-600">Solar energy monitoring and facility dashboards.</div>
+                    <div className="text-sm font-semibold text-foreground">{service.label}</div>
+                    <div className="text-xs text-muted-foreground">Solar energy monitoring and facility dashboards.</div>
                   </div>
                 </label>
               ))
@@ -157,13 +157,13 @@ export function ServiceVisibilityPanel({
         </Card>
 
         <Button
-          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+          className="w-full"
           onClick={handleSave}
           disabled={savingVisibility || loadingVisibility || !selectedFacilityId}
         >
           {savingVisibility ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="h-4 w-4 animate-spin mr-2" aria-hidden="true" />
               Saving…
             </>
           ) : (

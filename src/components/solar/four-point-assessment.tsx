@@ -179,7 +179,7 @@ export function FourPointAssessment({
 
   const maturity =
     bmiPercent === null
-      ? "—"
+      ? ""
       : bmiPercent >= 75
         ? "Strong"
         : bmiPercent >= 50
@@ -357,8 +357,8 @@ export function FourPointAssessment({
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0-2">0–2 hours</SelectItem>
-                  <SelectItem value="3-6">3–6 hours</SelectItem>
+                  <SelectItem value="0-2">02 hours</SelectItem>
+                  <SelectItem value="3-6">36 hours</SelectItem>
                   <SelectItem value="7-plus">&gt; 6 hours</SelectItem>
                 </SelectContent>
               </Select>
@@ -394,7 +394,7 @@ export function FourPointAssessment({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">&lt; 50%</SelectItem>
-                  <SelectItem value="medium">50–80%</SelectItem>
+                  <SelectItem value="medium">5080%</SelectItem>
                   <SelectItem value="high">&gt; 80%</SelectItem>
                 </SelectContent>
               </Select>
@@ -495,7 +495,7 @@ export function FourPointAssessment({
           <li>
             BMI (when calculated):{" "}
             <span className="font-semibold">
-              {assessmentScore !== null ? `${assessmentScore}/40` : "—"} {bmiPercent !== null && `(${bmiPercent}%)`}
+              {assessmentScore !== null ? `${assessmentScore}/40` : ""} {bmiPercent !== null && `(${bmiPercent}%)`}
             </span>
           </li>
           <li>
@@ -546,7 +546,7 @@ export function FourPointAssessment({
           <div className="space-y-3 pt-2">
             <div className="text-center">
               <p className="text-4xl font-bold text-emerald-700">
-                {assessmentScore !== null && bmiPercent !== null ? `${assessmentScore}/40` : "—"}
+                {assessmentScore !== null && bmiPercent !== null ? `${assessmentScore}/40` : ""}
               </p>
               {bmiPercent !== null && <p className="text-xs text-gray-600 mt-1">{bmiPercent}% of best-practice checklist</p>}
             </div>
