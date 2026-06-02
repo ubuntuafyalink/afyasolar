@@ -101,11 +101,11 @@ export function FacilityMeterEfficiencyDashboard({
     })) ?? []
 
   return (
-    <Card className="border-emerald-100 shadow-sm">
+    <Card className="border-border shadow-sm">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div>
           <CardTitle className="text-base flex items-center gap-2">
-            <Gauge className="h-5 w-5 text-emerald-600" />
+            <Gauge className="h-5 w-5 text-primary" />
             Energy efficiency assessment
           </CardTitle>
           <CardDescription className="text-xs mt-1 max-w-xl">
@@ -132,7 +132,7 @@ export function FacilityMeterEfficiencyDashboard({
         {data && (
           <>
             {data.summary.latestUnderperforming && (
-              <Badge className="bg-amber-100 text-amber-900 border-amber-200">Latest period underperforming</Badge>
+              <Badge className="bg-warning/15 text-warning-foreground border-warning/30">Latest period underperforming</Badge>
             )}
             {data.alerts.length > 0 && (
               <div className="space-y-2">
@@ -141,7 +141,7 @@ export function FacilityMeterEfficiencyDashboard({
                     key={i}
                     className={cn(
                       "flex gap-2 rounded-lg border p-2 text-sm",
-                      a.level === "critical" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"
+                      a.level === "critical" ? "border-destructive/30 bg-destructive/10" : "border-warning/30 bg-warning/10"
                     )}
                   >
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -158,8 +158,8 @@ export function FacilityMeterEfficiencyDashboard({
                   <YAxis tick={{ fontSize: 10 }} />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="produced" name="Produced kWh" stroke="#059669" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="expected" name="Expected kWh" stroke="#6366f1" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="produced" name="Produced kWh" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="expected" name="Expected kWh" stroke="var(--color-chart-3)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -177,7 +177,7 @@ export function FacilityMeterEfficiencyDashboard({
                     type="monotone"
                     dataKey="irradiance"
                     name="Irradiance W/m²"
-                    stroke="#f59e0b"
+                    stroke="var(--color-solar)"
                     strokeWidth={2}
                     dot={false}
                   />
@@ -186,7 +186,7 @@ export function FacilityMeterEfficiencyDashboard({
                     type="monotone"
                     dataKey="pr"
                     name="Perf. ratio"
-                    stroke="#0ea5e9"
+                    stroke="var(--color-chart-2)"
                     strokeWidth={2}
                     dot={false}
                   />
