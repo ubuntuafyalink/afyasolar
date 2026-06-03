@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { Leaf, TrendingUp } from "lucide-react"
+import { BookOpen, Leaf, TrendingUp } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { rankEcms, type EcmHorizon } from "@/lib/dashboard/ecm-catalogue"
+import { useAdminAdaptationsRollup } from "@/hooks/use-admin-adaptations-rollup"
 import { formatCurrency } from "@/lib/utils"
 
 const HORIZON_META: Record<EcmHorizon, { label: string; variant: "success" | "warning" | "secondary" }> = {
@@ -22,6 +22,22 @@ function HorizonBadge({ horizon }: { horizon: EcmHorizon }) {
 
 export function AdminEcmManager() {
   const ranked = React.useMemo(() => rankEcms(), [])
+  const { data: rollup } = useAdminAdaptationsRollup()
+
+  // Cross-link real adopted measures: count adaptation records whose
+  // recommendation text references each catalogue measure's title.
+  const adoptedByTitle = React.useMemo(() => {
+    const map = new Map<string, number>()
+    for (const item of rollup?.items ?? []) {
+      const rec = item.recommendation.toLowerCase()
+      for (const ecm of ranked) {
+        if (rec.includes(ecm.title.toLowerCase())) {
+          map.set(ecm.title, (map.get(ecm.title) ?? 0) + 1)
+        }
+      }
+    }
+    return map
+  }, [rollup, ranked])
 
   return (
     <Card>
@@ -30,12 +46,16 @@ export function AdminEcmManager() {
           <Leaf aria-hidden className="size-5 text-primary" />
           ECM catalogue manager
         </CardTitle>
-        <DemoDataBadge />
+        <Badge variant="outline" className="gap-1 text-muted-foreground">
+          <BookOpen aria-hidden className="size-3" />
+          Reference catalogue
+        </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <TrendingUp aria-hidden className="size-3.5" />
-          Ranking score = resilience gain (points) per million TSh of indicative cost. Higher is better.
+          Ranking score = resilience gain (points) per million TSh of indicative cost. Higher is better. The
+          Adopted column shows how many facilities have logged a matching adaptation.
         </p>
 
         <div className="overflow-x-auto rounded-lg border">
@@ -51,6 +71,7 @@ export function AdminEcmManager() {
                 <th scope="col" className="px-3 py-2 font-medium">Dimension</th>
                 <th scope="col" className="px-3 py-2 font-medium">Horizon</th>
                 <th scope="col" className="px-3 py-2 text-right font-medium">Rank score</th>
+                <th scope="col" className="px-3 py-2 text-right font-medium">Adopted</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -78,6 +99,13 @@ export function AdminEcmManager() {
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 text-right font-semibold text-foreground">
                     {ecm.rankScore}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right">
+                    {adoptedByTitle.get(ecm.title) ? (
+                      <Badge variant="success">{adoptedByTitle.get(ecm.title)}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
