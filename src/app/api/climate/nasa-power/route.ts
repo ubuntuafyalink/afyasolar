@@ -15,12 +15,10 @@
  * fetch itself is cached for 6h via { next: { revalidate } }.
  */
 import { z } from "zod"
+import { fetchNasaPowerServer, NasaPowerServerError } from "@/lib/climate/nasa-power-server"
 
 const ALLOWED_PARAMETERS = ["T2M_MAX", "PRECTOTCORR", "WS10M", "ALLSKY_SFC_SW_DWN"] as const
 const ALLOWED = new Set<string>(ALLOWED_PARAMETERS)
-
-const UPSTREAM_TIMEOUT_MS = 8000
-const REVALIDATE_SECONDS = 21600 // 6 hours
 
 const QuerySchema = z
   .object({
@@ -76,66 +74,13 @@ export async function GET(request: Request) {
   const { lat, lon, temporal, start, end } = parsed.data
   const params = parsed.data.parameters.split(",").map((s) => s.trim()).filter(Boolean)
 
-  const upstreamParams = new URLSearchParams({
-    parameters: params.join(","),
-    community: "RE",
-    latitude: String(lat),
-    longitude: String(lon),
-    start,
-    end,
-    format: "JSON",
-  })
-  const sourceUrl = `https://power.larc.nasa.gov/api/temporal/${temporal}/point?${upstreamParams.toString()}`
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS)
-  let upstream: Response
   try {
-    upstream = await fetch(sourceUrl, {
-      signal: controller.signal,
-      next: { revalidate: REVALIDATE_SECONDS },
-    })
-  } catch {
-    return errorResponse("upstream_unreachable", "NASA POWER did not respond in time", 504)
-  } finally {
-    clearTimeout(timeout)
-  }
-
-  if (!upstream.ok) {
-    return errorResponse("upstream_error", `NASA POWER returned status ${upstream.status}`, 502)
-  }
-
-  let raw: unknown
-  try {
-    raw = await upstream.json()
-  } catch {
-    return errorResponse("parse_error", "Could not parse the NASA POWER response", 502)
-  }
-
-  const root = raw as {
-    header?: { fill_value?: number }
-    properties?: { parameter?: Record<string, Record<string, unknown>> }
-  }
-  const fillValue = typeof root?.header?.fill_value === "number" ? root.header.fill_value : -999
-  const parameter = root?.properties?.parameter ?? {}
-
-  const series: Record<string, { date: string; value: number }[]> = {}
-  for (const p of params) {
-    const table = parameter[p] ?? {}
-    const points: { date: string; value: number }[] = []
-    for (const [key, value] of Object.entries(table)) {
-      if (typeof value !== "number") continue
-      if (value === fillValue || value === -999) continue
-      if (temporal === "monthly") {
-        // Keep monthly keys YYYYMM with MM 01..12; drop the YYYY13 annual roll-up.
-        const month = Number(key.slice(4, 6))
-        if (!(month >= 1 && month <= 12)) continue
-      }
-      points.push({ date: key, value })
+    const result = await fetchNasaPowerServer({ lat, lon, temporal, start, end, parameters: params })
+    return Response.json(result)
+  } catch (err) {
+    if (err instanceof NasaPowerServerError) {
+      return errorResponse(err.code, err.message, err.status)
     }
-    points.sort((a, b) => a.date.localeCompare(b.date))
-    series[p] = points
+    return errorResponse("upstream_unreachable", "NASA POWER did not respond in time", 504)
   }
-
-  return Response.json({ temporal, params, series, sourceUrl })
 }

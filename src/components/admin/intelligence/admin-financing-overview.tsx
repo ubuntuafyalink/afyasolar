@@ -1,20 +1,60 @@
 "use client"
 
+import { useMemo } from "react"
 import { Banknote, BadgeCheck, DollarSign, Gauge } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatCard } from "@/components/ui/stat-card"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { formatCurrency } from "@/lib/utils"
-import { getFinancingOverview } from "@/lib/dashboard/admin-portfolio-data"
+import { useAdminPaygFinancing } from "@/hooks/use-admin-payg-financing"
+import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
+
+const UNGROUPED = "Unspecified"
 
 /**
- * Operator view of the Medical Credit Fund financing snapshot: KPI cards plus a
- * by-network breakdown of deployments and financed amounts. Read-only, demo
- * data only.
+ * Operator view of the PAYG / financing portfolio: KPI cards plus a by-region
+ * breakdown of contracts and financed amounts. Real data from the accounting
+ * financing contracts.
  */
 export function AdminFinancingOverview() {
-  const fin = getFinancingOverview()
+  const { data, isLoading, isError } = useAdminPaygFinancing()
+  const { facilities } = useAdminPortfolio()
+
+  const regionById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const f of facilities) map.set(f.id, f.region || UNGROUPED)
+    return map
+  }, [facilities])
+
+  const kpis = data?.kpis
+  const onTimePct =
+    kpis && kpis.totalContracts > 0
+      ? Math.round((1 - kpis.overdueCount / kpis.totalContracts) * 100)
+      : null
+
+  const byRegion = useMemo(() => {
+    const map = new Map<string, { contracts: number; financedTsh: number; outstandingTsh: number }>()
+    for (const c of data?.contracts ?? []) {
+      const region = regionById.get(c.customerId) ?? UNGROUPED
+      const cur = map.get(region) ?? { contracts: 0, financedTsh: 0, outstandingTsh: 0 }
+      cur.contracts += 1
+      cur.financedTsh += Number(c.principalIssued) || 0
+      cur.outstandingTsh += Number(c.outstandingBalance) || 0
+      map.set(region, cur)
+    }
+    return [...map.entries()]
+      .map(([region, v]) => ({ region, ...v }))
+      .sort((a, b) => b.financedTsh - a.financedTsh)
+  }, [data, regionById])
+
+  if (isLoading) {
+    return <div className="h-64 animate-pulse rounded-lg bg-muted" />
+  }
+  if (isError || !kpis) {
+    return <p className="text-sm text-destructive">Could not load financing data. Please retry.</p>
+  }
+
+  const financedTotal = (data?.contracts ?? []).reduce((s, c) => s + (Number(c.principalIssued) || 0), 0)
 
   return (
     <Card>
@@ -24,76 +64,75 @@ export function AdminFinancingOverview() {
             <Banknote aria-hidden className="size-5 text-primary" />
             Financing overview
           </CardTitle>
-          <DemoDataBadge />
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Deployments"
-            value={fin.deployments}
+            title="Active contracts"
+            value={kpis.activeContracts}
             icon={<Gauge />}
             accent="primary"
-            meta="Sites financed"
+            meta={`${kpis.totalContracts} total`}
           />
           <StatCard
             title="On-time payments"
-            value={`${fin.onTimePaymentPct}%`}
+            value={onTimePct != null ? `${onTimePct}%` : "N/A"}
             icon={<BadgeCheck />}
             accent="success"
-            meta="Repayment performance"
-            progress={fin.onTimePaymentPct}
+            meta={`${kpis.overdueCount} overdue`}
+            progress={onTimePct ?? 0}
             progressLabel="On-time payments"
           />
           <StatCard
             title="Defaults"
-            value={fin.defaults}
+            value={kpis.defaultedContracts}
             icon={<DollarSign />}
-            accent={fin.defaults === 0 ? "success" : "destructive"}
-            meta={fin.defaults === 0 ? "No defaults" : "Needs attention"}
+            accent={kpis.defaultedContracts === 0 ? "success" : "destructive"}
+            meta={kpis.defaultedContracts === 0 ? "No defaults" : "Needs attention"}
           />
           <StatCard
-            title="Financed total"
-            value={formatCurrency(fin.financedTotalTsh)}
+            title="Outstanding"
+            value={formatCurrency(kpis.totalOutstanding)}
             icon={<Banknote />}
             accent="solar"
-            meta="Across the portfolio"
+            meta={`${formatCurrency(financedTotal)} financed`}
           />
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <caption className="sr-only">Financing by network</caption>
-            <thead>
-              <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
-                <th scope="col" className="py-2 pr-4">
-                  Network
-                </th>
-                <th scope="col" className="py-2 pr-4 text-right">
-                  Deployments
-                </th>
-                <th scope="col" className="py-2 text-right">
-                  Financed
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {fin.byNetwork.map((n) => (
-                <tr key={n.network} className="border-b border-border/60 last:border-0">
-                  <th scope="row" className="py-2 pr-4 text-left font-medium text-foreground">
-                    {n.network}
-                  </th>
-                  <td className="py-2 pr-4 text-right tabular-nums text-muted-foreground">
-                    {n.deployments}
-                  </td>
-                  <td className="py-2 text-right tabular-nums text-foreground">
-                    {formatCurrency(n.financedTsh)}
-                  </td>
+        {byRegion.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No financing contracts recorded yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <caption className="sr-only">Financing by region</caption>
+              <thead>
+                <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
+                  <th scope="col" className="py-2 pr-4">Region</th>
+                  <th scope="col" className="py-2 pr-4 text-right">Contracts</th>
+                  <th scope="col" className="py-2 pr-4 text-right">Financed</th>
+                  <th scope="col" className="py-2 text-right">Outstanding</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {byRegion.map((n) => (
+                  <tr key={n.region} className="border-b border-border/60 last:border-0">
+                    <th scope="row" className="py-2 pr-4 text-left font-medium text-foreground">
+                      {n.region}
+                    </th>
+                    <td className="py-2 pr-4 text-right tabular-nums text-muted-foreground">{n.contracts}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums text-foreground">
+                      {formatCurrency(n.financedTsh)}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-foreground">
+                      {formatCurrency(n.outstandingTsh)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

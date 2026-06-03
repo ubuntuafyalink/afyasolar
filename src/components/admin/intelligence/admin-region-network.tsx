@@ -1,22 +1,26 @@
 "use client"
 
-import { MapPin, Network } from "lucide-react"
+import { useMemo } from "react"
+import { MapPin, LayoutGrid } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { scoreBarColor } from "@/lib/dashboard/facility-ui"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
-import { getPortfolioByRegion } from "@/lib/dashboard/ngo-portfolio-data"
-import { getPortfolioByNetwork } from "@/lib/dashboard/admin-portfolio-data"
+import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
+import { byRegion, byCategory } from "@/lib/dashboard/admin-portfolio-real"
 
 type BreakdownRow = {
   label: string
   facilities: number
-  avgRcs: number
-  atRiskSites: number
+  assessed: number
+  avgRcs: number | null
+  criticalSites: number
 }
 
 function BreakdownList({ rows }: { rows: BreakdownRow[] }) {
+  if (rows.length === 0) {
+    return <p className="text-xs text-muted-foreground">No facilities yet.</p>
+  }
   return (
     <ul className="space-y-3">
       {rows.map((r) => (
@@ -24,22 +28,25 @@ function BreakdownList({ rows }: { rows: BreakdownRow[] }) {
           <div className="flex items-center justify-between gap-2 text-sm">
             <span className="font-medium text-foreground">{r.label}</span>
             <span className="text-xs text-muted-foreground">
-              {r.facilities} facilities · {r.atRiskSites} at-risk
+              {r.facilities} facilities · {r.criticalSites} critical
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div
               className="h-2 flex-1 overflow-hidden rounded-full bg-muted"
               role="progressbar"
-              aria-valuenow={r.avgRcs}
+              aria-valuenow={r.avgRcs ?? 0}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-label={`${r.label} average RCS`}
             >
-              <div className={cn("h-full rounded-full", scoreBarColor(r.avgRcs))} style={{ width: `${r.avgRcs}%` }} />
+              <div
+                className={cn("h-full rounded-full", scoreBarColor(r.avgRcs ?? 0))}
+                style={{ width: `${r.avgRcs ?? 0}%` }}
+              />
             </div>
-            <span className="w-10 shrink-0 text-right text-xs font-semibold tabular-nums text-foreground">
-              {r.avgRcs}
+            <span className="w-12 shrink-0 text-right text-xs font-semibold tabular-nums text-foreground">
+              {r.avgRcs != null ? r.avgRcs : "N/A"}
             </span>
           </div>
         </li>
@@ -49,28 +56,44 @@ function BreakdownList({ rows }: { rows: BreakdownRow[] }) {
 }
 
 /**
- * Portfolio resilience broken down by region and by faith network/operator.
- * Helps prioritise where to invest (application Area 1). Simulated data.
+ * Portfolio resilience broken down by region and by facility category. Helps
+ * prioritise where to invest (application Area 1). Real data; facilities with no
+ * saved assessment show no RCS contribution.
  */
 export function AdminRegionNetwork() {
-  const regions = getPortfolioByRegion().map((r) => ({
-    label: r.region,
-    facilities: r.facilities,
-    avgRcs: r.avgRcs,
-    atRiskSites: r.atRiskSites,
-  }))
-  const networks = getPortfolioByNetwork().map((n) => ({
-    label: n.network,
-    facilities: n.facilities,
-    avgRcs: n.avgRcs,
-    atRiskSites: n.atRiskSites,
-  }))
+  const { facilities, isLoading, isError } = useAdminPortfolio()
+  const regions = useMemo(
+    () =>
+      byRegion(facilities).map((r) => ({
+        label: r.region,
+        facilities: r.facilities,
+        assessed: r.assessed,
+        avgRcs: r.avgRcs,
+        criticalSites: r.criticalSites,
+      })),
+    [facilities],
+  )
+  const categories = useMemo(
+    () =>
+      byCategory(facilities).map((c) => ({
+        label: c.category,
+        facilities: c.facilities,
+        assessed: c.assessed,
+        avgRcs: c.avgRcs,
+        criticalSites: c.criticalSites,
+      })),
+    [facilities],
+  )
+
+  if (isLoading) {
+    return <div className="h-40 animate-pulse rounded-lg bg-muted" />
+  }
+  if (isError) {
+    return <p className="text-sm text-destructive">Could not load portfolio data. Please retry.</p>
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end">
-        <DemoDataBadge />
-      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
@@ -87,12 +110,12 @@ export function AdminRegionNetwork() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Network className="size-5 text-primary" aria-hidden />
-              By network
+              <LayoutGrid className="size-5 text-primary" aria-hidden />
+              By category
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <BreakdownList rows={networks} />
+            <BreakdownList rows={categories} />
           </CardContent>
         </Card>
       </div>
