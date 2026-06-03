@@ -3,17 +3,42 @@
  * surface. Mirrors receipt-pdf.ts: programmatic jsPDF, dynamically imported on
  * use so the library never ships in the main bundle. No backend, no new deps.
  *
+ * Takes already-fetched REAL data as an argument (assembled by the caller from
+ * the React Query caches) so this module has no dependency on the demo seed.
+ *
  * Note: this file intentionally avoids the unicode em/en dash anywhere in its
  * output strings (only plain hyphens / colons are used).
  */
-import {
-  getAdminPortfolioSummary,
-  getImpactSummary,
-  getFinancingOverview,
-} from "@/lib/dashboard/admin-portfolio-data"
 import { formatCurrency } from "@/lib/utils"
+import type { ResilienceTier } from "@/lib/dashboard/admin-portfolio-types"
 
-export async function downloadPortfolioReportPdf(now?: Date): Promise<void> {
+export type PortfolioReportData = {
+  summary: {
+    facilities: number
+    assessed: number
+    regions: number
+    categories: number
+    avgRcs: number | null
+    tierCounts: Record<ResilienceTier, number>
+    criticalCount: number
+  }
+  impact: {
+    servicesProtected: number
+    adaptationsImplemented: number
+    co2AvoidedTons: number | null
+  }
+  financing: {
+    activeContracts: number
+    totalContracts: number
+    onTimePct: number | null
+    defaults: number
+    financedTotalTsh: number
+    outstandingTsh: number
+    byRegion: { region: string; contracts: number; financedTsh: number }[]
+  }
+}
+
+export async function downloadPortfolioReportPdf(data: PortfolioReportData, now?: Date): Promise<void> {
   const { jsPDF } = await import("jspdf")
   const doc = new jsPDF({ unit: "pt", format: "a4" })
   const pageW = doc.internal.pageSize.getWidth()
@@ -21,9 +46,7 @@ export async function downloadPortfolioReportPdf(now?: Date): Promise<void> {
   const M = 48
   let y = M
 
-  const summary = getAdminPortfolioSummary()
-  const impact = getImpactSummary()
-  const financing = getFinancingOverview()
+  const { summary, impact, financing } = data
 
   const ensureSpace = (needed: number) => {
     if (y > pageH - needed) {
@@ -83,55 +106,43 @@ export async function downloadPortfolioReportPdf(now?: Date): Promise<void> {
 
   // Portfolio summary
   sectionHeading("Portfolio summary")
-  kv("Facilities assessed", String(summary.facilities))
-  kv("Regions / networks", `${summary.regions} regions, ${summary.networks} networks`)
-  kv("Portfolio average RCS", `${summary.avgRcs} / 100`)
+  kv("Facilities", String(summary.facilities))
+  kv("Facilities assessed", `${summary.assessed} of ${summary.facilities}`)
+  kv("Regions / categories", `${summary.regions} regions, ${summary.categories} categories`)
+  kv("Portfolio average RCS", summary.avgRcs != null ? `${summary.avgRcs} / 100` : "Not assessed yet")
   kv(
     "Resilience tiers",
     `Resilient ${summary.tierCounts.Resilient}, Developing ${summary.tierCounts.Developing}, At risk ${summary.tierCounts["At risk"]}, Critical ${summary.tierCounts.Critical}`,
   )
-  kv("Failing sites", String(summary.failingSites))
-  kv("At-risk sites", String(summary.atRiskSites))
-  kv("Women-led facilities", `${summary.womenLedPct}%`)
+  kv("Critical sites", String(summary.criticalCount))
   y += 10
 
   // Impact
   sectionHeading("Impact")
-  kv("Facilities assessed", String(impact.facilitiesAssessed))
-  kv("Critical services protected", String(impact.servicesProtected))
-  kv("Resilience points gained", String(impact.resiliencePointsGained))
-  kv("CO2 avoided (tons)", String(impact.co2AvoidedTons))
+  kv("Facilities assessed", `${summary.assessed} of ${summary.facilities}`)
+  kv("Services protected", String(impact.servicesProtected))
+  kv("Adaptations implemented", String(impact.adaptationsImplemented))
+  kv("CO2 avoided (tons)", impact.co2AvoidedTons != null ? String(impact.co2AvoidedTons) : "N/A")
   y += 10
 
   // Financing
   sectionHeading("Financing")
-  kv("Deployments", String(financing.deployments))
-  kv("On-time payments", `${financing.onTimePaymentPct}%`)
+  kv("Active contracts", `${financing.activeContracts} of ${financing.totalContracts}`)
+  kv("On-time payments", financing.onTimePct != null ? `${financing.onTimePct}%` : "N/A")
   kv("Defaults", String(financing.defaults))
   kv("Financed total", formatCurrency(financing.financedTotalTsh))
-  y += 4
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(11)
-  doc.setTextColor(26, 32, 28)
-  ensureSpace(40)
-  doc.text("By network", M, y)
-  y += 16
-  for (const n of financing.byNetwork) {
-    kv(n.network, `${n.deployments} deployments, ${formatCurrency(n.financedTsh)}`)
-  }
-
-  // Footer on every page
-  const pageCount = doc.getNumberOfPages()
-  for (let p = 1; p <= pageCount; p++) {
-    doc.setPage(p)
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(8)
-    doc.setTextColor(107, 114, 128)
-    doc.text(
-      "Demo data - sample values, not yet wired to a live source.",
-      M,
-      pageH - 28,
-    )
+  kv("Outstanding", formatCurrency(financing.outstandingTsh))
+  if (financing.byRegion.length > 0) {
+    y += 4
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(11)
+    doc.setTextColor(26, 32, 28)
+    ensureSpace(40)
+    doc.text("By region", M, y)
+    y += 16
+    for (const n of financing.byRegion) {
+      kv(n.region, `${n.contracts} contracts, ${formatCurrency(n.financedTsh)}`)
+    }
   }
 
   doc.save("afyasolar-portfolio-report.pdf")
