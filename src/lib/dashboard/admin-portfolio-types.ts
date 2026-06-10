@@ -79,8 +79,24 @@ export type PortfolioFacility = {
   energyBmiPercent: number | null
   climateAssessmentDate: string | null
   energyAssessmentDate: string | null
+  /** CRiPHC capacity dimensions (0..100, higher is better) from the saved climate
+   *  assessment; null when the facility has no climate assessment. */
+  dimensions: ClimateDimensions | null
+  /** Power-sizing metrics from the saved energy assessment; null when not assessed. */
+  energy: EnergySizing | null
   // real climate exposure (NASA POWER); null when unavailable
   climate: PortfolioClimate | null
+}
+
+/** CRiPHC capacity dimensions (each 0..100, higher = more resilient). */
+export type ClimateDimensions = { hes: number | null; csf: number | null; ecpq: number | null; edc: number | null; rrc: number | null }
+
+/** Lightweight power-sizing metrics from the energy assessment. */
+export type EnergySizing = {
+  solarArraySize: number | null
+  dailyLoad: number | null
+  requiredKw: number | null
+  annualSavings: number | null
 }
 
 // --- aggregate render shapes ------------------------------------------------

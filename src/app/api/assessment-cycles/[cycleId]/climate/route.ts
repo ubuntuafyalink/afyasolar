@@ -7,16 +7,28 @@ import {
   climateAssessmentResponses,
   climateScoreSummaries,
   evidenceItems,
+  facilities,
+  facilityClimateProfile,
+  facilityResilienceSnapshot,
   riskDrivers,
 } from "@/lib/db/schema"
 import { and, desc, eq } from "drizzle-orm"
 import { generateId } from "@/lib/utils"
+import { NORMALIZATION_VERSION } from "@/lib/climate/nasa-power"
+import { persistRealClimateProfile } from "@/lib/climate/facility-climate-persist"
+import {
+  CRIPHC_FORMULA_VERSION,
+  combineRcs,
+  hesFromComposite,
+  rcsTierInt,
+  type ModuleCode,
+} from "@/lib/climate/criphc-scoring"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-type ModuleCode = "HES" | "CSF" | "ECPQ" | "EDC" | "RRC"
-
+// Valid module codes (also used to validate the PUT payload). Values are the
+// questionnaire's per-module risk caps, retained only to recognize the modules.
 const MODULE_MAX: Record<ModuleCode, number> = {
   HES: 20,
   CSF: 30,
@@ -29,18 +41,14 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
 }
 
-function getTier(score: number, criticalAttention: boolean) {
-  if (criticalAttention) return { tier: 0, label: "Critical attention" }
-  if (score >= 80) return { tier: 3, label: "Tier 3 (strong)" }
-  if (score >= 60) return { tier: 2, label: "Tier 2 (moderate)" }
-  if (score >= 40) return { tier: 1, label: "Tier 1 (weak)" }
-  return { tier: 0, label: "Tier 0 (fragile)" }
-}
-
-function computeScores(payload: {
+/**
+ * Reduce the questionnaire responses to a per-module RISK fraction in [0, 1]
+ * (higher answer score = more risk), plus the red-flag critical-attention flag.
+ * The capacity score per dimension is later derived as (1 - riskFraction) * 100.
+ */
+function computeModuleRisk(payload: {
   responses: Array<{
     moduleCode: ModuleCode
-    questionCode: string
     score: number
     scoreMax: number
     isRedFlag?: boolean
@@ -51,36 +59,24 @@ function computeScores(payload: {
   let criticalAttention = false
 
   for (const r of payload.responses) {
-    const module = r.moduleCode
-    if (!MODULE_MAX[module]) continue
+    const mod = r.moduleCode
+    if (!MODULE_MAX[mod]) continue
     const sMax = clamp(Number(r.scoreMax ?? 0), 0, 1000)
     const s = clamp(Number(r.score ?? 0), 0, sMax || 0)
-    max[module] += sMax
-    sums[module] += s
+    max[mod] += sMax
+    sums[mod] += s
     if (r.isRedFlag) criticalAttention = true
   }
 
-  const normalized: Record<ModuleCode, number> = { HES: 0, CSF: 0, ECPQ: 0, EDC: 0, RRC: 0 }
+  const riskFrac: Record<ModuleCode, number> = { HES: 0, CSF: 0, ECPQ: 0, EDC: 0, RRC: 0 }
   ;(Object.keys(MODULE_MAX) as ModuleCode[]).forEach((m) => {
-    const rawMax = Math.max(1, max[m])
-    normalized[m] = Math.round((sums[m] / rawMax) * MODULE_MAX[m] * 10) / 10
+    riskFrac[m] = max[m] > 0 ? clamp(sums[m] / max[m], 0, 1) : 0
   })
 
-  const total = normalized.HES + normalized.CSF + normalized.ECPQ + normalized.EDC + normalized.RRC
-  const riskTotal = Math.round(total * 10) / 10
-  const capacity = Math.round((100 - riskTotal) * 10) / 10
-  const tier = getTier(capacity, criticalAttention)
-
-  return {
-    normalized,
-    riskTotal,
-    capacity,
-    tier: tier.tier,
-    criticalAttention,
-  }
+  return { riskFrac, criticalAttention }
 }
 
-function computeTopRisks(normalized: Record<ModuleCode, number>) {
+function computeTopRisks(riskFrac: Record<ModuleCode, number>) {
   const drivers = [
     { key: "flood", module: "HES" as const, title: "Flood exposure", w: 1.0 },
     { key: "heat", module: "HES" as const, title: "Heat stress", w: 0.9 },
@@ -91,8 +87,8 @@ function computeTopRisks(normalized: Record<ModuleCode, number>) {
 
   return drivers
     .map((d) => {
-      const moduleScore = normalized[d.module]
-      const sev = Math.round(clamp((moduleScore / MODULE_MAX[d.module]) * 100 * d.w, 0, 100))
+      // Severity scales with the module's measured RISK fraction (0..1).
+      const sev = Math.round(clamp(riskFrac[d.module] * 100 * d.w, 0, 100))
       return {
         title: d.title,
         riskType: d.key,
@@ -273,8 +269,63 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "responses[] required to compute score" }, { status: 400 })
     }
 
-    const computed = computeScores({ responses })
-    const topRisks = computeTopRisks(computed.normalized)
+    const { riskFrac, criticalAttention } = computeModuleRisk({ responses })
+    const topRisks = computeTopRisks(riskFrac)
+
+    // HES dimension comes from REAL persisted NASA climate exposure, not the
+    // questionnaire: compute + persist the facility's real climate profile, then
+    // derive HES capacity = 100 - CVI composite. Falls back to an already-persisted
+    // real profile, and finally to the questionnaire-derived HES if NASA is down.
+    const [facRow] = await db
+      .select({ region: facilities.region, latitude: facilities.latitude, longitude: facilities.longitude })
+      .from(facilities)
+      .where(eq(facilities.id, access.cycle.facilityId))
+      .limit(1)
+
+    let composite: number | null = null
+    try {
+      const real = await persistRealClimateProfile(access.cycle.facilityId, {
+        region: facRow?.region ?? null,
+        lat: facRow?.latitude != null ? Number(facRow.latitude) : null,
+        lon: facRow?.longitude != null ? Number(facRow.longitude) : null,
+      })
+      if (real) composite = real.composite
+    } catch (e) {
+      console.warn("[assessment-cycle climate POST] real climate fetch:", e)
+    }
+    if (composite == null) {
+      // Use an already-persisted REAL profile if present (avg of the 4 hazard fields = CVI composite).
+      try {
+        const [p] = await db
+          .select()
+          .from(facilityClimateProfile)
+          .where(eq(facilityClimateProfile.facilityId, access.cycle.facilityId))
+          .limit(1)
+        if (p && p.dataSource === "real") {
+          composite = Math.round(
+            (Number(p.floodRiskScore) + Number(p.heatRiskScore) + Number(p.windRiskScore) + Number(p.rainRiskScore)) / 4,
+          )
+        }
+      } catch {
+        /* keep composite null -> questionnaire fallback below */
+      }
+    }
+
+    // Per-dimension CAPACITY (0..100): HES from real climate; others = inverse of questionnaire risk.
+    const capacity: Record<ModuleCode, number> = {
+      HES: composite != null ? hesFromComposite(composite) : Math.round((1 - riskFrac.HES) * 100),
+      CSF: Math.round((1 - riskFrac.CSF) * 100),
+      ECPQ: Math.round((1 - riskFrac.ECPQ) * 100),
+      EDC: Math.round((1 - riskFrac.EDC) * 100),
+      RRC: Math.round((1 - riskFrac.RRC) * 100),
+    }
+    const rcs = combineRcs(capacity)
+    const tier = rcsTierInt(rcs)
+    const formulaVersion = `${CRIPHC_FORMULA_VERSION}+climate-${NORMALIZATION_VERSION}`
+    const periodMonth = (() => {
+      const d = new Date()
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    })()
 
     await db.transaction(async (tx) => {
       // Upsert summary for the cycle (delete+insert keeps it simple across MySQL/TiDB variants)
@@ -283,17 +334,44 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       await tx.insert(climateScoreSummaries).values({
         id: generateId(),
         assessmentCycleId: cycleId,
-        hes: Math.round(computed.normalized.HES),
-        csf: Math.round(computed.normalized.CSF),
-        ecpq: Math.round(computed.normalized.ECPQ),
-        edc: Math.round(computed.normalized.EDC),
-        rrc: Math.round(computed.normalized.RRC),
-        rcs: Math.round(computed.capacity),
-        tier: computed.tier,
-        criticalAttention: computed.criticalAttention,
+        hes: capacity.HES,
+        csf: capacity.CSF,
+        ecpq: capacity.ECPQ,
+        edc: capacity.EDC,
+        rrc: capacity.RRC,
+        rcs,
+        tier,
+        formulaVersion,
+        criticalAttention,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
+
+      // Persist a monthly resilience snapshot from the REAL computed RCS so the
+      // trend is read from history instead of regenerated on the fly.
+      const [existingSnap] = await tx
+        .select({ id: facilityResilienceSnapshot.id })
+        .from(facilityResilienceSnapshot)
+        .where(
+          and(
+            eq(facilityResilienceSnapshot.facilityId, access.cycle.facilityId),
+            eq(facilityResilienceSnapshot.periodMonth, periodMonth),
+          ),
+        )
+        .limit(1)
+      if (existingSnap) {
+        await tx
+          .update(facilityResilienceSnapshot)
+          .set({ resilienceScore: String(rcs) })
+          .where(eq(facilityResilienceSnapshot.id, existingSnap.id))
+      } else {
+        await tx.insert(facilityResilienceSnapshot).values({
+          id: generateId(),
+          facilityId: access.cycle.facilityId,
+          periodMonth,
+          resilienceScore: String(rcs),
+        })
+      }
 
       await tx.delete(riskDrivers).where(eq(riskDrivers.assessmentCycleId, cycleId))
       if (topRisks.length > 0) {

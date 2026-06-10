@@ -71,6 +71,17 @@ interface MeterCommand {
   }
 }
 
+interface MeterReading {
+  id: number
+  smartmeterId: number
+  recordedAt: string | null
+  power: number | null
+  energy: number | null
+  relayStatus: string | null
+  creditBalance: number | null
+  status: string | null
+}
+
 interface MeterFormData {
   meterSerial: string
   vendor: string
@@ -81,6 +92,7 @@ interface MeterFormData {
 export default function AfyaSolarMeterManagement() {
   const [meters, setMeters] = useState<SmartMeter[]>([])
   const [commands, setCommands] = useState<MeterCommand[]>([])
+  const [readings, setReadings] = useState<Record<number, MeterReading>>({})
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [vendorFilter, setVendorFilter] = useState('all')
@@ -105,6 +117,7 @@ export default function AfyaSolarMeterManagement() {
   useEffect(() => {
     fetchMeters()
     fetchCommands()
+    fetchReadings()
   }, [searchTerm, vendorFilter, statusFilter])
 
   const fetchMeters = async () => {
@@ -136,6 +149,20 @@ export default function AfyaSolarMeterManagement() {
       setCommands(data.data || [])
     } catch (error) {
       console.error('Error fetching commands:', error)
+    }
+  }
+
+  const fetchReadings = async () => {
+    try {
+      const response = await fetch('/api/afya-solar/meter-readings')
+      const data = await response.json()
+      const map: Record<number, MeterReading> = {}
+      for (const r of (data.data || []) as MeterReading[]) {
+        map[r.smartmeterId] = r
+      }
+      setReadings(map)
+    } catch (error) {
+      console.error('Error fetching readings:', error)
     }
   }
 
@@ -401,8 +428,26 @@ export default function AfyaSolarMeterManagement() {
                 {/* Status Info */}
                 <div className="text-sm space-y-1">
                   <div><strong>Installed:</strong> {meter.installedAt ? new Date(meter.installedAt).toLocaleDateString() : 'Not installed'}</div>
-                  <div><strong>Last Seen:</strong> {new Date(meter.lastSeenAt).toLocaleString()}</div>
+                  <div><strong>Last Seen:</strong> {meter.lastSeenAt ? new Date(meter.lastSeenAt).toLocaleString() : 'Never'}</div>
                   <div><strong>Created:</strong> {new Date(meter.createdAt).toLocaleDateString()}</div>
+                </div>
+
+                {/* Latest real reading */}
+                <div className="bg-blue-50 p-3 rounded text-sm">
+                  <div className="font-medium mb-1">Latest reading</div>
+                  {readings[meter.id] ? (
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                      <div><strong>Relay:</strong> {readings[meter.id].relayStatus ?? 'n/a'}</div>
+                      <div><strong>Power:</strong> {readings[meter.id].power != null ? `${readings[meter.id].power} W` : 'n/a'}</div>
+                      <div><strong>Energy:</strong> {readings[meter.id].energy != null ? `${readings[meter.id].energy} kWh` : 'n/a'}</div>
+                      <div><strong>Credit:</strong> {readings[meter.id].creditBalance != null ? readings[meter.id].creditBalance : 'n/a'}</div>
+                      <div className="col-span-2 text-xs text-muted-foreground">
+                        {readings[meter.id].recordedAt ? new Date(readings[meter.id].recordedAt as string).toLocaleString() : ''}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-muted-foreground">No readings recorded yet</div>
+                  )}
                 </div>
 
                 {/* Actions */}

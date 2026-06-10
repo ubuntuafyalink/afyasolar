@@ -1,395 +1,167 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  TrendingUp, 
-  TrendingDown,
-  BarChart3,
-  Calendar,
-  Zap,
-  Battery,
-  Thermometer,
-  MapPin,
-  Activity,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Sun,
-  Wind,
-  Droplets
-} from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-import { format, subDays, subMonths } from 'date-fns'
+import { BarChart3, Zap, ShieldCheck, MapPin, RefreshCw, Info } from 'lucide-react'
+import { useAdminSolarOps } from '@/hooks/use-admin-solar-ops'
 
-interface AnalyticsData {
-  period: string
-  totalEnergy: number
-  avgEfficiency: number
-  peakPower: number
-  co2Saved: number
-  costSavings: number
-  uptime: number
-  devicesOnline: number
-  alertsCount: number
+const TIER_LABEL: Record<number, string> = { 3: 'Resilient', 2: 'Developing', 1: 'At risk', 0: 'Critical' }
+const TIER_COLOR: Record<number, string> = {
+  3: 'bg-green-100 text-green-800',
+  2: 'bg-blue-100 text-blue-800',
+  1: 'bg-yellow-100 text-yellow-800',
+  0: 'bg-red-100 text-red-800',
 }
 
-interface FacilityPerformance {
-  id: string
-  name: string
-  location: string
-  energyGenerated: number
-  efficiency: number
-  uptime: number
-  alerts: number
-  lastMaintenance: string
-}
-
-interface TopPerformer {
-  id: string
-  name: string
-  metric: string
-  value: number
-  change: number
-  trend: 'up' | 'down'
+function avg(nums: number[]): number | null {
+  const vals = nums.filter((n) => Number.isFinite(n))
+  if (!vals.length) return null
+  return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
 }
 
 export function AdminSolarAnalytics() {
-  const [timeRange, setTimeRange] = useState('30d')
-  const [selectedMetric, setSelectedMetric] = useState('energy')
-  const [searchQuery, setSearchQuery] = useState('')
+  const { data: ops = [], isLoading, refetch } = useAdminSolarOps()
 
-  // Real analytics data from database
-  const { data: analyticsData, isLoading } = useQuery({
-    queryKey: ['solar-analytics', timeRange],
-    queryFn: async (): Promise<AnalyticsData> => {
-      const response = await fetch(`/api/admin/solar/analytics?period=${timeRange}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics data')
-      }
-      const result = await response.json()
-      return result.data
-    },
-  })
+  const totalFacilities = ops.length
+  const withClimate = ops.filter((f) => f.rcs != null)
+  const withEnergy = ops.filter((f) => f.bmiPercent != null)
+  const avgRcs = avg(withClimate.map((f) => f.rcs as number))
+  const avgBmi = avg(withEnergy.map((f) => f.bmiPercent as number))
+  const totalAnnualKwh = ops.reduce((s, f) => s + (f.estimatedAnnualKwh || 0), 0)
+  const totalSavings = ops.reduce((s, f) => s + (f.estimatedAnnualSavingsTzs || 0), 0)
 
-  // Real facility performance data from database
-  const { data: facilityPerformance = [] } = useQuery({
-    queryKey: ['facility-performance', timeRange],
-    queryFn: async (): Promise<FacilityPerformance[]> => {
-      const response = await fetch(`/api/admin/solar/facility-performance?period=${timeRange}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch facility performance')
-      }
-      const result = await response.json()
-      return result.data || []
-    },
-  })
+  const tierCounts: Record<number, number> = { 3: 0, 2: 0, 1: 0, 0: 0 }
+  for (const f of withClimate) if (f.tier != null && tierCounts[f.tier] != null) tierCounts[f.tier] += 1
 
-  // Real top performers data from database
-  const { data: topPerformers = [] } = useQuery({
-    queryKey: ['top-performers', selectedMetric],
-    queryFn: async (): Promise<TopPerformer[]> => {
-      const response = await fetch(`/api/admin/solar/top-performers?metric=${selectedMetric}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch top performers')
-      }
-      const result = await response.json()
-      return result.data || []
-    },
-  })
-
-  const filteredFacilities = facilityPerformance.filter(facility =>
-    facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    facility.location.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  const getMetricLabel = (metric: string) => {
-    switch (metric) {
-      case 'energy': return 'Energy Generated'
-      case 'efficiency': return 'Efficiency'
-      case 'uptime': return 'Uptime'
-      case 'savings': return 'Cost Savings'
-      default: return 'Performance'
-    }
+  // By region
+  const regionMap = new Map<string, { count: number; rcs: number[]; kwh: number }>()
+  for (const f of ops) {
+    const region = f.region || 'Unknown'
+    const entry = regionMap.get(region) || { count: 0, rcs: [], kwh: 0 }
+    entry.count += 1
+    if (f.rcs != null) entry.rcs.push(f.rcs)
+    entry.kwh += f.estimatedAnnualKwh || 0
+    regionMap.set(region, entry)
   }
-
-  const formatNumber = (num: number, decimals = 1) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(decimals)}M`
-    if (num >= 1000) return `${(num / 1000).toFixed(decimals)}K`
-    return num.toFixed(decimals)
-  }
+  const regions = Array.from(regionMap.entries())
+    .map(([region, v]) => ({ region, count: v.count, avgRcs: avg(v.rcs), kwh: Math.round(v.kwh) }))
+    .sort((a, b) => b.count - a.count)
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading analytics...</span>
+        <RefreshCw className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading portfolio analytics...</span>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold">Solar Analytics & Insights</h2>
-          <p className="text-muted-foreground">
-            Comprehensive analytics and performance insights for solar systems
+          <h2 className="text-2xl font-bold">Portfolio Analytics</h2>
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            <Info className="h-3.5 w-3.5" />
+            Aggregated from facility assessments + climate. Generation figures are estimated, not metered.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground">Facilities</p>
+            <p className="text-2xl font-bold">{totalFacilities}</p>
+            <p className="text-xs text-muted-foreground">{withEnergy.length} energy / {withClimate.length} climate assessed</p>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Energy</p>
-                <p className="text-2xl font-bold">{formatNumber(analyticsData?.totalEnergy || 0)} kWh</p>
-                <p className="text-xs text-muted-foreground">
-                  {timeRange === '7d' ? 'Past 7 days' : timeRange === '30d' ? 'Past 30 days' : 'Past 90 days'}
-                </p>
+                <p className="text-sm text-muted-foreground">Avg Resilience (RCS)</p>
+                <p className="text-2xl font-bold">{avgRcs != null ? avgRcs : 'No data'}</p>
+                <p className="text-xs text-muted-foreground">Avg BMI {avgBmi != null ? `${avgBmi}%` : 'n/a'}</p>
+              </div>
+              <ShieldCheck className="h-8 w-8 text-emerald-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Est. Annual Generation</p>
+                <p className="text-2xl font-bold">{totalAnnualKwh.toLocaleString()} kWh</p>
               </div>
               <Zap className="h-8 w-8 text-yellow-600" />
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Avg Efficiency</p>
-                <p className="text-2xl font-bold">{analyticsData?.avgEfficiency.toFixed(1)}%</p>
-                <p className="text-xs text-green-600 flex items-center">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  +2.3% vs last period
-                </p>
+                <p className="text-sm text-muted-foreground">Est. Annual Savings (TZS)</p>
+                <p className="text-2xl font-bold">{totalSavings.toLocaleString()}</p>
               </div>
               <BarChart3 className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">CO₂ Saved</p>
-                <p className="text-2xl font-bold">{formatNumber(analyticsData?.co2Saved || 0)} kg</p>
-                <p className="text-xs text-muted-foreground">Environmental impact</p>
-              </div>
-              <Droplets className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Cost Savings</p>
-                <p className="text-2xl font-bold">${formatNumber(analyticsData?.costSavings || 0)}</p>
-                <p className="text-xs text-muted-foreground">Estimated savings</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Performance Trends */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-blue-600" />
-              Performance Trends
-            </CardTitle>
+            <CardTitle>Resilience tier distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">System Uptime</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-32 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full" 
-                      style={{ width: `${analyticsData?.uptime || 0}%` }}
-                    />
+            {withClimate.length === 0 ? (
+              <p className="text-sm text-gray-500">No climate assessments yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {[3, 2, 1, 0].map((tier) => (
+                  <div key={tier} className="flex items-center justify-between">
+                    <Badge className={TIER_COLOR[tier]}>{TIER_LABEL[tier]}</Badge>
+                    <span className="text-sm font-medium">{tierCounts[tier]}</span>
                   </div>
-                  <span className="text-sm font-medium">{analyticsData?.uptime.toFixed(1)}%</span>
-                </div>
+                ))}
               </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Peak Power Output</span>
-                <span className="text-sm font-medium">{analyticsData?.peakPower} kW</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Active Devices</span>
-                <span className="text-sm font-medium">{analyticsData?.devicesOnline || 0} / {(analyticsData?.devicesOnline || 0) + 8}</span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Active Alerts</span>
-                <Badge variant={analyticsData?.alertsCount && analyticsData.alertsCount > 0 ? "destructive" : "secondary"}>
-                  {analyticsData?.alertsCount || 0}
-                </Badge>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              Top Performers
-            </CardTitle>
+            <CardTitle>By region</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {topPerformers.map((performer, index) => (
-                <div key={performer.id} className="flex items-center justify-between p-3 border rounded">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{performer.name}</p>
-                      <p className="text-xs text-muted-foreground">{performer.metric}</p>
-                    </div>
+            {regions.length === 0 ? (
+              <p className="text-sm text-gray-500">No facilities.</p>
+            ) : (
+              <div className="space-y-3">
+                {regions.map((r) => (
+                  <div key={r.region} className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      {r.region}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {r.count} facilities • RCS {r.avgRcs ?? 'n/a'} • {r.kwh.toLocaleString()} kWh/yr est.
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{performer.value.toFixed(1)}</p>
-                    <p className={`text-xs flex items-center gap-1 ${
-                      performer.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {performer.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {Math.abs(performer.change)}%
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Facility Performance Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Facility Performance</CardTitle>
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search facilities..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-              <Select value={selectedMetric} onValueChange={setSelectedMetric}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="energy">Energy Generated</SelectItem>
-                  <SelectItem value="efficiency">Efficiency</SelectItem>
-                  <SelectItem value="uptime">Uptime</SelectItem>
-                  <SelectItem value="savings">Cost Savings</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-2">Facility</th>
-                  <th className="text-left p-2">Location</th>
-                  <th className="text-left p-2">Energy (kWh)</th>
-                  <th className="text-left p-2">Efficiency</th>
-                  <th className="text-left p-2">Uptime</th>
-                  <th className="text-left p-2">Alerts</th>
-                  <th className="text-left p-2">Last Maintenance</th>
-                  <th className="text-left p-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredFacilities.map((facility) => (
-                  <tr key={facility.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-medium">{facility.name}</td>
-                    <td className="p-2 text-sm text-muted-foreground">{facility.location}</td>
-                    <td className="p-2">{facility.energyGenerated}</td>
-                    <td className="p-2">
-                      <span className={facility.efficiency >= 90 ? 'text-green-600' : facility.efficiency >= 75 ? 'text-yellow-600' : 'text-red-600'}>
-                        {facility.efficiency.toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className="p-2">{facility.uptime.toFixed(1)}%</td>
-                    <td className="p-2 text-sm">
-                      {(() => {
-                        if (!facility.lastMaintenance) return 'Never'
-                        try {
-                          const date = new Date(facility.lastMaintenance)
-                          // Check if date is valid
-                          if (isNaN(date.getTime())) return 'Never'
-                          return format(date, 'MMM dd, yyyy')
-                        } catch {
-                          return 'Never'
-                        }
-                      })()}
-                    </td>
-                    <td className="p-2">
-                      <Badge variant={facility.alerts === 0 ? "default" : "destructive"}>
-                        {facility.alerts === 0 ? 'Healthy' : 'Needs Attention'}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {filteredFacilities.length === 0 && (
-            <div className="text-center py-8">
-              <BarChart3 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No facilities found</h3>
-              <p className="text-gray-500">Try adjusting your search criteria</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

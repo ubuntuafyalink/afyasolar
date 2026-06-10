@@ -30,11 +30,10 @@ import { extractClimateScore } from "@/lib/assessment-cycle-overview-metrics"
 
 type ClimateScoreShape = NonNullable<ReturnType<typeof extractClimateScore>>
 
-const MODULE_MAX = { HES: 20, CSF: 30, ECPQ: 25, EDC: 15, RRC: 10 } as const
-
-function normPct(v: number | null | undefined, max: number) {
-  if (v == null || Number.isNaN(v) || max <= 0) return 0
-  return Math.min(100, Math.round((Number(v) / max) * 100))
+// climate_score_summaries dimensions are stored as 0-100 capacity scores (CRiPHC model).
+function clampPct(v: number | null | undefined) {
+  if (v == null || Number.isNaN(Number(v))) return 0
+  return Math.min(100, Math.max(0, Math.round(Number(v))))
 }
 
 const VIOLET = "#6d28d9"
@@ -91,11 +90,11 @@ export function AdminClimateChartSection({
 }) {
   const radarData = score
     ? [
-        { module: "HES", value: normPct(score.hes, MODULE_MAX.HES) },
-        { module: "CSF", value: normPct(score.csf, MODULE_MAX.CSF) },
-        { module: "ECPQ", value: normPct(score.ecpq, MODULE_MAX.ECPQ) },
-        { module: "EDC", value: normPct(score.edc, MODULE_MAX.EDC) },
-        { module: "RRC", value: normPct(score.rrc, MODULE_MAX.RRC) },
+        { module: "HES", value: clampPct(score.hes) },
+        { module: "CSF", value: clampPct(score.csf) },
+        { module: "ECPQ", value: clampPct(score.ecpq) },
+        { module: "EDC", value: clampPct(score.edc) },
+        { module: "RRC", value: clampPct(score.rrc) },
       ]
     : []
 
@@ -116,7 +115,7 @@ export function AdminClimateChartSection({
       <Card className="border-violet-100">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Module scores</CardTitle>
-          <CardDescription className="text-xs">From climate_score_summaries (normalized modules)</CardDescription>
+          <CardDescription className="text-xs">Dimension capacity 0-100 (from climate_score_summaries)</CardDescription>
         </CardHeader>
         <CardContent className="h-[260px]">
           {!score || radarData.every((d) => d.value === 0) ? (
