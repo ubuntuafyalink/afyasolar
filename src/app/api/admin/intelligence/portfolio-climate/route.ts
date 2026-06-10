@@ -22,8 +22,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const data = await computePortfolioClimate()
-    return NextResponse.json({ success: true, data })
+    const { data, aggregate } = await computePortfolioClimate()
+    return NextResponse.json({ success: true, data, aggregate })
   } catch (error) {
     console.error("[admin/intelligence/portfolio-climate GET]", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -12,6 +12,7 @@ import {
   simulateClimateProfile,
   simulateResilienceTrend,
 } from "@/lib/efficiency-climate/simulation"
+import { persistRealClimateProfile } from "@/lib/climate/facility-climate-persist"
 import { generateId } from "@/lib/utils"
 
 export type AdaptationPayload = {
@@ -106,10 +107,19 @@ export async function buildClimateResiliencePayload(
 
   try {
     if (!profileRow) {
-      await db.insert(facilityClimateProfile).values({
-        facilityId,
-        ...profileValues,
-      })
+      // Prefer REAL NASA-derived exposure on first seed; persistRealClimateProfile
+      // writes the row with dataSource="real". Only fall back to the simulated
+      // profile when forced, or when real climate is unavailable (no coords / NASA down).
+      let real = null as Awaited<ReturnType<typeof persistRealClimateProfile>>
+      if (!options.forceMock) {
+        real = await persistRealClimateProfile(facilityId, { region }).catch(() => null)
+      }
+      if (!real) {
+        await db.insert(facilityClimateProfile).values({
+          facilityId,
+          ...profileValues,
+        })
+      }
     } else if (options.forceMock) {
       await db
         .update(facilityClimateProfile)

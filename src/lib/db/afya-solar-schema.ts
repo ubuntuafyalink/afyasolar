@@ -1,4 +1,4 @@
-import { mysqlTable, bigint, varchar, decimal, text, tinyint, timestamp, index } from 'drizzle-orm/mysql-core'
+import { mysqlTable, bigint, varchar, decimal, text, tinyint, timestamp, index, json } from 'drizzle-orm/mysql-core'
 
 // Afya Solar Packages
 export const afyaSolarPackages = mysqlTable('afyasolar_packages', {
@@ -374,5 +374,93 @@ export const afyaSolarRelayActions = mysqlTable('afyasolar_relay_actions', {
 }, (table) => ({
   meterIdx: index('idx_relay_actions_meter').on(table.smartmeterId, table.createdAt),
   resultIdx: index('idx_relay_actions_result').on(table.result),
+}))
+
+// ---------------------------------------------------------------------------
+// Afya Solar admin sub-panel tables (system users, logs, configs, support)
+// Back the admin Resilience/System/Support panels with real persisted rows.
+// ---------------------------------------------------------------------------
+
+// Admin management users (registry for the System > Users panel; not auth accounts)
+export const afyaSolarAdminUsers = mysqlTable('afyasolar_admin_users', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  role: varchar('role', { length: 20 }).notNull(), // super_admin | admin | support | viewer
+  status: varchar('status', { length: 20 }).notNull().default('active'), // active | inactive | suspended
+  lastLogin: timestamp('last_login'),
+  permissions: json('permissions'), // string[]
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  roleIdx: index('idx_admin_users_role').on(table.role),
+  statusIdx: index('idx_admin_users_status').on(table.status),
+}))
+
+// System activity logs for the System > Logs panel
+export const afyaSolarSystemLogs = mysqlTable('afyasolar_system_logs', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  level: varchar('level', { length: 20 }).notNull(), // info | warning | error | debug
+  category: varchar('category', { length: 50 }).notNull(),
+  message: text('message').notNull(),
+  userId: varchar('user_id', { length: 64 }),
+  ipAddress: varchar('ip_address', { length: 64 }),
+  metadata: json('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  levelIdx: index('idx_system_logs_level').on(table.level),
+  categoryIdx: index('idx_system_logs_category').on(table.category),
+  createdAtIdx: index('idx_system_logs_created').on(table.createdAt),
+}))
+
+// System configuration entries for the System > Config panel
+export const afyaSolarAdminConfigs = mysqlTable('afyasolar_admin_configs', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  category: varchar('category', { length: 30 }).notNull(), // general | security | notifications | automation | integrations
+  configKey: varchar('config_key', { length: 150 }).notNull(),
+  configValue: text('config_value'), // serialized; coerced back via type on read
+  description: text('description'),
+  type: varchar('type', { length: 20 }).notNull().default('string'), // string | boolean | number | select
+  options: json('options'), // string[]
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  categoryIdx: index('idx_admin_configs_category').on(table.category),
+}))
+
+// Support tickets for the Support panel
+export const afyaSolarSupportTickets = mysqlTable('afyasolar_support_tickets', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  ticketNumber: varchar('ticket_number', { length: 50 }).notNull(),
+  facilityId: varchar('facility_id', { length: 36 }).notNull(),
+  facilityName: varchar('facility_name', { length: 255 }),
+  subject: varchar('subject', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  category: varchar('category', { length: 30 }).notNull().default('general'), // technical | billing | installation | maintenance | general
+  priority: varchar('priority', { length: 20 }).notNull().default('medium'), // low | medium | high | urgent
+  status: varchar('status', { length: 20 }).notNull().default('open'), // open | in_progress | resolved | closed
+  assignedTo: varchar('assigned_to', { length: 120 }),
+  createdBy: varchar('created_by', { length: 120 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  resolvedAt: timestamp('resolved_at'),
+}, (table) => ({
+  statusIdx: index('idx_support_tickets_status').on(table.status),
+  categoryIdx: index('idx_support_tickets_category').on(table.category),
+  priorityIdx: index('idx_support_tickets_priority').on(table.priority),
+  facilityIdx: index('idx_support_tickets_facility').on(table.facilityId),
+  createdAtIdx: index('idx_support_tickets_created').on(table.createdAt),
+}))
+
+// Responses appended to a support ticket
+export const afyaSolarSupportResponses = mysqlTable('afyasolar_support_responses', {
+  id: varchar('id', { length: 36 }).primaryKey(),
+  ticketId: varchar('ticket_id', { length: 36 }).notNull(),
+  message: text('message').notNull(),
+  isInternal: tinyint('is_internal').notNull().default(0),
+  createdBy: varchar('created_by', { length: 120 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  ticketIdx: index('idx_support_responses_ticket').on(table.ticketId, table.createdAt),
 }))
 

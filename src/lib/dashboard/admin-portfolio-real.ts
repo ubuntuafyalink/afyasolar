@@ -69,6 +69,8 @@ export function buildPortfolioFacilities(
       energyBmiPercent: a?.energyBmiPercent ?? null,
       climateAssessmentDate: a?.climateAssessmentDate ?? null,
       energyAssessmentDate: a?.energyAssessmentDate ?? null,
+      dimensions: a?.climateDimensions ?? null,
+      energy: a?.energySizing ?? null,
       climate:
         c && !c.degraded
           ? {
@@ -175,23 +177,50 @@ const CHILD_SERVICE_ORDER: ChildServiceKey[] = [
 ]
 
 /** Map a 0..100 hazard exposure to a service status (higher = worse). */
-function statusFromHazard(score: number): ChildServiceStatus {
-  if (score >= 66) return "failing"
-  if (score >= 40) return "at-risk"
+const clampPct = (n: number): number => Math.max(0, Math.min(100, Math.round(n)))
+
+/**
+ * Status from a "resilience headroom" value (0..100, higher = safer). Mirrors the
+ * facility statusFromHeadroom thresholds.
+ */
+export function statusFromHeadroom(headroom: number): ChildServiceStatus {
+  if (headroom < 35) return "failing"
+  if (headroom < 60) return "at-risk"
   return "ok"
 }
 
+/** Where each child service's headroom comes from (for honest UI labelling). */
+export function childServiceSource(key: ChildServiceKey): "nasa" | "csf" | "edc" {
+  if (key === "cold-chain" || key === "water-pumping") return "nasa"
+  if (key === "diagnostics") return "edc"
+  return "csf" // maternity, neonatal
+}
+
 /**
- * Per-facility status for a child service. Only cold-chain (heat) and
- * water-pumping (drought/flood) have a real climate signal; the rest have no
- * real source yet and return "not-assessed".
+ * Real per-facility "resilience headroom" (0..100, higher = safer) for a child
+ * service, or null when no real source exists for that facility:
+ *  - cold-chain    = 100 - heat exposure (NASA hazard; higher exposure = less headroom)
+ *  - water-pumping = 100 - max(drought, flood) exposure (NASA hazard)
+ *  - maternity, neonatal = CSF capacity (saved climate assessment; already 0..100, higher better)
+ *  - diagnostics   = EDC capacity (saved climate assessment)
+ */
+export function childServiceHeadroom(f: PortfolioFacility, key: ChildServiceKey): number | null {
+  if (key === "cold-chain") return f.climate ? clampPct(100 - f.climate.byHazard.heat) : null
+  if (key === "water-pumping")
+    return f.climate ? clampPct(100 - Math.max(f.climate.byHazard.drought, f.climate.byHazard.flood)) : null
+  if (key === "maternity" || key === "neonatal") return f.dimensions?.csf ?? null
+  if (key === "diagnostics") return f.dimensions?.edc ?? null
+  return null
+}
+
+/**
+ * Per-facility status for a child service, derived from real headroom. Returns
+ * "not-assessed" when the facility has no real source for that service (no NASA
+ * climate for cold-chain/water, or no climate assessment for the CSF/EDC ones).
  */
 export function childServiceStatus(f: PortfolioFacility, key: ChildServiceKey): ChildServiceStatus {
-  if (!f.climate) return "not-assessed"
-  const h = f.climate.byHazard
-  if (key === "cold-chain") return statusFromHazard(h.heat)
-  if (key === "water-pumping") return statusFromHazard(Math.max(h.drought, h.flood))
-  return "not-assessed"
+  const headroom = childServiceHeadroom(f, key)
+  return headroom == null ? "not-assessed" : statusFromHeadroom(headroom)
 }
 
 export function childServiceRollup(rows: PortfolioFacility[]): ServiceRollup[] {

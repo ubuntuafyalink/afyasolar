@@ -1,139 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
+import { db } from '@/lib/db'
+import { afyaSolarSubscribers } from '@/lib/db/afyasolar-subscribers-schema'
+import { payments } from '@/lib/db/schema'
+import { eq, sql } from 'drizzle-orm'
 
-// Mock comprehensive analytics data - in real implementation this would be calculated from database
-const mockAnalyticsData = {
-  overview: {
-    totalRevenue: 2847500000, // TZS
-    totalCustomers: 156,
-    totalEnergyGenerated: 1247.5, // MWh
-    systemUptime: 98.7, // percentage
-    customerSatisfaction: 87.5, // percentage
-    marketPenetration: 12.3 // percentage
-  },
-  trends: {
-    revenue: [
-      { period: 'Current Period', value: 2847500000, change: 15.2 },
-      { period: 'Previous Period', value: 2472000000, change: 8.7 }
-    ],
-    customers: [
-      { period: 'Current Period', value: 156, change: 12.3 },
-      { period: 'Previous Period', value: 139, change: 9.1 }
-    ],
-    energy: [
-      { period: 'Current Period', value: 1247.5, change: 18.4 },
-      { period: 'Previous Period', value: 1053.2, change: 14.2 }
-    ],
-    satisfaction: [
-      { period: 'Current Period', value: 87.5, change: 3.2 },
-      { period: 'Previous Period', value: 84.8, change: 1.8 }
-    ]
-  },
-  geographic: [
-    {
-      region: 'Dar es Salaam',
-      customers: 68,
-      revenue: 1234500000,
-      energyGenerated: 543.2,
-      percentage: 43.6
-    },
-    {
-      region: 'Arusha',
-      customers: 34,
-      revenue: 678900000,
-      energyGenerated: 298.7,
-      percentage: 21.8
-    },
-    {
-      region: 'Mwanza',
-      customers: 28,
-      revenue: 567800000,
-      energyGenerated: 249.8,
-      percentage: 17.9
-    },
-    {
-      region: 'Dodoma',
-      customers: 18,
-      revenue: 289000000,
-      energyGenerated: 127.3,
-      percentage: 11.5
-    },
-    {
-      region: 'Other Regions',
-      customers: 8,
-      revenue: 77300000,
-      energyGenerated: 28.5,
-      percentage: 5.1
-    }
-  ],
-  performance: {
-    topFacilities: [
-      {
-        name: 'St. Mary\'s Hospital',
-        energyGenerated: 156.7,
-        efficiency: 94.2,
-        uptime: 99.1
-      },
-      {
-        name: 'City Health Center',
-        energyGenerated: 134.2,
-        efficiency: 91.8,
-        uptime: 98.7
-      },
-      {
-        name: 'Rural Medical Clinic',
-        energyGenerated: 118.9,
-        efficiency: 89.4,
-        uptime: 97.3
-      }
-    ],
-    packagePerformance: [
-      {
-        name: 'Ultra Package (10kW)',
-        sales: 45,
-        revenue: 1234500000,
-        satisfaction: 91.2
-      },
-      {
-        name: 'Pro Package (6kW)',
-        sales: 67,
-        revenue: 987600000,
-        satisfaction: 88.7
-      },
-      {
-        name: 'Plus Package (4.2kW)',
-        sales: 34,
-        revenue: 456700000,
-        satisfaction: 86.3
-      }
-    ],
-    systemHealth: {
-      overall: 98.7,
-      meters: {
-        online: 148,
-        total: 156,
-        uptime: 94.9
-      },
-      services: {
-        active: 152,
-        total: 156,
-        uptime: 97.4
-      }
-    }
-  },
-  predictions: {
-    nextMonthRevenue: 3125000000,
-    nextQuarterCustomers: 23,
-    yearlyEnergyGrowth: 22.4,
-    maintenanceAlerts: 7
+export const dynamic = 'force-dynamic'
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10
+}
+
+function windowDays(timeRange: string): number {
+  switch (timeRange) {
+    case '90d':
+      return 90
+    case '1y':
+      return 365
+    case 'all':
+      return 365 * 50 // effectively all-time
+    case '30d':
+    default:
+      return 30
+  }
+}
+
+function pctChange(current: number, previous: number): number {
+  if (previous <= 0) return current > 0 ? 100 : 0
+  return round1(((current - previous) / previous) * 100)
+}
+
+// Sum produced energy (kWh) from the efficiency table since a given date string.
+// Best-effort: the table may not exist / be empty, in which case energy is 0.
+async function energyKwhSince(dateStr: string): Promise<number> {
+  try {
+    const result = await db.execute(
+      sql`SELECT COALESCE(SUM(produced_kwh), 0) AS kwh FROM \`facility_efficiency_daily\` WHERE \`snapshot_date\` >= ${dateStr}`
+    )
+    const rows = Array.isArray(result) ? (result[0] as unknown as Array<{ kwh: number | string }>) : []
+    return Number(rows?.[0]?.kwh ?? 0)
+  } catch {
+    return 0
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -141,30 +56,179 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const timeRange = searchParams.get('timeRange') || '30d'
 
-    // In real implementation, calculate analytics based on time range
-    // For now, return mock data with slight variations based on time range
-    let analyticsData = { ...mockAnalyticsData }
+    const days = windowDays(timeRange)
+    const nowMs = Date.now()
+    const currentStart = nowMs - days * 24 * 60 * 60 * 1000
+    const previousStart = nowMs - 2 * days * 24 * 60 * 60 * 1000
+    const dateStr = (ms: number) => new Date(ms).toISOString().slice(0, 10)
 
-    // Adjust data based on time range
-    if (timeRange === '90d') {
-      analyticsData.overview.totalRevenue = Math.round(analyticsData.overview.totalRevenue * 3)
-      analyticsData.overview.totalEnergyGenerated = Math.round(analyticsData.overview.totalEnergyGenerated * 3)
-    } else if (timeRange === '1y') {
-      analyticsData.overview.totalRevenue = Math.round(analyticsData.overview.totalRevenue * 12)
-      analyticsData.overview.totalEnergyGenerated = Math.round(analyticsData.overview.totalEnergyGenerated * 12)
-    } else if (timeRange === 'all') {
-      analyticsData.overview.totalRevenue = Math.round(analyticsData.overview.totalRevenue * 24)
-      analyticsData.overview.totalEnergyGenerated = Math.round(analyticsData.overview.totalEnergyGenerated * 24)
+    // Real source rows
+    const subscribers = await db.select().from(afyaSolarSubscribers)
+    const completedPayments = await db
+      .select({ amount: payments.amount, createdAt: payments.createdAt })
+      .from(payments)
+      .where(eq(payments.status, 'completed'))
+
+    // --- Revenue (real, from completed payments) ---
+    let revenueCurrent = 0
+    let revenuePrevious = 0
+    for (const p of completedPayments) {
+      const ts = p.createdAt ? new Date(p.createdAt).getTime() : 0
+      const amount = Number(p.amount ?? 0)
+      if (ts >= currentStart) revenueCurrent += amount
+      else if (ts >= previousStart) revenuePrevious += amount
+    }
+
+    // --- Customers (real, subscriber counts) ---
+    const totalCustomers = subscribers.length
+    const customersCurrent = subscribers.filter(s => {
+      const ts = s.createdAt ? new Date(s.createdAt).getTime() : 0
+      return ts >= currentStart
+    }).length
+    const customersPrevious = subscribers.filter(s => {
+      const ts = s.createdAt ? new Date(s.createdAt).getTime() : 0
+      return ts >= previousStart && ts < currentStart
+    }).length
+
+    // --- Energy (best-effort from efficiency table; MWh) ---
+    const energyCurrentKwh = await energyKwhSince(dateStr(currentStart))
+    const energyAllKwh = await energyKwhSince(dateStr(previousStart))
+    const energyPreviousKwh = Math.max(0, energyAllKwh - energyCurrentKwh)
+    const energyCurrentMwh = round1(energyCurrentKwh / 1000)
+    const energyPreviousMwh = round1(energyPreviousKwh / 1000)
+
+    // --- System health (derived proxies from subscriber status) ---
+    const activeSystems = subscribers.filter(s => (s.systemStatus || '').toLowerCase() === 'active').length
+    const activeServices = subscribers.filter(s => (s.subscriptionStatus || '').toLowerCase() === 'active').length
+    const meterSubscribers = subscribers.filter(s => !!s.smartmeterSerial)
+    const metersTotal = meterSubscribers.length
+    const metersOnline = meterSubscribers.filter(s => (s.systemStatus || '').toLowerCase() === 'active').length
+    const systemUptime = totalCustomers ? round1((activeSystems / totalCustomers) * 100) : 0
+
+    // --- Geographic (real: group subscribers by region) ---
+    const regionMap = new Map<string, { customers: number; revenue: number }>()
+    for (const s of subscribers) {
+      const region = s.facilityRegion || 'Unknown'
+      const entry = regionMap.get(region) || { customers: 0, revenue: 0 }
+      entry.customers += 1
+      entry.revenue += Number(s.totalPackagePrice ?? 0)
+      regionMap.set(region, entry)
+    }
+    const geographic = Array.from(regionMap.entries())
+      .map(([region, v]) => ({
+        region,
+        customers: v.customers,
+        revenue: v.revenue,
+        energyGenerated: 0, // no per-region energy source yet
+        percentage: totalCustomers ? round1((v.customers / totalCustomers) * 100) : 0,
+      }))
+      .sort((a, b) => b.customers - a.customers)
+
+    // --- Top facilities (best-effort: ranked by contract value) ---
+    const topFacilities = [...subscribers]
+      .sort((a, b) => Number(b.totalPackagePrice ?? 0) - Number(a.totalPackagePrice ?? 0))
+      .slice(0, 3)
+      .map(s => ({
+        name: s.facilityName,
+        energyGenerated: 0, // no per-facility energy source yet
+        efficiency: 0,
+        uptime: (s.systemStatus || '').toLowerCase() === 'active' ? 100 : 0,
+      }))
+
+    // --- Package performance (real: group by package) ---
+    const packageMap = new Map<string, { sales: number; revenue: number }>()
+    for (const s of subscribers) {
+      const name = s.packageName || 'Unknown Package'
+      const entry = packageMap.get(name) || { sales: 0, revenue: 0 }
+      entry.sales += 1
+      entry.revenue += Number(s.totalPackagePrice ?? 0)
+      packageMap.set(name, entry)
+    }
+    const packagePerformance = Array.from(packageMap.entries())
+      .map(([name, v]) => ({
+        name,
+        sales: v.sales,
+        revenue: v.revenue,
+        satisfaction: 0, // no rating source yet
+      }))
+      .sort((a, b) => b.revenue - a.revenue)
+
+    // --- Predictions (derived) ---
+    const monthlyRecurringRevenue = subscribers.reduce((sum, s) => {
+      const planType = (s.planType || '').toUpperCase()
+      const isRecurring = planType === 'INSTALLMENT' || planType === 'PAAS'
+      const isActive = (s.subscriptionStatus || '').toLowerCase() === 'active'
+      return isRecurring && isActive ? sum + Number(s.monthlyPaymentAmount ?? 0) : sum
+    }, 0)
+    const horizon = nowMs + 30 * 24 * 60 * 60 * 1000
+    const maintenanceAlerts = subscribers.filter(s => {
+      const healthBad = ['warning', 'critical'].includes((s.systemHealth || '').toLowerCase())
+      const dueSoon = s.nextMaintenanceDate
+        ? new Date(s.nextMaintenanceDate).getTime() <= horizon
+        : false
+      return healthBad || dueSoon
+    }).length
+
+    const data = {
+      overview: {
+        totalRevenue: revenueCurrent,
+        totalCustomers,
+        totalEnergyGenerated: energyCurrentMwh,
+        systemUptime,
+        customerSatisfaction: 0, // no rating source yet
+        marketPenetration: 0, // no market-size source yet
+      },
+      trends: {
+        revenue: [
+          { period: 'Current Period', value: revenueCurrent, change: pctChange(revenueCurrent, revenuePrevious) },
+          { period: 'Previous Period', value: revenuePrevious, change: 0 },
+        ],
+        customers: [
+          { period: 'Current Period', value: customersCurrent, change: pctChange(customersCurrent, customersPrevious) },
+          { period: 'Previous Period', value: customersPrevious, change: 0 },
+        ],
+        energy: [
+          { period: 'Current Period', value: energyCurrentMwh, change: pctChange(energyCurrentMwh, energyPreviousMwh) },
+          { period: 'Previous Period', value: energyPreviousMwh, change: 0 },
+        ],
+        satisfaction: [
+          { period: 'Current Period', value: 0, change: 0 },
+          { period: 'Previous Period', value: 0, change: 0 },
+        ],
+      },
+      geographic,
+      performance: {
+        topFacilities,
+        packagePerformance,
+        systemHealth: {
+          overall: systemUptime,
+          meters: {
+            online: metersOnline,
+            total: metersTotal,
+            uptime: metersTotal ? round1((metersOnline / metersTotal) * 100) : 0,
+          },
+          services: {
+            active: activeServices,
+            total: totalCustomers,
+            uptime: totalCustomers ? round1((activeServices / totalCustomers) * 100) : 0,
+          },
+        },
+      },
+      predictions: {
+        nextMonthRevenue: monthlyRecurringRevenue,
+        nextQuarterCustomers: customersCurrent,
+        yearlyEnergyGrowth: pctChange(energyCurrentMwh, energyPreviousMwh),
+        maintenanceAlerts,
+      },
     }
 
     return NextResponse.json({
       success: true,
-      data: analyticsData,
+      data,
       meta: {
         timeRange,
         generatedAt: new Date().toISOString(),
-        note: 'Mock data - replace with real database calculations'
-      }
+      },
     })
 
   } catch (error) {
