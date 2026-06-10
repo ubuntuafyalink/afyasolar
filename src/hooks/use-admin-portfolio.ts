@@ -31,7 +31,7 @@ export function useAdminPortfolio(): UseAdminPortfolioResult {
   const climateQ = useAdminPortfolioClimate()
 
   const facilities = useMemo(
-    () => buildPortfolioFacilities(facilitiesQ.data, assessmentsQ.data, climateQ.data),
+    () => buildPortfolioFacilities(facilitiesQ.data, assessmentsQ.data, climateQ.data?.rows),
     [facilitiesQ.data, assessmentsQ.data, climateQ.data],
   )
 

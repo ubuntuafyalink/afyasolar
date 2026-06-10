@@ -12,11 +12,30 @@ import {
   DEFAULT_COORDS,
   rangeForPreset,
   NASA_POWER_PARAMETERS,
+  SOLAR_PARAMETERS,
   toCvi,
   toHazardScores,
+  toHazardTrend,
+  toSolarResource,
   type Coords,
+  type SolarResource,
 } from "@/lib/climate/nasa-power"
 import { fetchNasaPowerServer } from "@/lib/climate/nasa-power-server"
+import type { HazardTrendPoint } from "@/lib/dashboard/facility-demo-data"
+
+/** Portfolio-level climate aggregate (facility-weighted averages). */
+export type PortfolioClimateAggregate = {
+  /** Per-year average hazard indices across facilities with climate. */
+  trend: HazardTrendPoint[]
+  byHazard: { flood: number; drought: number; heat: number; storm: number }
+  composite: number
+  facilitiesWithClimate: number
+}
+
+export type PortfolioClimateResult = {
+  data: FacilityClimate[]
+  aggregate: PortfolioClimateAggregate
+}
 
 export type CoordsSource = "facility" | "region" | "default"
 
@@ -31,6 +50,8 @@ export type FacilityClimate = {
   hesScore: number
   topHazard: { type: string; score: number }
   hazardScores: { type: string; score: number; trend: string; note: string }[]
+  /** Solar resource (peak-sun-hours) at the facility, for modeled generation. Null when unavailable. */
+  solar: SolarResource | null
   degraded: boolean
 }
 
@@ -75,7 +96,7 @@ type CoordClimate = Omit<FacilityClimate, "facilityId" | "region" | "lat" | "lon
  * lat/lon, run with bounded concurrency, and reuse the shared 6h upstream cache.
  * A failed coordinate degrades only its facilities (degraded:true).
  */
-export async function computePortfolioClimate(): Promise<FacilityClimate[]> {
+export async function computePortfolioClimate(): Promise<PortfolioClimateResult> {
   const pool = getRawConnection()
   const [rows] = await pool.query<FacilityRow[]>(
     `SELECT id, region, latitude, longitude FROM facilities ORDER BY name ASC`,
@@ -94,6 +115,9 @@ export async function computePortfolioClimate(): Promise<FacilityClimate[]> {
   for (const r of resolved) if (!keyToCoords.has(r.key)) keyToCoords.set(r.key, r.coords)
 
   const climateByKey = new Map<string, CoordClimate>()
+  // Per-coordinate multi-year trend, kept separate so it is NOT spread into the
+  // per-facility payload (only the portfolio aggregate uses it).
+  const trendByKey = new Map<string, HazardTrendPoint[]>()
   await mapWithConcurrency(uniqueKeys, 5, async (key) => {
     const coords = keyToCoords.get(key)!
     try {
@@ -103,7 +127,7 @@ export async function computePortfolioClimate(): Promise<FacilityClimate[]> {
         temporal: range.temporal,
         start: range.start,
         end: range.end,
-        parameters: NASA_POWER_PARAMETERS,
+        parameters: [...NASA_POWER_PARAMETERS, ...SOLAR_PARAMETERS],
       })
       const cvi = toCvi(resp)
       const hazardScores = toHazardScores(resp)
@@ -117,8 +141,10 @@ export async function computePortfolioClimate(): Promise<FacilityClimate[]> {
         hesScore: Math.max(0, Math.min(100, 100 - cvi.composite)),
         topHazard,
         hazardScores,
+        solar: toSolarResource(resp),
         degraded: false,
       })
+      trendByKey.set(key, toHazardTrend(resp))
     } catch {
       climateByKey.set(key, {
         byHazard: { flood: 0, drought: 0, heat: 0, storm: 0 },
@@ -126,12 +152,13 @@ export async function computePortfolioClimate(): Promise<FacilityClimate[]> {
         hesScore: 0,
         topHazard: { type: "", score: 0 },
         hazardScores: [],
+        solar: null,
         degraded: true,
       })
     }
   })
 
-  return resolved.map((r) => {
+  const data = resolved.map((r) => {
     const c = climateByKey.get(r.key)!
     return {
       facilityId: r.facility.id,
@@ -142,4 +169,59 @@ export async function computePortfolioClimate(): Promise<FacilityClimate[]> {
       ...c,
     }
   })
+
+  // Facility-weighted portfolio aggregate (each facility contributes its coord's data).
+  const yearAcc = new Map<number, { heat: number; flood: number; storm: number; drought: number; n: number }>()
+  let compSum = 0
+  let hSum = 0
+  let fSum = 0
+  let sSum = 0
+  let dSum = 0
+  let climCount = 0
+  for (const r of resolved) {
+    const c = climateByKey.get(r.key)!
+    if (c.degraded) continue
+    climCount += 1
+    compSum += c.composite
+    hSum += c.byHazard.heat
+    fSum += c.byHazard.flood
+    sSum += c.byHazard.storm
+    dSum += c.byHazard.drought
+    const trend = trendByKey.get(r.key)
+    if (trend) {
+      for (const p of trend) {
+        const a = yearAcc.get(p.year) ?? { heat: 0, flood: 0, storm: 0, drought: 0, n: 0 }
+        a.heat += p.heat
+        a.flood += p.flood
+        a.storm += p.storm
+        a.drought += p.drought
+        a.n += 1
+        yearAcc.set(p.year, a)
+      }
+    }
+  }
+  const trend: HazardTrendPoint[] = [...yearAcc.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([year, a]) => ({
+      year,
+      heat: Math.round(a.heat / a.n),
+      flood: Math.round(a.flood / a.n),
+      storm: Math.round(a.storm / a.n),
+      drought: Math.round(a.drought / a.n),
+    }))
+  const aggregate: PortfolioClimateAggregate = {
+    trend,
+    byHazard: climCount
+      ? {
+          heat: Math.round(hSum / climCount),
+          flood: Math.round(fSum / climCount),
+          storm: Math.round(sSum / climCount),
+          drought: Math.round(dSum / climCount),
+        }
+      : { flood: 0, drought: 0, heat: 0, storm: 0 },
+    composite: climCount ? Math.round(compSum / climCount) : 0,
+    facilitiesWithClimate: climCount,
+  }
+
+  return { data, aggregate }
 }

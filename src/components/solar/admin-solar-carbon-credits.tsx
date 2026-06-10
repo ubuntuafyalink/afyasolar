@@ -24,36 +24,9 @@ import {
   BarChart3,
   Calculator
 } from 'lucide-react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { format } from 'date-fns'
-
-interface CarbonCredit {
-  id: string
-  deviceId: string
-  facilityId: string
-  facilityName: string
-  deviceSerial: string
-  period: string
-  startDate: string
-  endDate: string
-  energyGenerated: number
-  co2Saved: number
-  creditsEarned: number
-  creditValue: number
-  totalValue: number
-  verificationStatus: 'pending' | 'verified' | 'certified' | 'rejected'
-  certificateId?: string
-  verifiedAt?: string
-  verifiedBy?: string
-  createdAt: string
-  metadata: {
-    efficiency: number
-    operatingHours: number
-    baselineEmissions: number
-    gridEmissionFactor: number
-    calculationMethod: string
-  }
-}
+import { useAdminCarbonVerification } from '@/hooks/use-admin-carbon-verification'
 
 interface CalculationRequest {
   deviceId: string
@@ -71,27 +44,22 @@ export function AdminSolarCarbonCredits() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [periodFilter, setPeriodFilter] = useState('all')
 
-  // Fetch carbon credits
-  const { data: carbonCredits = [], isLoading, refetch } = useQuery({
-    queryKey: ['carbon-credits', selectedFacility, selectedDevice, statusFilter, periodFilter],
-    queryFn: async (): Promise<CarbonCredit[]> => {
-      const params = new URLSearchParams({
-        ...(selectedFacility !== 'all' && { facilityId: selectedFacility }),
-        ...(selectedDevice !== 'all' && { deviceId: selectedDevice }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(periodFilter !== 'all' && { period: periodFilter }),
-        limit: '50'
-      })
-      
-      const response = await fetch(`/api/admin/carbon-credits?${params}`)
-      if (!response.ok) throw new Error('Failed to fetch carbon credits')
-      const data = await response.json()
-      return data.data
-    },
-    refetchInterval: 60000, // Refresh every minute
-  })
+  // Optional reviewer note per credit (passed to the transition).
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({})
+  const setNote = (id: string, v: string) => setReviewNotes((p) => ({ ...p, [id]: v }))
 
-  // Calculate credits mutation
+  // Real review queue + verify/certify/reject mutations (identity + certificateId stamped server-side).
+  const { query, verify, certify, reject } = useAdminCarbonVerification({
+    facilityId: selectedFacility !== 'all' ? selectedFacility : undefined,
+    deviceId: selectedDevice !== 'all' ? selectedDevice : undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    period: periodFilter !== 'all' ? periodFilter : undefined,
+  })
+  const carbonCredits = query.data ?? []
+  const isLoading = query.isLoading
+  const refetch = query.refetch
+
+  // Calculate credits mutation (calculator tab)
   const calculateCreditsMutation = useMutation({
     mutationFn: async (request: CalculationRequest) => {
       const response = await fetch('/api/admin/carbon-credits/calculate', {
@@ -107,30 +75,17 @@ export function AdminSolarCarbonCredits() {
     }
   })
 
-  // Update credit status mutation
-  const updateCreditMutation = useMutation({
-    mutationFn: async ({ id, verificationStatus, verifiedBy, notes }: any) => {
-      const response = await fetch(`/api/admin/carbon-credits/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verificationStatus, verifiedBy, notes })
-      })
-      if (!response.ok) throw new Error('Failed to update credit')
-      return response.json()
-    },
-    onSuccess: () => {
-      refetch()
-    }
-  })
-
-  const filteredCredits = carbonCredits.filter(credit => {
-    const matchesFacility = selectedFacility === 'all' || credit.facilityId === selectedFacility
-    const matchesDevice = selectedDevice === 'all' || credit.deviceId === selectedDevice
-    const matchesStatus = statusFilter === 'all' || credit.verificationStatus === statusFilter
-    const matchesPeriod = periodFilter === 'all' || credit.period === periodFilter
-    
-    return matchesFacility && matchesDevice && matchesStatus && matchesPeriod
-  })
+  // Review queue: pending first, then verified, then certified/rejected; newest within group.
+  const statusOrder: Record<string, number> = { pending: 0, verified: 1, certified: 2, rejected: 3 }
+  const filteredCredits = carbonCredits
+    .filter(credit => {
+      const matchesFacility = selectedFacility === 'all' || credit.facilityId === selectedFacility
+      const matchesDevice = selectedDevice === 'all' || credit.deviceId === selectedDevice
+      const matchesStatus = statusFilter === 'all' || credit.verificationStatus === statusFilter
+      const matchesPeriod = periodFilter === 'all' || credit.period === periodFilter
+      return matchesFacility && matchesDevice && matchesStatus && matchesPeriod
+    })
+    .sort((a, b) => (statusOrder[a.verificationStatus] ?? 9) - (statusOrder[b.verificationStatus] ?? 9))
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -373,40 +328,55 @@ export function AdminSolarCarbonCredits() {
                               <span>Verified by {credit.verifiedBy} on {format(new Date(credit.verifiedAt), 'MMM dd, yyyy')}</span>
                             )}
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4 mr-1" />
-                              Details
-                            </Button>
-                            {credit.verificationStatus === 'pending' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => updateCreditMutation.mutate({
-                                  id: credit.id,
-                                  verificationStatus: 'verified',
-                                  verifiedBy: 'admin@afyalink.com'
-                                })}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Verify
-                              </Button>
+                          <div className="flex flex-col items-end gap-2">
+                            {(credit.verificationStatus === 'pending' || credit.verificationStatus === 'verified') && (
+                              <Input
+                                value={reviewNotes[credit.id] ?? ''}
+                                onChange={(e) => setNote(credit.id, e.target.value)}
+                                placeholder="Optional note"
+                                className="h-8 w-56 text-xs"
+                              />
                             )}
-                            {credit.verificationStatus === 'verified' && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => updateCreditMutation.mutate({
-                                  id: credit.id,
-                                  verificationStatus: 'certified',
-                                  verifiedBy: 'admin@afyalink.com',
-                                  certificateId: `CC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-                                })}
-                              >
-                                <Award className="h-4 w-4 mr-1" />
-                                Certify
+                            <div className="flex items-center space-x-2">
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-4 w-4 mr-1" />
+                                Details
                               </Button>
-                            )}
+                              {credit.verificationStatus === 'pending' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={verify.isPending && verify.variables?.id === credit.id}
+                                  onClick={() => verify.mutate({ id: credit.id, note: reviewNotes[credit.id] })}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Verify
+                                </Button>
+                              )}
+                              {credit.verificationStatus === 'verified' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={certify.isPending && certify.variables?.id === credit.id}
+                                  onClick={() => certify.mutate({ id: credit.id, note: reviewNotes[credit.id] })}
+                                >
+                                  <Award className="h-4 w-4 mr-1" />
+                                  Certify
+                                </Button>
+                              )}
+                              {(credit.verificationStatus === 'pending' || credit.verificationStatus === 'verified') && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600"
+                                  disabled={reject.isPending && reject.variables?.id === credit.id}
+                                  onClick={() => reject.mutate({ id: credit.id, note: reviewNotes[credit.id] })}
+                                >
+                                  <AlertTriangle className="h-4 w-4 mr-1" />
+                                  Reject
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -418,8 +388,8 @@ export function AdminSolarCarbonCredits() {
               {filteredCredits.length === 0 && (
                 <div className="text-center py-8">
                   <Leaf className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900">No carbon credits found</h3>
-                  <p className="text-gray-500">Calculate credits from energy generation data</p>
+                  <h3 className="text-lg font-medium text-gray-900">No carbon credits recorded yet</h3>
+                  <p className="text-gray-500">Credits appear here once calculated from real energy generation data.</p>
                 </div>
               )}
             </CardContent>

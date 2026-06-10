@@ -16,6 +16,10 @@ export type AssessmentSnapshotRow = {
   climateTier: number | null
   climateCriticalAttention: boolean
   climateEvidenceCount: number
+  /** CRiPHC capacity dimensions (0..100, higher is better) from the saved climate score. */
+  climateDimensions: { hes: number | null; csf: number | null; ecpq: number | null; edc: number | null; rrc: number | null } | null
+  /** Lightweight power-sizing metrics from the saved energy assessment. */
+  energySizing: { solarArraySize: number | null; dailyLoad: number | null; requiredKw: number | null; annualSavings: number | null } | null
   hasEnergySnapshot: boolean
   hasClimateSnapshot: boolean
 }

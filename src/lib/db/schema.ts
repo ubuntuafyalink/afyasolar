@@ -2362,6 +2362,7 @@ export const climateScoreSummaries = mysqlTable('climate_score_summaries', {
   rrc: int('rrc').notNull().default(0),
   rcs: int('rcs').notNull().default(0), // 0100 (capacity score)
   tier: int('tier').notNull().default(0),
+  formulaVersion: varchar('formula_version', { length: 40 }), // audit stamp of the scoring formula that produced this row
   criticalAttention: boolean('critical_attention').notNull().default(false),
   createdAt: datetime('created_at', { mode: 'date' }).notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: datetime('updated_at', { mode: 'date' }).notNull().default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),

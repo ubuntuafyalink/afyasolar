@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
+import { db } from '@/lib/db'
+import { afyaSolarAdminConfigs } from '@/lib/db/afya-solar-schema'
+import { eq } from 'drizzle-orm'
+import { ensureAdminTables } from '@/lib/db/ensure-admin-tables'
+import { logAdminAction } from '@/lib/admin/admin-log'
 
-// Mock system configuration data
+export const dynamic = 'force-dynamic'
+
 interface SystemConfig {
   id: string
   category: 'general' | 'security' | 'notifications' | 'automation' | 'integrations'
@@ -13,157 +19,57 @@ interface SystemConfig {
   options?: string[]
 }
 
-const mockConfigs: SystemConfig[] = [
-  // General Settings
-  {
-    id: '1',
-    category: 'general',
-    key: 'System Name',
-    value: 'Afya Solar Management System',
-    description: 'Display name for the system',
-    type: 'string'
-  },
-  {
-    id: '2',
-    category: 'general',
-    key: 'Default Timezone',
-    value: 'Africa/Dar_es_Salaam',
-    description: 'Default timezone for the system',
-    type: 'string'
-  },
-  {
-    id: '3',
-    category: 'general',
-    key: 'Maintenance Mode',
-    value: false,
-    description: 'Enable maintenance mode to disable user access',
-    type: 'boolean'
-  },
-  
-  // Security Settings
-  {
-    id: '4',
-    category: 'security',
-    key: 'Session Timeout',
-    value: 480,
-    description: 'Session timeout in minutes',
-    type: 'number'
-  },
-  {
-    id: '5',
-    category: 'security',
-    key: 'Two-Factor Authentication',
-    value: false,
-    description: 'Require 2FA for admin users',
-    type: 'boolean'
-  },
-  {
-    id: '6',
-    category: 'security',
-    key: 'Password Policy',
-    value: 'strong',
-    description: 'Password strength requirement',
-    type: 'select',
-    options: ['weak', 'medium', 'strong']
-  },
-  
-  // Notification Settings
-  {
-    id: '7',
-    category: 'notifications',
-    key: 'Email Notifications',
-    value: true,
-    description: 'Enable email notifications for system events',
-    type: 'boolean'
-  },
-  {
-    id: '8',
-    category: 'notifications',
-    key: 'SMTP Server',
-    value: 'smtp.afyasolar.com',
-    description: 'SMTP server for outgoing emails',
-    type: 'string'
-  },
-  {
-    id: '9',
-    category: 'notifications',
-    key: 'Alert Email',
-    value: 'alerts@afyasolar.com',
-    description: 'Email address for system alerts',
-    type: 'string'
-  },
-  
-  // Automation Settings
-  {
-    id: '10',
-    category: 'automation',
-    key: 'Auto-Suspend Overdue',
-    value: true,
-    description: 'Automatically suspend services with overdue payments',
-    type: 'boolean'
-  },
-  {
-    id: '11',
-    category: 'automation',
-    key: 'Grace Period Days',
-    value: 7,
-    description: 'Number of days before auto-suspension',
-    type: 'number'
-  },
-  {
-    id: '12',
-    category: 'automation',
-    key: 'Backup Frequency',
-    value: 'daily',
-    description: 'System backup frequency',
-    type: 'select',
-    options: ['hourly', 'daily', 'weekly']
-  },
-  
-  // Integration Settings
-  {
-    id: '13',
-    category: 'integrations',
-    key: 'Payment Gateway',
-    value: 'flutterwave',
-    description: 'Default payment gateway',
-    type: 'select',
-    options: ['flutterwave', 'mpesa', 'tigo pesa', 'airtel money']
-  },
-  {
-    id: '14',
-    category: 'integrations',
-    key: 'SMS Provider',
-    value: 'twilio',
-    description: 'SMS service provider for notifications',
-    type: 'select',
-    options: ['twilio', 'africastalking', 'infobip']
-  },
-  {
-    id: '15',
-    category: 'integrations',
-    key: 'API Rate Limit',
-    value: 1000,
-    description: 'Maximum API requests per hour',
-    type: 'number'
+// Coerce the stored string value back to its declared type for the response.
+function coerceValue(raw: string | null, type: string): string | boolean | number {
+  const value = raw ?? ''
+  if (type === 'boolean') {
+    return value === 'true' || value === '1'
   }
-]
+  if (type === 'number') {
+    const n = Number(value)
+    return Number.isNaN(n) ? 0 : n
+  }
+  return value
+}
+
+// Serialize an incoming value to its stored string form.
+function serializeValue(value: unknown): string {
+  if (typeof value === 'boolean') return value ? 'true' : 'false'
+  if (value === null || value === undefined) return ''
+  return String(value)
+}
+
+function mapConfig(row: typeof afyaSolarAdminConfigs.$inferSelect): SystemConfig {
+  return {
+    id: row.id,
+    category: (row.category as SystemConfig['category']),
+    key: row.configKey,
+    value: coerceValue(row.configValue, row.type),
+    description: row.description ?? '',
+    type: (row.type as SystemConfig['type']),
+    options: Array.isArray(row.options) ? (row.options as string[]) : undefined,
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await ensureAdminTables()
+
+    const rows = await db.select().from(afyaSolarAdminConfigs)
+    const configs = rows.map(mapConfig)
+
     return NextResponse.json({
       success: true,
-      data: mockConfigs,
+      data: configs,
       meta: {
-        count: mockConfigs.length,
-        note: 'Mock data - replace with real database configuration'
-      }
+        count: configs.length,
+      },
     })
 
   } catch (error) {
@@ -178,7 +84,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -193,21 +99,45 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Find and update config (in real implementation, this would update the database)
-    const configIndex = mockConfigs.findIndex(config => config.id === configId)
-    if (configIndex === -1) {
+    await ensureAdminTables()
+
+    const existing = await db
+      .select()
+      .from(afyaSolarAdminConfigs)
+      .where(eq(afyaSolarAdminConfigs.id, configId))
+      .limit(1)
+
+    if (existing.length === 0) {
       return NextResponse.json(
         { error: 'Configuration not found' },
         { status: 404 }
       )
     }
 
-    mockConfigs[configIndex].value = value
+    await db
+      .update(afyaSolarAdminConfigs)
+      .set({ configValue: serializeValue(value) })
+      .where(eq(afyaSolarAdminConfigs.id, configId))
+
+    const updated = await db
+      .select()
+      .from(afyaSolarAdminConfigs)
+      .where(eq(afyaSolarAdminConfigs.id, configId))
+      .limit(1)
+
+    const mapped = mapConfig(updated[0])
+
+    await logAdminAction({
+      category: 'system',
+      message: `System config updated: ${mapped.key}`,
+      userId: session.user.id,
+      metadata: { configId, value: mapped.value },
+    })
 
     return NextResponse.json({
       success: true,
-      data: mockConfigs[configIndex],
-      message: 'Configuration updated successfully'
+      data: mapped,
+      message: 'Configuration updated successfully',
     })
 
   } catch (error) {

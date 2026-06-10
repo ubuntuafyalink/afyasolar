@@ -2542,6 +2542,7 @@ async function createTablesDirectly(connection: any, dbName: string) {
         \`rrc\` int NOT NULL DEFAULT 0,
         \`rcs\` int NOT NULL DEFAULT 0,
         \`tier\` int NOT NULL DEFAULT 0,
+        \`formula_version\` varchar(40) NULL,
         \`critical_attention\` boolean NOT NULL DEFAULT false,
         \`created_at\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
         \`updated_at\` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -2553,6 +2554,19 @@ async function createTablesDirectly(connection: any, dbName: string) {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `)
     console.log('✅ Created climate_score_summaries table')
+
+    // Add formula_version to an existing climate_score_summaries (idempotent; no ALTER IF NOT EXISTS in MySQL)
+    const [cssCols] = await connection.query(`
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = ?
+      AND TABLE_NAME = 'climate_score_summaries'
+      AND COLUMN_NAME = 'formula_version'
+    `, [dbName])
+    if ((cssCols as any[]).length === 0) {
+      await connection.query("ALTER TABLE `climate_score_summaries` ADD COLUMN `formula_version` varchar(40) NULL AFTER `tier`")
+      console.log('✅ Added formula_version column to climate_score_summaries')
+    }
   } catch (error: any) {
     console.error('Error creating climate_score_summaries table:', error.message)
   }

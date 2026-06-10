@@ -1,68 +1,48 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FileText, Download, Calendar, Zap, TrendingUp, BarChart3 } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
-
-interface EnergyReport {
-  facilityId: string
-  facilityName: string
-  period: string
-  energyGenerated: number
-  energyConsumed: number
-  efficiency: number
-  costSavings: number
-  co2Saved: number
-}
+import { FileText, Zap, TrendingUp, BarChart3, RefreshCw, Info } from 'lucide-react'
+import { useAdminSolarOps } from '@/hooks/use-admin-solar-ops'
 
 export function AdminSolarEnergyReports() {
-  const [timeRange, setTimeRange] = useState('monthly')
-  const [facilityFilter, setFacilityFilter] = useState('all')
+  const { data: ops = [], isLoading, refetch } = useAdminSolarOps()
 
-  const { data: reports = [], isLoading } = useQuery({
-    queryKey: ['solar-energy-reports', timeRange, facilityFilter],
-    queryFn: async (): Promise<EnergyReport[]> => [
-      {
-        facilityId: '1',
-        facilityName: 'Kigali Central Hospital',
-        period: '2024-01',
-        energyGenerated: 1240,
-        energyConsumed: 980,
-        efficiency: 94.5,
-        costSavings: 1240,
-        co2Saved: 890
-      }
-    ]
-  })
+  const rows = ops.filter((f) => f.estimatedDailyKwh != null)
 
-  if (isLoading) return <div>Loading...</div>
+  const totals = rows.reduce(
+    (acc, f) => ({
+      annualKwh: acc.annualKwh + (f.estimatedAnnualKwh || 0),
+      savings: acc.savings + (f.estimatedAnnualSavingsTzs || 0),
+      co2: acc.co2 + (f.estimatedAnnualCo2Kg || 0),
+      dailyLoad: acc.dailyLoad + (f.dailyLoadKwh || 0),
+    }),
+    { annualKwh: 0, savings: 0, co2: 0, dailyLoad: 0 },
+  )
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <RefreshCw className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading estimated energy...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Solar Energy Reports</h2>
-        <div className="flex gap-2">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold">Estimated Energy & Savings</h2>
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            <Info className="h-3.5 w-3.5" />
+            Estimated from system design + climate (NASA peak-sun-hours). Not metered telemetry.
+          </p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -70,8 +50,8 @@ export function AdminSolarEnergyReports() {
           <CardContent className="p-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-muted-foreground">Total Generated</p>
-                <p className="text-2xl font-bold">5,420 kWh</p>
+                <p className="text-sm text-muted-foreground">Est. Annual Generation</p>
+                <p className="text-2xl font-bold">{totals.annualKwh.toLocaleString()} kWh</p>
               </div>
               <Zap className="h-8 w-8 text-yellow-600" />
             </div>
@@ -81,8 +61,8 @@ export function AdminSolarEnergyReports() {
           <CardContent className="p-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-muted-foreground">Total Consumed</p>
-                <p className="text-2xl font-bold">4,280 kWh</p>
+                <p className="text-sm text-muted-foreground">Est. Daily Load</p>
+                <p className="text-2xl font-bold">{Math.round(totals.dailyLoad).toLocaleString()} kWh</p>
               </div>
               <BarChart3 className="h-8 w-8 text-blue-600" />
             </div>
@@ -92,8 +72,8 @@ export function AdminSolarEnergyReports() {
           <CardContent className="p-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-muted-foreground">Cost Savings</p>
-                <p className="text-2xl font-bold">$5,420</p>
+                <p className="text-sm text-muted-foreground">Est. Annual Savings (TZS)</p>
+                <p className="text-2xl font-bold">{totals.savings.toLocaleString()}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-600" />
             </div>
@@ -103,8 +83,8 @@ export function AdminSolarEnergyReports() {
           <CardContent className="p-6">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm text-muted-foreground">CO₂ Saved</p>
-                <p className="text-2xl font-bold">3,860 kg</p>
+                <p className="text-sm text-muted-foreground">Est. Annual CO2 Avoided</p>
+                <p className="text-2xl font-bold">{totals.co2.toLocaleString()} kg</p>
               </div>
               <FileText className="h-8 w-8 text-indigo-600" />
             </div>
@@ -114,25 +94,59 @@ export function AdminSolarEnergyReports() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Energy Reports</CardTitle>
+          <CardTitle>Per-facility estimates ({rows.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {reports.map((report) => (
-              <div key={report.facilityId} className="border rounded p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-semibold">{report.facilityName}</h3>
-                    <p className="text-sm text-muted-foreground">{report.period}</p>
+            {rows.map((f) => (
+              <div key={f.facilityId} className="border rounded p-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold truncate">{f.facilityName}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {f.region || 'Unknown region'}
+                      {f.systemKw != null ? ` • ${f.systemKw} kW system` : ''}
+                      {f.peakSunHours != null ? ` • ${f.peakSunHours} PSH` : ''}
+                    </p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">{report.energyGenerated} kWh</p>
-                    <p className="text-sm text-muted-foreground">Generated</p>
+                  <Badge variant={f.estimatedSource === 'assessment' ? 'default' : 'secondary'}>
+                    {f.estimatedSource === 'assessment' ? 'design estimate' : 'modeled'}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Est. daily</p>
+                    <p className="font-medium">{f.estimatedDailyKwh} kWh</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Est. annual</p>
+                    <p className="font-medium">{(f.estimatedAnnualKwh || 0).toLocaleString()} kWh</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Daily load</p>
+                    <p className="font-medium">{f.dailyLoadKwh != null ? `${f.dailyLoadKwh} kWh` : 'n/a'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Est. annual savings</p>
+                    <p className="font-medium">
+                      {f.estimatedAnnualSavingsTzs != null ? `${f.estimatedAnnualSavingsTzs.toLocaleString()} TZS` : 'n/a'}
+                    </p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+
+          {rows.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">No energy estimates yet</h3>
+              <p className="text-gray-500">
+                Estimates appear once a facility has an energy assessment, or a subscription system size plus
+                climate data.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

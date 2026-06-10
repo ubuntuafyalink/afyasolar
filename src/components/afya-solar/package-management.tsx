@@ -524,7 +524,7 @@ export default function AfyaSolarPackageManagement() {
                 <div>
                   <h4 className="font-medium mb-2">Available Plans:</h4>
                   <div className="space-y-2">
-                    {pkg.plans.map((plan) => (
+                    {(pkg.plans ?? []).map((plan) => (
                       <div key={plan.id} className="flex items-center justify-between p-2 border rounded">
                         <div className="flex items-center space-x-2">
                           <Badge className={getPlanTypeColor(plan.planTypeCode)}>

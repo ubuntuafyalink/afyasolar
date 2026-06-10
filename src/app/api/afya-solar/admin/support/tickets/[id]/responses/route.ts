@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
+import { db } from '@/lib/db'
+import { afyaSolarSupportTickets, afyaSolarSupportResponses } from '@/lib/db/afya-solar-schema'
+import { eq } from 'drizzle-orm'
 import { generateId } from '@/lib/utils'
+import { ensureAdminTables } from '@/lib/db/ensure-admin-tables'
+import { logAdminAction } from '@/lib/admin/admin-log'
 
-// Mock responses storage - in real implementation this would be a proper table
+export const dynamic = 'force-dynamic'
+
 interface SupportResponse {
   id: string
   ticketId: string
@@ -13,26 +19,15 @@ interface SupportResponse {
   createdAt: string
 }
 
-const mockResponses: SupportResponse[] = [
-  {
-    id: '1',
-    ticketId: '1',
-    message: 'We have received your ticket and are investigating the issue. Our technical team will contact you within 24 hours.',
-    isInternal: false,
-    createdBy: 'support-agent-1',
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-  }
-]
-
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const ticketId = params.id
+    const { id: ticketId } = await params
     const body = await request.json()
     const { message, isInternal } = body
 
@@ -43,23 +38,42 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       )
     }
 
-    // Create new response (in real implementation, this would be saved to database)
+    await ensureAdminTables()
+
     const newResponse: SupportResponse = {
       id: generateId(),
       ticketId,
       message,
       isInternal: isInternal || false,
       createdBy: session.user.id || 'admin',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     }
 
-    // In real implementation, save to database
-    mockResponses.push(newResponse)
+    await db.insert(afyaSolarSupportResponses).values({
+      id: newResponse.id,
+      ticketId: newResponse.ticketId,
+      message: newResponse.message,
+      isInternal: newResponse.isInternal ? 1 : 0,
+      createdBy: newResponse.createdBy,
+    })
+
+    // Bump the parent ticket's updated_at so it surfaces as recently active
+    await db
+      .update(afyaSolarSupportTickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(afyaSolarSupportTickets.id, ticketId))
+
+    await logAdminAction({
+      category: 'support',
+      message: `Response added to ticket ${ticketId}`,
+      userId: session.user.id,
+      metadata: { ticketId, isInternal: newResponse.isInternal },
+    })
 
     return NextResponse.json({
       success: true,
       data: newResponse,
-      message: 'Response added successfully'
+      message: 'Response added successfully',
     })
 
   } catch (error) {

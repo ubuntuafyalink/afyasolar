@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
+import { db } from '@/lib/db'
+import { afyaSolarSystemLogs } from '@/lib/db/afya-solar-schema'
+import { and, eq, desc, sql } from 'drizzle-orm'
+import { ensureAdminTables } from '@/lib/db/ensure-admin-tables'
 
-// Mock system logs data
+export const dynamic = 'force-dynamic'
+
 interface SystemLog {
   id: string
   level: 'info' | 'warning' | 'error' | 'debug'
@@ -14,126 +19,65 @@ interface SystemLog {
   metadata?: Record<string, any>
 }
 
-const mockLogs: SystemLog[] = [
-  {
-    id: '1',
-    level: 'info',
-    category: 'authentication',
-    message: 'User login successful',
-    userId: '2',
-    ipAddress: '192.168.1.100',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    metadata: { userAgent: 'Mozilla/5.0...' }
-  },
-  {
-    id: '2',
-    level: 'warning',
-    category: 'system',
-    message: 'High memory usage detected',
-    timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    metadata: { memoryUsage: '87%', threshold: '85%' }
-  },
-  {
-    id: '3',
-    level: 'error',
-    category: 'database',
-    message: 'Database connection failed',
-    timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    metadata: { error: 'Connection timeout', retryCount: 3 }
-  },
-  {
-    id: '4',
-    level: 'info',
-    category: 'automation',
-    message: 'Scheduled backup completed successfully',
-    timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-    metadata: { backupSize: '2.3GB', duration: '45 seconds' }
-  },
-  {
-    id: '5',
-    level: 'warning',
-    category: 'security',
-    message: 'Multiple failed login attempts',
-    userId: 'unknown',
-    ipAddress: '192.168.1.200',
-    timestamp: new Date(Date.now() - 120 * 60 * 1000).toISOString(),
-    metadata: { attempts: 5, timeWindow: '5 minutes' }
-  },
-  {
-    id: '6',
-    level: 'info',
-    category: 'api',
-    message: 'API rate limit reached',
-    userId: '3',
-    timestamp: new Date(Date.now() - 150 * 60 * 1000).toISOString(),
-    metadata: { endpoint: '/api/analytics', requests: 1000, limit: 1000 }
-  },
-  {
-    id: '7',
-    level: 'error',
-    category: 'payment',
-    message: 'Payment processing failed',
-    userId: '1',
-    timestamp: new Date(Date.now() - 180 * 60 * 1000).toISOString(),
-    metadata: { 
-      paymentId: 'pay_123456789', 
-      amount: 150000, 
-      currency: 'TZS',
-      error: 'Insufficient funds'
-    }
-  },
-  {
-    id: '8',
-    level: 'debug',
-    category: 'energy',
-    message: 'Smart meter data received',
-    timestamp: new Date(Date.now() - 210 * 60 * 1000).toISOString(),
-    metadata: { 
-      meterId: 'SM001', 
-      power: 2500, 
-      energy: 15.6,
-      batteryLevel: 78
-    }
+function mapLog(row: typeof afyaSolarSystemLogs.$inferSelect): SystemLog {
+  return {
+    id: row.id,
+    level: (row.level as SystemLog['level']),
+    category: row.category,
+    message: row.message,
+    userId: row.userId ?? undefined,
+    ipAddress: row.ipAddress ?? undefined,
+    timestamp: row.createdAt ? new Date(row.createdAt).toISOString() : new Date().toISOString(),
+    metadata: (row.metadata as Record<string, any>) ?? undefined,
   }
-]
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    await ensureAdminTables()
 
     const { searchParams } = new URL(request.url)
     const level = searchParams.get('level') || 'all'
     const category = searchParams.get('category') || 'all'
     const limit = parseInt(searchParams.get('limit') || '100')
 
-    // Filter logs based on parameters
-    let filteredLogs = mockLogs
-
+    const conditions = []
     if (level !== 'all') {
-      filteredLogs = filteredLogs.filter(log => log.level === level)
+      conditions.push(eq(afyaSolarSystemLogs.level, level))
     }
-
     if (category !== 'all') {
-      filteredLogs = filteredLogs.filter(log => log.category === category)
+      conditions.push(eq(afyaSolarSystemLogs.category, category))
     }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
-    // Sort by timestamp (newest first) and limit
-    filteredLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    filteredLogs = filteredLogs.slice(0, limit)
+    const rows = await db
+      .select()
+      .from(afyaSolarSystemLogs)
+      .where(whereClause)
+      .orderBy(desc(afyaSolarSystemLogs.createdAt))
+      .limit(limit)
+
+    const totalRows = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(afyaSolarSystemLogs)
+    const total = Number(totalRows[0]?.count ?? 0)
+
+    const logs = rows.map(mapLog)
 
     return NextResponse.json({
       success: true,
-      data: filteredLogs,
+      data: logs,
       meta: {
-        count: filteredLogs.length,
-        total: mockLogs.length,
+        count: logs.length,
+        total,
         filters: { level, category, limit },
-        note: 'Mock data - replace with real database logs'
-      }
+      },
     })
 
   } catch (error) {

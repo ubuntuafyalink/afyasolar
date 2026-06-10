@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
 import { serviceSubscriptions, serviceAccessPayments } from '@/lib/db/schema'
-import { eq, and, lt, gte, isNull, isNotNull } from 'drizzle-orm'
+import { afyaSolarMeterCommands, afyaSolarSmartmeters } from '@/lib/db/afya-solar-schema'
+import { eq, and, lt, gte, isNull, isNotNull, sql } from 'drizzle-orm'
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -162,19 +163,38 @@ export async function GET(request: NextRequest) {
       pendingInstall: pendingInstallServices
     }
 
-    // Mock command statistics (since we don't have the meter commands table in main schema)
-    const commandStats = {
-      queued: 0,
-      sent: 0,
-      acknowledged: 0,
-      failed: 0
+    // Real command statistics from afyasolar_meter_commands (grouped by status).
+    const cmdRows = await db
+      .select({ status: afyaSolarMeterCommands.status, count: sql<number>`count(*)` })
+      .from(afyaSolarMeterCommands)
+      .groupBy(afyaSolarMeterCommands.status)
+    const commandStats = { queued: 0, sent: 0, acknowledged: 0, failed: 0 }
+    for (const r of cmdRows) {
+      const c = Number(r.count) || 0
+      if (r.status === 'QUEUED') commandStats.queued = c
+      else if (r.status === 'SENT') commandStats.sent = c
+      else if (r.status === 'ACKED') commandStats.acknowledged = c
+      else if (r.status === 'FAILED') commandStats.failed = c
     }
 
-    // Mock meter statistics (since we don't have the smart meters table in main schema)
+    // Real meter statistics from afyasolar_smartmeters (online = seen in last 24h).
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const [meterTotal] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(afyaSolarSmartmeters)
+      .where(isNull(afyaSolarSmartmeters.deletedAt))
+    const [meterInstalled] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(afyaSolarSmartmeters)
+      .where(and(isNull(afyaSolarSmartmeters.deletedAt), isNotNull(afyaSolarSmartmeters.installedAt)))
+    const [meterOnline] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(afyaSolarSmartmeters)
+      .where(and(isNull(afyaSolarSmartmeters.deletedAt), gte(afyaSolarSmartmeters.lastSeenAt, dayAgo)))
     const meterStats = {
-      total: Math.floor(Number(activeServices.count) * 0.8), // Estimate 80% of services have meters
-      installed: Math.floor(Number(activeServices.count) * 0.7), // Estimate 70% are installed
-      online: Math.floor(Number(activeServices.count) * 0.65) // Estimate 65% are online
+      total: Number(meterTotal?.count) || 0,
+      installed: Number(meterInstalled?.count) || 0,
+      online: Number(meterOnline?.count) || 0,
     }
 
     return NextResponse.json({

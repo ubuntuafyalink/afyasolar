@@ -53,14 +53,20 @@ export function ClimateOutlookSection({
   facilityId,
   facilityName,
   region,
+  coords: coordsProp,
 }: {
   facilityId?: string
   facilityName?: string | null
   region?: string | null
+  /** Explicit coordinates (e.g. a facility's real lat/lon); falls back to resolveCoords. */
+  coords?: Coords
 }) {
   const { locale, t } = useFacilityPreferences()
 
-  const defaultCoords = useMemo<Coords>(() => resolveCoords({ facilityId, region }), [facilityId, region])
+  const defaultCoords = useMemo<Coords>(
+    () => coordsProp ?? resolveCoords({ facilityId, region }),
+    [coordsProp, facilityId, region],
+  )
 
   const [coords, setCoords] = useState<Coords>(defaultCoords)
   const [locationLabel, setLocationLabel] = useState<string | null>(facilityName ?? region ?? null)

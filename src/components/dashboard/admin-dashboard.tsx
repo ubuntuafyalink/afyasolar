@@ -47,7 +47,6 @@ import {
   Phone,
   Mail,
   Calendar,
-  Plug,
   UserCheck,
   AlertCircle,
   Bell,
@@ -64,30 +63,36 @@ import {
   Clock as ClockIcon,
   Trash2,
   SlidersHorizontal,
+  Baby,
+  Bot,
+  MessageCircle,
+  LifeBuoy,
+  Gauge,
+  ClipboardList,
+  Satellite,
+  PlugZap,
 } from "lucide-react"
 // Resilience Intelligence (additive, simulated data) — consolidated into hubs
 import { FacilityPreferencesProvider } from "@/components/dashboard/facility/facility-preferences-provider"
 import { FacilityToolbar } from "@/components/dashboard/facility/facility-toolbar"
-import { AdminIntelPortfolioHub } from "@/components/admin/intelligence/admin-intel-portfolio-hub"
-import { AdminIntelRiskHub } from "@/components/admin/intelligence/admin-intel-risk-hub"
-import { AdminIntelAdaptationHub } from "@/components/admin/intelligence/admin-intel-adaptation-hub"
-import { AdminIntelMethodologyHub } from "@/components/admin/intelligence/admin-intel-methodology-hub"
+// Facility-mirror section components (portfolio-level)
+import { AdminChildServicesRollup } from "@/components/admin/intelligence/admin-child-services-rollup"
+import { AdminFacilitiesRcsTable } from "@/components/admin/intelligence/admin-facilities-rcs-table"
+import { AdminClimateOutlook } from "@/components/admin/intelligence/admin-climate-outlook"
+import { AdminNotificationsCenter } from "@/components/admin/notifications/admin-notifications-center"
+import { AdminReportCenter } from "@/components/admin/reports/admin-report-center"
+import { AdminAssistant } from "@/components/admin/admin-assistant"
+import { AdminChannels } from "@/components/admin/admin-channels"
+import { AdminHelp } from "@/components/admin/admin-help"
 import { useDeviceRequests, useUpdateDeviceRequest } from "@/hooks/use-device-requests"
 import { LogoutButton } from "@/components/logout-button"
 import { UserManagement } from "@/components/dashboard/user-management"
 import { TechnicianManagement } from "@/components/dashboard/technician-management"
-import { AdminNotifications } from "@/components/admin/admin-notifications"
-import { NotificationPopup } from "@/components/admin/notification-popup"
-import AdminSolarLiveMonitoring from "@/components/solar/admin-solar-live-monitoring"
-import AdminSolarAnalytics from "@/components/solar/admin-solar-analytics"
-import AdminSolarAlerts from "@/components/solar/admin-solar-alerts"
-import AdminSolarMaintenance from "@/components/solar/admin-solar-maintenance"
-import AdminSolarPerformance from "@/components/solar/admin-solar-performance"
-import AdminSolarEnergyReports from "@/components/solar/admin-solar-energy-reports"
+import { AdminPower } from "@/components/admin/intelligence/admin-power"
 import AdminSolarCarbonCredits from "@/components/solar/admin-solar-carbon-credits"
 import { FacilityCarbonCredits } from "@/components/dashboard/facility-carbon-credits"
 import { InternalSystemTools } from "@/components/admin/internal-system-tools"
-import { AdminPortfolioAssessmentSnapshots } from "@/components/afya-solar/admin-portfolio-assessment-snapshots"
+import { AdminEnergyEfficiency } from "@/components/admin/intelligence/admin-energy-efficiency"
 import { AdminPortfolioSolarBilling } from "@/components/afya-solar/admin-portfolio-solar-billing"
 import { useComprehensiveFacilities, type ComprehensiveFacility } from "@/hooks/use-facilities"
 import { useFacilities } from "@/hooks/use-facilities"
@@ -98,21 +103,12 @@ import { DeleteFacilityDialog } from "@/components/dashboard/delete-facility-dia
 import { AdminTransactions } from "@/components/dashboard/admin-transactions"
 import { useAdminWithdrawals, useUpdateWithdrawal } from "@/hooks/use-admin-withdrawals"
 import { format } from "date-fns"
-import { AdminFeatureRequests } from "@/components/dashboard/admin-feature-requests"
-import { AdminReferrals } from "@/components/dashboard/admin-referrals"
-import { AdminPaymentTransactions } from "@/components/dashboard/admin-payment-transactions"
-import { AdminBulkSMS } from "@/components/dashboard/admin-bulk-sms"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useQueryClient, useQuery } from "@tanstack/react-query"
-import AfyaSolarAdminDashboard from '@/components/afya-solar/admin-dashboard'
 import AfyaSolarPackageManagement from '@/components/afya-solar/package-management'
-import AfyaSolarServiceManagement from '@/components/afya-solar/service-management'
 import AfyaSolarSubscribersManagement from '@/components/afya-solar/subscribers-management'
-import AfyaSolarMeterManagement from '@/components/afya-solar/meter-management'
-import AfyaSolarInvoiceRequests from '@/components/afya-solar/invoice-requests'
-import { ServiceVisibilityPanel } from "@/components/dashboard/ServiceVisibilityPanel"
 import { useNotificationCount } from "@/hooks/use-notification-count"
 import { FacilityDetailsDialog } from "@/components/dashboard/facility-details-dialog"
 import { StatCard } from "@/components/ui/stat-card"
@@ -127,125 +123,103 @@ type AdminTransactionStats = {
   totalAmount: number
 }
 
+// Admin sections mirror the facility manager dashboard 1:1 (portfolio-level),
+// plus a small "Manage" group for admin-only essentials. Existing section ids are
+// reused where a render block already exists; new ids cover the new mirrors.
 type SectionId =
+  // Home
   | 'overview'
+  // Resilience
+  | 'maternal-newborn'
+  | 'resilience-score'
+  | 'climate-outlook'
+  // Energy
+  | 'solar-live-monitoring' // "Power"
+  | 'afya-solar-portfolio-assessments' // "Energy Efficiency"
+  // Updates
+  | 'reports'
+  | 'notifications'
+  | 'assistant'
+  | 'channels'
+  // Billing
+  | 'afya-solar-portfolio-billing' // "Bills & Payment"
+  | 'solar-carbon-credits' // "Carbon Credits"
+  | 'afya-solar-subscribers' // "Subscription"
+  | 'afya-solar-packages' // "Packages"
+  // Support
+  | 'help'
+  // Manage (admin-only essentials)
   | 'facilities'
-  | 'service-visibility'
   | 'users'
   | 'technicians'
-  | 'payments'
-  | 'devices'
-  | 'device-requests'
-  | 'afya-solar-dashboard'
-  | 'afya-solar-services'
-  | 'afya-solar-packages'
-  | 'afya-solar-subscribers'
-  | 'afya-solar-invoice-requests'
-  | 'afya-solar-meters'
-  | 'afya-solar-reports'
-  | 'solar-live-monitoring'
-  | 'solar-analytics'
-  | 'solar-alerts'
-  | 'solar-maintenance'
-  | 'solar-performance'
-  | 'solar-energy-reports'
-  | 'solar-carbon-credits'
-  | 'afya-solar-portfolio-assessments'
-  | 'afya-solar-portfolio-billing'
-  | 'transactions'
-  | 'payment-transactions'
-  | 'feature-requests'
-  | 'referrals'
-  | 'bulk-sms'
-  | 'internal-tools'
-  | 'notifications'
-  // Resilience Intelligence (additive, simulated data) — consolidated hubs
-  | 'intel-portfolio'
-  | 'intel-risk'
-  | 'intel-adaptation'
-  | 'intel-methodology'
+  | 'transactions' // "Withdrawals"
+  | 'internal-tools' // "Settings"
 
 type AdminDashboardProps = {
   initialSection?: SectionId
 }
 
-// Grouped navigation structure
-type NavGroup = 'general' | 'afya-solar' | 'intelligence'
+// Grouped navigation structure (mirrors facility-nav.ts groups)
+type NavGroup = 'home' | 'resilience' | 'energy' | 'updates' | 'billing' | 'support' | 'manage'
 
-const navGroups: Record<
-  NavGroup,
-  {
-    label: string
-    icon: React.ElementType
-    items: { id: SectionId; label: string; icon: React.ElementType }[]
-  }
-> = {
-  'general': {
-    label: 'General',
-    icon: Home,
-    items: [
-      { id: 'overview', label: 'Overview', icon: BarChart3 },
-      { id: 'facilities', label: 'Facilities', icon: Building2 },
-      { id: 'service-visibility', label: 'Service Visibility', icon: Eye },
-      { id: 'users', label: 'Users', icon: Users },
-      { id: 'technicians', label: 'Technicians', icon: Wrench },
-      { id: 'internal-tools', label: 'System tools', icon: SlidersHorizontal },
-      { id: 'payment-transactions', label: 'Payment Transactions', icon: CreditCard },
-      { id: 'transactions', label: 'Withdrawals', icon: DollarSign },
-      { id: 'feature-requests', label: 'Feature Requests', icon: Sparkles },
-      { id: 'referrals', label: 'Referrals', icon: Gift },
-      { id: 'bulk-sms', label: 'Bulk SMS', icon: Phone },
-      { id: 'afya-solar-invoice-requests', label: 'Invoice Requests', icon: Receipt },
-      { id: 'notifications', label: 'Notification Center', icon: Bell },
-    ],
-  },
-  'afya-solar': {
-    label: 'Afya Solar',
-    icon: Sun,
-    items: [
-      { id: 'afya-solar-dashboard', label: 'Dashboard Overview', icon: BarChart3 },
-      { id: 'afya-solar-packages', label: 'Package Management', icon: Package },
-      { id: 'afya-solar-subscribers', label: 'Subscribers', icon: UserCheck },
-      { id: 'afya-solar-portfolio-assessments', label: 'Assessment snapshots', icon: BarChart3 },
-      { id: 'afya-solar-portfolio-billing', label: 'Bills & Payment', icon: Receipt },
-      { id: 'solar-alerts', label: 'Alerts & Notifications', icon: Bell },
-      { id: 'solar-carbon-credits', label: 'Carbon Credits', icon: Leaf },
-    ],
-  },
-  'intelligence': {
-    label: 'Resilience Intelligence',
-    icon: BarChart3,
-    items: [
-      { id: 'intel-portfolio', label: 'Portfolio', icon: BarChart3 },
-      { id: 'intel-risk', label: 'Risk & Readiness', icon: AlertTriangle },
-      { id: 'intel-adaptation', label: 'Adaptation & Impact', icon: TrendingUp },
-      { id: 'intel-methodology', label: 'Funding & Methodology', icon: FileText },
-    ],
-  },
+// Display order of the groups in the sidebar (all shown at once, like facility).
+const NAV_GROUP_ORDER: NavGroup[] = ['home', 'resilience', 'energy', 'updates', 'billing', 'support', 'manage']
+
+const NAV_GROUP_LABELS: Record<NavGroup, string> = {
+  home: 'Home',
+  resilience: 'Resilience',
+  energy: 'Energy',
+  updates: 'Updates',
+  billing: 'Billing',
+  support: 'Support',
+  manage: 'Manage',
 }
 
-// Helper to determine which group a section belongs to
-const getSectionGroup = (section: SectionId): NavGroup => {
-  if (section.startsWith('intel-')) {
-    return 'intelligence'
-  }
-  if (
-    [
-      'afya-solar-dashboard',
-      'afya-solar-packages',
-      'afya-solar-subscribers',
-      'afya-solar-portfolio-assessments',
-      'afya-solar-portfolio-billing',
-      'solar-alerts',
-      'solar-carbon-credits',
-    ].includes(section)
-  ) {
-    return 'afya-solar'
-  }
-  if (['notifications'].includes(section)) {
-    return 'general'
-  }
-  return 'general'
+const navGroups: Record<NavGroup, { items: { id: SectionId; label: string; icon: React.ElementType }[] }> = {
+  home: {
+    items: [{ id: 'overview', label: 'Overview', icon: BarChart3 }],
+  },
+  resilience: {
+    items: [
+      { id: 'maternal-newborn', label: 'Maternal & Newborn', icon: Baby },
+      { id: 'resilience-score', label: 'Resilience Score', icon: BarChart3 },
+      { id: 'climate-outlook', label: 'Climate Outlook', icon: Satellite },
+    ],
+  },
+  energy: {
+    items: [
+      { id: 'solar-live-monitoring', label: 'Power', icon: PlugZap },
+      { id: 'afya-solar-portfolio-assessments', label: 'Energy Efficiency', icon: Gauge },
+    ],
+  },
+  updates: {
+    items: [
+      { id: 'reports', label: 'Reports', icon: ClipboardList },
+      { id: 'notifications', label: 'Notifications', icon: Bell },
+      { id: 'assistant', label: 'Assistant', icon: Bot },
+      { id: 'channels', label: 'Channels', icon: MessageCircle },
+    ],
+  },
+  billing: {
+    items: [
+      { id: 'afya-solar-portfolio-billing', label: 'Bills & Payment', icon: Receipt },
+      { id: 'solar-carbon-credits', label: 'Carbon Credits', icon: Leaf },
+      { id: 'afya-solar-subscribers', label: 'Subscription', icon: CreditCard },
+      { id: 'afya-solar-packages', label: 'Packages', icon: Package },
+    ],
+  },
+  support: {
+    items: [{ id: 'help', label: 'Help', icon: LifeBuoy }],
+  },
+  manage: {
+    items: [
+      { id: 'facilities', label: 'Facilities', icon: Building2 },
+      { id: 'users', label: 'Users', icon: Users },
+      { id: 'technicians', label: 'Technicians', icon: Wrench },
+      { id: 'transactions', label: 'Withdrawals', icon: DollarSign },
+      { id: 'internal-tools', label: 'Settings', icon: Settings },
+    ],
+  },
 }
 
 export function AdminDashboard({ initialSection = "overview" }: AdminDashboardProps) {
@@ -255,6 +229,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
   const { data: deviceRequests } = useDeviceRequests()
   const updateDeviceRequest = useUpdateDeviceRequest()
   const [activeSection, setActiveSection] = useState<SectionId>(initialSection)
+  const [focusFacilityId, setFocusFacilityId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [deviceStatusFilter, setDeviceStatusFilter] = useState<string>('all')
@@ -371,10 +346,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
     setSidebarOpen(isDesktop)
   }, [])
 
-  // The active workspace is derived from the active section.
-  const activeWorkspace = getSectionGroup(activeSection)
-
-  // Navigate to a section, honouring the route-based + popup special cases.
+  // Navigate to a section, honouring the route-based special cases.
   const goToSection = (id: SectionId) => {
     if (id === 'overview') {
       router.push('/dashboard/admin/overview')
@@ -386,11 +358,6 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
     }
     if (id === 'users') {
       router.push('/dashboard/admin/users')
-      return
-    }
-    if (id === 'notifications') {
-      setShowNotificationPopup(true)
-      setMobileMenuOpen(false)
       return
     }
     setActiveSection(id)
@@ -487,75 +454,53 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
           {/* Navigation */}
           <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-            {/* Workspace switcher — pick one area; the list below shows only that area */}
-            <div className="space-y-1">
-              {(Object.keys(navGroups) as NavGroup[]).map((groupKey) => {
-                const group = navGroups[groupKey]
-                const GroupIcon = group.icon
-                const isActiveWs = activeWorkspace === groupKey
-                return (
-                  <button
-                    key={groupKey}
-                    onClick={() => goToSection(group.items[0].id)}
-                    aria-current={isActiveWs ? "page" : undefined}
-                    title={group.label}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-lg transition-colors",
-                      isActiveWs
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    <GroupIcon className="w-4 h-4 flex-shrink-0" />
-                    {sidebarOpen && <span className="flex-1 text-left">{group.label}</span>}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="my-2 border-t border-border" />
-
-            {/* Items for the active workspace only */}
-            <div className="space-y-1">
-              {navGroups[activeWorkspace].items.map((item) => {
-                const ItemIcon = item.icon
-                const isActive = activeSection === item.id
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (item.id === 'service-visibility') {
-                        setActiveSection('service-visibility')
-                        setMobileMenuOpen(false)
-                        return
-                      }
-                      goToSection(item.id)
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : item.id === 'notifications'
-                          ? "text-destructive hover:bg-destructive/10 border border-destructive/20"
-                          : "text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    <ItemIcon className={cn("w-4 h-4 flex-shrink-0", item.id === 'notifications' && !isActive && "text-destructive")} />
-                    {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
-                    {item.id === 'transactions' && pendingWithdrawalsCount > 0 && (
-                      <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                        {pendingWithdrawalsCount}
-                      </Badge>
-                    )}
-                    {item.id === 'notifications' && unreadNotificationCount > 0 && (
-                      <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                        {unreadNotificationCount}
-                      </Badge>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+            {/* All groups shown at once, mirroring the facility dashboard sidebar. */}
+            {NAV_GROUP_ORDER.map((groupKey, groupIndex) => {
+              const group = navGroups[groupKey]
+              return (
+                <div key={groupKey} role="group" aria-label={NAV_GROUP_LABELS[groupKey]} className="space-y-1">
+                  {sidebarOpen ? (
+                    <p
+                      className={cn(
+                        "px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+                        groupIndex === 0 ? "pt-1" : "pt-4",
+                      )}
+                    >
+                      {NAV_GROUP_LABELS[groupKey]}
+                    </p>
+                  ) : (
+                    groupIndex > 0 && <div className="mx-2 my-2 border-t border-border/60" aria-hidden />
+                  )}
+                  {group.items.map((item) => {
+                    const ItemIcon = item.icon
+                    const isActive = activeSection === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => goToSection(item.id)}
+                        title={item.label}
+                        aria-current={isActive ? "page" : undefined}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                          !sidebarOpen && "justify-center",
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                      >
+                        <ItemIcon className="w-4 h-4 flex-shrink-0" aria-hidden />
+                        {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+                        {item.id === 'transactions' && pendingWithdrawalsCount > 0 && (
+                          <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
+                            {pendingWithdrawalsCount}
+                          </Badge>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
           </nav>
 
           {/* Sidebar Footer */}
@@ -1037,17 +982,36 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
             )}
 
             {/* Service Visibility Panel */}
-            {activeSection === 'service-visibility' && (
-              <ServiceVisibilityPanel
-                selectedFacilityId={selectedVisibilityFacilityId}
-                loadingVisibility={loadingVisibility}
-                savingVisibility={savingVisibility}
-                visibleServices={visibleServices}
-                setLoadingVisibility={setLoadingVisibility}
-                setSavingVisibility={setSavingVisibility}
-                setVisibleServices={setVisibleServices}
+            {/* Resilience */}
+            {activeSection === 'maternal-newborn' && <AdminChildServicesRollup />}
+
+            {activeSection === 'resilience-score' && (
+              <AdminFacilitiesRcsTable focusFacilityId={focusFacilityId} onFocusHandled={() => setFocusFacilityId(null)} />
+            )}
+
+            {activeSection === 'climate-outlook' && (
+              <AdminClimateOutlook focusFacilityId={focusFacilityId} onFocusHandled={() => setFocusFacilityId(null)} />
+            )}
+
+
+            {/* Updates */}
+            {activeSection === 'reports' && <AdminReportCenter />}
+
+            {activeSection === 'notifications' && (
+              <AdminNotificationsCenter
+                onOpen={({ section, facilityId }) => {
+                  setActiveSection(section as SectionId)
+                  setFocusFacilityId(facilityId ?? null)
+                }}
               />
             )}
+
+            {activeSection === 'assistant' && <AdminAssistant />}
+
+            {activeSection === 'channels' && <AdminChannels />}
+
+            {/* Support */}
+            {activeSection === 'help' && <AdminHelp />}
 
             {/* User Management */}
             {activeSection === 'users' && (
@@ -1061,49 +1025,9 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
             {activeSection === 'internal-tools' && <InternalSystemTools />}
 
-            {/* Payment Transactions */}
-            {activeSection === 'payment-transactions' && (
-              <AdminPaymentTransactions />
-            )}
-
-            {/* Transactions */}
+            {/* Manage: Withdrawals */}
             {activeSection === 'transactions' && (
               <AdminTransactions />
-            )}
-
-            {/* Feature Requests */}
-            {activeSection === 'feature-requests' && (
-              <AdminFeatureRequests />
-            )}
-
-            {/* Referrals */}
-            {activeSection === 'referrals' && (
-              <AdminReferrals />
-            )}
-
-            {/* Bulk SMS */}
-            {activeSection === 'bulk-sms' && (
-              <AdminBulkSMS />
-            )}
-
-            {/* Notifications */}
-            {activeSection === 'notifications' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Center</CardTitle>
-                  <CardDescription>
-                    Manage system notifications and alerts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <AdminNotifications />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Afya Solar Sections */}
-            {activeSection === 'afya-solar-dashboard' && (
-              <AfyaSolarAdminDashboard />
             )}
 
             {activeSection === 'afya-solar-packages' && (
@@ -1114,33 +1038,14 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
               <AfyaSolarSubscribersManagement />
             )}
 
-            {activeSection === 'afya-solar-portfolio-assessments' && <AdminPortfolioAssessmentSnapshots />}
+            {activeSection === 'afya-solar-portfolio-assessments' && (
+              <AdminEnergyEfficiency focusFacilityId={focusFacilityId} onFocusHandled={() => setFocusFacilityId(null)} />
+            )}
 
             {activeSection === 'afya-solar-portfolio-billing' && <AdminPortfolioSolarBilling />}
 
-            {activeSection === 'solar-live-monitoring' && (
-              <AdminSolarLiveMonitoring />
-            )}
+            {activeSection === 'solar-live-monitoring' && <AdminPower />}
 
-            {activeSection === 'solar-analytics' && (
-              <AdminSolarAnalytics />
-            )}
-
-            {activeSection === 'solar-alerts' && (
-              <AdminSolarAlerts />
-            )}
-
-            {activeSection === 'solar-maintenance' && (
-              <AdminSolarMaintenance />
-            )}
-
-            {activeSection === 'solar-performance' && (
-              <AdminSolarPerformance />
-            )}
-
-            {activeSection === 'solar-energy-reports' && (
-              <AdminSolarEnergyReports />
-            )}
 
             {activeSection === 'solar-carbon-credits' && (
               <div className="space-y-6">
@@ -1200,103 +1105,9 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
               </div>
             )}
 
-            {/* Device Requests */}
-            {activeSection === 'device-requests' && (
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-base">Device Requests</CardTitle>
-                      <CardDescription className="text-xs">Facility requests for new devices</CardDescription>
-                    </div>
-                    <select
-                      value={deviceStatusFilter}
-                      onChange={(e) => setDeviceStatusFilter(e.target.value)}
-                      className="text-xs h-8 px-2 border border-border rounded-lg bg-background text-foreground w-full sm:w-auto"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="fulfilled">Fulfilled</option>
-                    </select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {deviceRequests && deviceRequests.length > 0 ? (
-                    <div className="space-y-3">
-                      {(deviceStatusFilter === 'all' 
-                        ? deviceRequests 
-                        : deviceRequests.filter(r => r.status === deviceStatusFilter)
-                      ).map((request) => (
-                        <div
-                          key={request.id}
-                          className="p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h3 className="font-medium text-sm truncate">{request.facilityName || 'Unknown Facility'}</h3>
-                                <Badge
-                                  variant={
-                                    request.status === 'pending'
-                                      ? 'warning'
-                                      : request.status === 'fulfilled'
-                                      ? 'success'
-                                      : request.status === 'approved'
-                                      ? 'secondary'
-                                      : 'destructive'
-                                  }
-                                  className="flex-shrink-0"
-                                >
-                                  {request.status}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground mb-2">
-                                <strong>Request:</strong> {request.quantity} {request.deviceType || 'device(s)'}
-                              </p>
-                              {request.message && (
-                                <p className="text-xs text-muted-foreground mb-2 break-words">{request.message}</p>
-                              )}
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground mb-2">
-                                <span className="break-words"><strong>From:</strong> {request.name} ({request.email})</span>
-                                <span><strong>Phone:</strong> {request.phone}</span>
-                                <span><strong>Date:</strong> {new Date(request.createdAt).toLocaleString()}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon={<Package />}
-                      title="No device requests found"
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Resilience Intelligence hubs (additive, simulated data) */}
-            {activeSection === 'intel-portfolio' && <AdminIntelPortfolioHub />}
-            {activeSection === 'intel-risk' && <AdminIntelRiskHub />}
-            {activeSection === 'intel-adaptation' && <AdminIntelAdaptationHub />}
-            {activeSection === 'intel-methodology' && <AdminIntelMethodologyHub />}
-
           </div>
         </main>
       </div>
-
-      {/* Notification Popup */}
-      <NotificationPopup
-        isOpen={showNotificationPopup}
-        onClose={() => setShowNotificationPopup(false)}
-        unreadCount={unreadNotificationCount}
-        onNotificationRead={() => {
-          queryClient.invalidateQueries({ queryKey: ['notification-count'] })
-        }}
-      />
     </div>
     </FacilityPreferencesProvider>
   )
