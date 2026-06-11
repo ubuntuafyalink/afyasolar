@@ -1,24 +1,35 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { 
-  Upload, 
-  Building2, 
-  Phone, 
-  Send, 
-  FileText, 
-  CheckCircle2, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Upload,
+  Building2,
+  Phone,
+  Send,
+  CheckCircle2,
   XCircle,
   Loader2,
   Search,
   X,
-  UserPlus
+  UserPlus,
+  Download,
+  MessageSquare,
+  Copy,
+  Check,
 } from "lucide-react"
 import { useFacilities } from "@/hooks/use-facilities"
 import { toast } from "sonner"
@@ -34,6 +45,41 @@ interface ManualRecipient {
   id: string
   phoneNumber: string
   facilityName: string
+}
+
+// GSM-7 basic + extended character set (anything outside ⇒ message is sent as UCS-2/Unicode).
+const GSM7 =
+  "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ ÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà"
+const GSM7_EXT = "^{}\\[~]|€"
+
+function isGsm7(text: string): boolean {
+  for (const ch of text) {
+    if (!GSM7.includes(ch) && !GSM7_EXT.includes(ch)) return false
+  }
+  return true
+}
+
+/** Length in SMS units: GSM-7 extended chars count as 2; non-GSM ⇒ UCS-2 (1 each). */
+function smsLength(text: string, gsm: boolean): number {
+  if (!gsm) return [...text].length // UCS-2 code points
+  let n = 0
+  for (const ch of text) n += GSM7_EXT.includes(ch) ? 2 : 1
+  return n
+}
+
+/** Segment math: GSM 160/153, Unicode 70/67 per segment. */
+function smsSegments(text: string): { segments: number; unicode: boolean; chars: number } {
+  const gsm = isGsm7(text)
+  const len = smsLength(text, gsm)
+  const single = gsm ? 160 : 70
+  const multi = gsm ? 153 : 67
+  const segments = len === 0 ? 0 : len <= single ? 1 : Math.ceil(len / multi)
+  return { segments, unicode: !gsm, chars: len }
+}
+
+// MUST mirror the wrapper in src/app/api/admin/bulk-sms/route.ts.
+function composeSms(facilityName: string, body: string): string {
+  return `Dear Manager ${facilityName},\n\n${body}\n\n- Ubuntu Afya Link Team`
 }
 
 export function AdminBulkSMS() {
@@ -52,6 +98,10 @@ export function AdminBulkSMS() {
   } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [copiedFailed, setCopiedFailed] = useState(false)
+
+  const hasPhone = (f: { phone?: string | null }) => Boolean(f.phone && f.phone.trim())
 
   // Filter facilities based on search
   const filteredFacilities = facilities?.filter(facility => {
@@ -64,6 +114,8 @@ export function AdminBulkSMS() {
       facility.region.toLowerCase().includes(query)
     )
   }) || []
+  // Only facilities with a phone can actually receive an SMS.
+  const selectableFacilities = filteredFacilities.filter(hasPhone)
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -154,7 +206,10 @@ export function AdminBulkSMS() {
         }
 
         setCsvData(parsedData)
-        toast.success(`Successfully loaded ${parsedData.length} phone numbers from CSV`)
+        const skipped = Math.max(0, lines.length - 1 - parsedData.length)
+        toast.success(
+          `Loaded ${parsedData.length} phone number${parsedData.length !== 1 ? 's' : ''} from CSV${skipped > 0 ? ` (${skipped} row${skipped !== 1 ? 's' : ''} skipped)` : ''}`,
+        )
       } catch (error) {
         console.error('Error parsing CSV:', error)
         toast.error('Failed to parse CSV file. Please check the format.')
@@ -177,11 +232,25 @@ export function AdminBulkSMS() {
   }
 
   const toggleAllFacilities = () => {
-    if (selectedFacilities.size === filteredFacilities.length) {
+    // Only select facilities that have a phone number.
+    if (selectableFacilities.every(f => selectedFacilities.has(f.id)) && selectableFacilities.length > 0) {
       setSelectedFacilities(new Set())
     } else {
-      setSelectedFacilities(new Set(filteredFacilities.map(f => f.id)))
+      setSelectedFacilities(new Set(selectableFacilities.map(f => f.id)))
     }
+  }
+
+  const downloadCsvTemplate = () => {
+    const csv = "phone number,facility name\n+255712345678,Example Clinic\n0754000111,Another Facility\n"
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "bulk-sms-template.csv"
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   const handleAddManualRecipient = () => {
@@ -225,6 +294,7 @@ export function AdminBulkSMS() {
   }
 
   const handleSendSMS = async () => {
+    setShowConfirm(false)
     if (!message.trim()) {
       toast.error('Please enter a message')
       return
@@ -303,11 +373,49 @@ export function AdminBulkSMS() {
     }
   }
 
-  const selectedCount = selectedMethod === 'facilities' 
-    ? selectedFacilities.size 
-    : selectedMethod === 'csv' 
-      ? csvData.length 
+  const selectedCount = selectedMethod === 'facilities'
+    ? selectedFacilities.size
+    : selectedMethod === 'csv'
+      ? csvData.length
       : manualRecipients.length
+
+  const requestSend = () => {
+    if (!message.trim()) {
+      toast.error('Please enter a message')
+      return
+    }
+    if (selectedCount === 0) {
+      toast.error('Please add at least one recipient')
+      return
+    }
+    setShowConfirm(true)
+  }
+
+  // Recipient names for the live preview + segment estimate.
+  const recipientNames = useMemo(() => {
+    if (selectedMethod === 'facilities') {
+      return (facilities ?? []).filter(f => selectedFacilities.has(f.id)).map(f => f.name)
+    }
+    if (selectedMethod === 'csv') return csvData.map(r => r.facilityName)
+    return manualRecipients.map(r => r.facilityName || 'Manager')
+  }, [selectedMethod, facilities, selectedFacilities, csvData, manualRecipients])
+
+  const sampleName = recipientNames[0] || 'Royal Polyclinic'
+  const longestName = recipientNames.reduce((a, b) => (b.length > a.length ? b : a), sampleName)
+  const previewText = composeSms(sampleName, message.trim() || 'Your message will appear here…')
+  const seg = useMemo(() => smsSegments(composeSms(longestName, message.trim())), [longestName, message])
+  const totalUnits = seg.segments * selectedCount
+
+  const failedNumbers = sendResults?.details.filter(d => !d.success).map(d => d.phone) ?? []
+  const copyFailed = () => {
+    void navigator.clipboard?.writeText(failedNumbers.join('\n'))
+    setCopiedFailed(true)
+    setTimeout(() => setCopiedFailed(false), 1500)
+  }
+  // Show failures first in the results list.
+  const orderedDetails = sendResults
+    ? [...sendResults.details].sort((a, b) => Number(a.success) - Number(b.success))
+    : []
 
   return (
     <div className="space-y-6">
@@ -320,8 +428,11 @@ export function AdminBulkSMS() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Method Selection */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div role="radiogroup" aria-label="Recipient source" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <button
+              type="button"
+              role="radio"
+              aria-checked={selectedMethod === 'facilities'}
               onClick={() => {
                 setSelectedMethod('facilities')
                 setCsvData([])
@@ -349,6 +460,9 @@ export function AdminBulkSMS() {
             </button>
 
             <button
+              type="button"
+              role="radio"
+              aria-checked={selectedMethod === 'csv'}
               onClick={() => {
                 setSelectedMethod('csv')
                 setSelectedFacilities(new Set())
@@ -373,6 +487,9 @@ export function AdminBulkSMS() {
             </button>
 
             <button
+              type="button"
+              role="radio"
+              aria-checked={selectedMethod === 'manual'}
               onClick={() => {
                 setSelectedMethod('manual')
                 setSelectedFacilities(new Set())
@@ -419,9 +536,12 @@ export function AdminBulkSMS() {
                     variant="outline"
                     size="sm"
                     onClick={toggleAllFacilities}
+                    disabled={selectableFacilities.length === 0}
                     className="text-xs h-8"
                   >
-                    {selectedFacilities.size === filteredFacilities.length ? 'Deselect All' : 'Select All'}
+                    {selectableFacilities.length > 0 && selectableFacilities.every(f => selectedFacilities.has(f.id))
+                      ? 'Deselect All'
+                      : 'Select All'}
                   </Button>
                   <Badge variant="secondary" className="text-xs">
                     {selectedFacilities.size} selected
@@ -442,31 +562,44 @@ export function AdminBulkSMS() {
               ) : (
                 <div className="border border-border rounded-lg max-h-96 overflow-y-auto">
                   <div className="divide-y divide-border">
-                    {filteredFacilities.map((facility) => (
-                      <label
-                        key={facility.id}
-                        className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
-                      >
-                        <Checkbox
-                          checked={selectedFacilities.has(facility.id)}
-                          onCheckedChange={() => toggleFacility(facility.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {facility.name}
-                          </p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Phone className="w-3 h-3" aria-hidden="true" />
-                              {facility.phone}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {facility.city}, {facility.region}
-                            </span>
+                    {filteredFacilities.map((facility) => {
+                      const noPhone = !hasPhone(facility)
+                      return (
+                        <label
+                          key={facility.id}
+                          className={cn(
+                            "flex items-center gap-3 p-3 transition-colors",
+                            noPhone ? "cursor-not-allowed opacity-60" : "hover:bg-muted/50 cursor-pointer",
+                          )}
+                        >
+                          <Checkbox
+                            checked={selectedFacilities.has(facility.id)}
+                            onCheckedChange={() => toggleFacility(facility.id)}
+                            disabled={noPhone}
+                            aria-label={`Select ${facility.name}`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
+                              {facility.name}
+                              {noPhone && (
+                                <Badge variant="outline" className="border-destructive/40 text-destructive text-[10px]">
+                                  No phone
+                                </Badge>
+                              )}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Phone className="w-3 h-3" aria-hidden="true" />
+                                {noPhone ? "—" : facility.phone}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {facility.city}, {facility.region}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </label>
-                    ))}
+                        </label>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -479,18 +612,21 @@ export function AdminBulkSMS() {
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="md:col-span-1">
-                    <label className="text-sm font-medium">Phone Number</label>
+                    <label htmlFor="manual-phone" className="text-sm font-medium">Phone Number</label>
                     <Input
+                      id="manual-phone"
                       type="tel"
                       placeholder="e.g. 0712345678 or +255712345678"
                       value={newRecipient.phoneNumber}
                       onChange={(e) => setNewRecipient(prev => ({ ...prev, phoneNumber: e.target.value }))}
                       className="mt-1"
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddManualRecipient()}
                     />
                   </div>
                   <div className="md:col-span-1">
-                    <label className="text-sm font-medium">Facility Name (Optional)</label>
+                    <label htmlFor="manual-name" className="text-sm font-medium">Facility Name (Optional)</label>
                     <Input
+                      id="manual-name"
                       type="text"
                       placeholder="Optional: Facility name"
                       value={newRecipient.facilityName}
@@ -574,16 +710,22 @@ export function AdminBulkSMS() {
                   className="hidden"
                   id="csv-upload"
                 />
-                <label htmlFor="csv-upload">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    asChild
-                  >
-                    <span>Choose File</span>
+                <div className="flex items-center justify-center gap-2">
+                  <label htmlFor="csv-upload">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
+                      asChild
+                    >
+                      <span>Choose File</span>
+                    </Button>
+                  </label>
+                  <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={downloadCsvTemplate}>
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                    Download template
                   </Button>
-                </label>
+                </div>
               </div>
 
               {csvData.length > 0 && (
@@ -623,25 +765,57 @@ export function AdminBulkSMS() {
             </div>
           )}
 
-          {/* Message Input */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Message</label>
-            <Textarea
-              placeholder="Type your message here... The facility name will be automatically included in each SMS."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[120px] text-sm"
-              maxLength={1000}
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Each SMS will include the facility name</span>
-              <span>{message.length}/1000</span>
+          {/* Message Input + live preview */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="bulk-message" className="text-sm font-medium">Message</label>
+              <Textarea
+                id="bulk-message"
+                placeholder="Type your message here... The greeting and signature are added automatically."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="min-h-[160px] text-sm"
+                maxLength={1000}
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Greeting &amp; signature auto-added per facility</span>
+                <span>{message.length}/1000</span>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />
+                Preview
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <p className="whitespace-pre-wrap rounded-2xl rounded-tl-sm bg-background px-3 py-2 text-sm text-foreground shadow-sm">
+                  {previewText}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>
+                  ≈ {seg.segments} segment{seg.segments !== 1 ? 's' : ''}/SMS · {seg.chars} chars
+                  {seg.unicode ? ' · Unicode' : ''}
+                </span>
+                {selectedCount > 0 && (
+                  <span className="font-medium text-foreground">
+                    ~{totalUnits} SMS unit{totalUnits !== 1 ? 's' : ''} for {selectedCount} recipient{selectedCount !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              {seg.unicode && (
+                <p className="text-[11px] text-warning-foreground">
+                  Non-GSM characters (e.g. emoji) shorten each segment to 70 characters and cost more.
+                </p>
+              )}
             </div>
           </div>
 
           {/* Send Button */}
           <Button
-            onClick={handleSendSMS}
+            onClick={requestSend}
             disabled={isSending || selectedCount === 0 || !message.trim()}
             className="w-full"
           >
@@ -661,7 +835,7 @@ export function AdminBulkSMS() {
           {/* Results */}
           {sendResults && (
             <div className="border border-border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h3 className="text-sm font-medium">Send Results</h3>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-primary">
@@ -669,16 +843,22 @@ export function AdminBulkSMS() {
                     <span className="text-xs">{sendResults.success} successful</span>
                   </div>
                   {sendResults.failed > 0 && (
-                    <div className="flex items-center gap-1 text-destructive">
-                      <XCircle className="w-4 h-4" aria-hidden="true" />
-                      <span className="text-xs">{sendResults.failed} failed</span>
-                    </div>
+                    <>
+                      <div className="flex items-center gap-1 text-destructive">
+                        <XCircle className="w-4 h-4" aria-hidden="true" />
+                        <span className="text-xs">{sendResults.failed} failed</span>
+                      </div>
+                      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={copyFailed}>
+                        {copiedFailed ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+                        {copiedFailed ? 'Copied' : 'Copy failed numbers'}
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
-              {sendResults.details.length > 0 && (
+              {orderedDetails.length > 0 && (
                 <div className="max-h-64 overflow-y-auto space-y-2">
-                  {sendResults.details.map((detail, index) => (
+                  {orderedDetails.map((detail, index) => (
                     <div
                       key={index}
                       className={cn(
@@ -708,6 +888,33 @@ export function AdminBulkSMS() {
           )}
         </CardContent>
       </Card>
+
+      {/* Confirm before sending real SMS */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send SMS to {selectedCount} recipient{selectedCount !== 1 ? 's' : ''}?</DialogTitle>
+            <DialogDescription>
+              This sends a real SMS to each recipient — about <strong>{totalUnits} SMS unit{totalUnits !== 1 ? 's' : ''}</strong>
+              {' '}({seg.segments} segment{seg.segments !== 1 ? 's' : ''} each{seg.unicode ? ', Unicode' : ''}). This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-lg border border-border bg-muted/30 p-3">
+            <p className="whitespace-pre-wrap rounded-2xl rounded-tl-sm bg-background px-3 py-2 text-xs text-foreground shadow-sm">
+              {previewText}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirm(false)} disabled={isSending}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendSMS} disabled={isSending}>
+              {isSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" /> : <Send className="w-4 h-4 mr-2" aria-hidden="true" />}
+              Send now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
