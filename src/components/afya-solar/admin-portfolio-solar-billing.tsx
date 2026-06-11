@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { m } from "framer-motion"
 import { toast } from "sonner"
 import {
   AlertCircle,
@@ -12,6 +13,7 @@ import {
   Search,
   TrendingUp,
   Wallet,
+  X,
 } from "lucide-react"
 import {
   Card,
@@ -23,15 +25,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatCard } from "@/components/ui/stat-card"
+import { AnimatedNumber } from "@/components/ui/animated-number"
+import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
+import { fadeInUp, scaleIn, staggerContainer } from "@/components/motion/variants"
 import { useFacility, useFacilities } from "@/hooks/use-facilities"
 import { useAfyaSolarSubscribers as useAfyaSolarSubscriberByFacility } from "@/hooks/use-afyasolar-subscribers"
 import { useBills } from "@/hooks/use-bills"
@@ -41,8 +39,8 @@ import {
   useAfyaSolarBillingEligibleFacilities,
 } from "@/hooks/use-admin-portfolio-billing"
 import { formatCurrency, cn } from "@/lib/utils"
+import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { BillsSubscriptionView } from "@/components/dashboard/bills-subscription-view"
-import { AdminPaygFinancingSection } from "@/components/payg-financing/admin-payg-financing-section"
 
 type FacilityOption = {
   id: string
@@ -50,6 +48,17 @@ type FacilityOption = {
   city?: string | null
   region?: string | null
   hasAfyaSolar?: boolean
+}
+
+function initials(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? "")
+      .join("") || "?"
+  )
 }
 
 export function AdminPortfolioSolarBilling() {
@@ -96,10 +105,7 @@ export function AdminPortfolioSolarBilling() {
     data: servicePayments = [],
     isFetching: sapFetching,
     refetch: refetchSap,
-  } = useServiceAccessPayments(
-    selectedFacilityId || undefined,
-    "afya-solar",
-  )
+  } = useServiceAccessPayments(selectedFacilityId || undefined, "afya-solar")
   const {
     data: afyaSolarSubscriber,
     isFetching: subscriberFetching,
@@ -126,9 +132,7 @@ export function AdminPortfolioSolarBilling() {
     let list = [...facilityOptions]
     if (q) {
       list = list.filter((f) =>
-        [f.name, f.city, f.region, f.id].some((v) =>
-          String(v || "").toLowerCase().includes(q),
-        ),
+        [f.name, f.city, f.region, f.id].some((v) => String(v || "").toLowerCase().includes(q)),
       )
     }
     // Surface Afya Solar subscribers first, then sort by name.
@@ -140,9 +144,11 @@ export function AdminPortfolioSolarBilling() {
 
   useEffect(() => {
     if (!selectedFacilityId) return
-    if (!facilityOptions.some((f) => f.id === selectedFacilityId)) {
-      setSelectedFacilityId("")
-    }
+    if (facilityOptions.some((f) => f.id === selectedFacilityId)) return
+    // The selected facility disappeared (deleted/inactive) — clear on the next
+    // frame rather than synchronously inside the effect body.
+    const id = requestAnimationFrame(() => setSelectedFacilityId(""))
+    return () => cancelAnimationFrame(id)
   }, [facilityOptions, selectedFacilityId])
 
   const selectedFacility = useMemo(
@@ -174,8 +180,7 @@ export function AdminPortfolioSolarBilling() {
       activeSubscriptions: summaryJson?.activeSubscriptions ?? 0,
       recognizedRevenue: summaryJson?.totalRevenue ?? 0,
       pendingPayments:
-        (summaryJson?.pendingPayments ?? 0) +
-        (summaryJson?.overduePayments ?? 0),
+        (summaryJson?.pendingPayments ?? 0) + (summaryJson?.overduePayments ?? 0),
       pendingInvoiceTotal,
     }
   }, [
@@ -210,10 +215,7 @@ export function AdminPortfolioSolarBilling() {
     summaryFetching ||
     invoicesFetching ||
     (!!selectedFacilityId &&
-      (facilityFetching ||
-        billsFetching ||
-        sapFetching ||
-        subscriberFetching))
+      (facilityFetching || billsFetching || sapFetching || subscriberFetching))
 
   const handleCopyId = async () => {
     if (!selectedFacilityId) return
@@ -221,230 +223,254 @@ export function AdminPortfolioSolarBilling() {
     toast.success("Facility id copied.")
   }
 
+  const metricSkeleton = <Skeleton className="h-7 w-24" />
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Bills &amp; Payment</h2>
-          <p className="text-gray-600 text-sm mt-1 max-w-2xl">
-            Select a facility from the directory to inspect the same Bills
-            &amp; Subscription and PAYG &amp; Financing view that facility users
-            see.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {busy ? (
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              Updating
-            </span>
-          ) : null}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={refreshAll}
-            disabled={busy}
-          >
-            <RefreshCw className={cn("h-4 w-4 mr-1", busy && "animate-spin")} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Admin metrics summary */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Active facilities"
-          subtitle={`${portfolioMetrics.solarSubscribers} on Afya Solar`}
-          value={String(portfolioMetrics.totalFacilities || "")}
-          icon={Building2}
-          loading={allFacilitiesLoading || eligibleLoading}
-        />
-        <MetricCard
-          title="Recognized revenue"
-          subtitle="Portfolio · last 30 days"
-          value={formatCurrency(portfolioMetrics.recognizedRevenue)}
-          icon={TrendingUp}
-          loading={summaryLoading}
-        />
-        <MetricCard
-          title="Pending / at risk"
-          subtitle="Pending + overdue (30d)"
-          value={formatCurrency(portfolioMetrics.pendingPayments)}
-          icon={AlertCircle}
-          loading={summaryLoading}
-        />
-        <MetricCard
-          title="Active subscriptions"
-          subtitle="Solar customers"
-          value={String(portfolioMetrics.activeSubscriptions || "")}
-          icon={CheckCircle}
-          loading={summaryLoading}
-        />
-      </div>
-
-      {/* Facility selector */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Facility selection</CardTitle>
-          <CardDescription>
-            All active facilities from the facilities table. Afya Solar
-            subscribers are listed first.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 lg:grid-cols-[minmax(280px,360px)_1fr]">
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Search</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="Name, city, region, or id…"
-                value={facilitySearch}
-                onChange={(e) => setFacilitySearch(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                Select facility (dropdown)
-              </Label>
-              <Select
-                value={selectedFacilityId || "__portfolio__"}
-                onValueChange={(v) =>
-                  setSelectedFacilityId(v === "__portfolio__" ? "" : v)
-                }
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Choose facility" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__portfolio__">
-                    No facility selected
-                  </SelectItem>
-                  {filteredFacilities.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                      {f.hasAfyaSolar ? "" : " (no Afya Solar)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Matches: {filteredFacilities.length}
-              </p>
-            </div>
+    <LazyMotionProvider>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">Bills &amp; Payment</h2>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+              Select a facility from the directory to inspect the same Bills &amp; Subscription view that facility
+              users see.
+            </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {busy ? (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                Updating
+              </span>
+            ) : null}
+            <Button type="button" variant="outline" size="sm" onClick={refreshAll} disabled={busy}>
+              <RefreshCw className={cn("mr-1 h-4 w-4", busy && "animate-spin")} />
+              Refresh
+            </Button>
+          </div>
+        </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">
-              Facility list
-            </Label>
-            <div className="max-h-[280px] overflow-y-auto rounded-md border">
-              <Button
-                type="button"
-                variant={!selectedFacilityId ? "secondary" : "ghost"}
-                className="h-auto w-full justify-start rounded-none px-3 py-2 text-left"
-                onClick={() => setSelectedFacilityId("")}
-              >
-                <div>
-                  <p className="text-sm font-medium">No facility selected</p>
-                  <p className="text-xs text-muted-foreground">
-                    Pick a facility to view its bills, subscription, and PAYG
-                    details.
+        {/* Admin metrics summary */}
+        <m.div
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <m.div variants={scaleIn}>
+            <StatCard
+              title="Active facilities"
+              meta={`${portfolioMetrics.solarSubscribers} on Afya Solar`}
+              icon={<Building2 />}
+              accent="primary"
+              value={
+                allFacilitiesLoading || eligibleLoading ? (
+                  metricSkeleton
+                ) : (
+                  <AnimatedNumber value={portfolioMetrics.totalFacilities} />
+                )
+              }
+            />
+          </m.div>
+          <m.div variants={scaleIn}>
+            <StatCard
+              title="Recognized revenue"
+              meta="Portfolio · last 30 days"
+              icon={<TrendingUp />}
+              accent="success"
+              value={
+                summaryLoading ? (
+                  metricSkeleton
+                ) : (
+                  <AnimatedNumber value={portfolioMetrics.recognizedRevenue} prefix="TSh " />
+                )
+              }
+            />
+          </m.div>
+          <m.div variants={scaleIn}>
+            <StatCard
+              title="Pending / at risk"
+              meta="Pending + overdue (30d)"
+              icon={<AlertCircle />}
+              accent={portfolioMetrics.pendingPayments > 0 ? "warning" : "muted"}
+              value={
+                summaryLoading ? (
+                  metricSkeleton
+                ) : (
+                  <AnimatedNumber value={portfolioMetrics.pendingPayments} prefix="TSh " />
+                )
+              }
+            />
+          </m.div>
+          <m.div variants={scaleIn}>
+            <StatCard
+              title="Active subscriptions"
+              meta="Solar customers"
+              icon={<CheckCircle />}
+              accent="primary"
+              value={
+                summaryLoading ? (
+                  metricSkeleton
+                ) : (
+                  <AnimatedNumber value={portfolioMetrics.activeSubscriptions} />
+                )
+              }
+            />
+          </m.div>
+        </m.div>
+
+        {/* Facility directory */}
+        <m.div variants={fadeInUp} initial="hidden" animate="show">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Facility directory</CardTitle>
+              <CardDescription>
+                All active facilities. Afya Solar subscribers are listed first — pick one to drill into its billing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  placeholder="Search name, city, region, or id…"
+                  value={facilitySearch}
+                  onChange={(e) => setFacilitySearch(e.target.value)}
+                  aria-label="Search facilities"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>
+                  Showing <span className="font-medium text-foreground">{filteredFacilities.length}</span> of{" "}
+                  {facilityOptions.length} · {portfolioMetrics.solarSubscribers} on Afya Solar
+                </span>
+                {selectedFacilityId ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => setSelectedFacilityId("")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear selection
+                  </Button>
+                ) : null}
+              </div>
+
+              <div className="max-h-[320px] overflow-y-auto rounded-lg border border-border">
+                {allFacilitiesLoading ? (
+                  <div className="space-y-2 p-3">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 w-full" />
+                    ))}
+                  </div>
+                ) : filteredFacilities.length === 0 ? (
+                  <p className="px-3 py-8 text-center text-sm text-muted-foreground">
+                    No facilities match the search.
                   </p>
-                </div>
-              </Button>
-              {filteredFacilities.map((f) => (
-                <Button
-                  key={f.id}
-                  type="button"
-                  variant={selectedFacilityId === f.id ? "secondary" : "ghost"}
-                  className="h-auto w-full justify-start rounded-none border-t px-3 py-2 text-left"
-                  onClick={() => setSelectedFacilityId(f.id)}
-                >
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-medium">{f.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {[f.city, f.region].filter(Boolean).join(", ") ||
-                          "No location"}
-                      </p>
-                    </div>
-                    {f.hasAfyaSolar ? (
-                      <Badge variant="default" className="shrink-0">
-                        Afya Solar
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {filteredFacilities.map((f) => {
+                      const active = selectedFacilityId === f.id
+                      return (
+                        <li key={f.id}>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedFacilityId(active ? "" : f.id)}
+                            aria-pressed={active}
+                            className={cn(
+                              "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors",
+                              FOCUS_RING,
+                              active ? "bg-primary/10" : "hover:bg-muted/60",
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                                f.hasAfyaSolar ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                              )}
+                            >
+                              {initials(f.name)}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-foreground">{f.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {[f.city, f.region].filter(Boolean).join(", ") || "No location"}
+                              </p>
+                            </div>
+                            {f.hasAfyaSolar ? (
+                              <Badge className="shrink-0 bg-primary/15 text-primary">Afya Solar</Badge>
+                            ) : (
+                              <Badge variant="outline" className="shrink-0 text-muted-foreground">
+                                No solar
+                              </Badge>
+                            )}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </m.div>
+
+        {/* Selected facility context strip */}
+        {selectedFacilityId ? (
+          <m.div
+            key={selectedFacilityId}
+            variants={fadeInUp}
+            initial="hidden"
+            animate="show"
+            className="rounded-lg border border-border bg-card p-4"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
+                  {initials(selectedFacility?.name ?? facilityRecord?.name ?? "?")}
+                </span>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {selectedFacility?.name ?? facilityRecord?.name ?? "Facility"}
+                  </h3>
+                  <p className="font-mono text-xs text-muted-foreground">{selectedFacilityId}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Badge variant={selectedFacility?.hasAfyaSolar ? "default" : "outline"}>
+                      {selectedFacility?.hasAfyaSolar ? "Afya Solar subscriber" : "No active Afya Solar"}
+                    </Badge>
+                    {facilityRecord?.paymentModel ? (
+                      <Badge variant="secondary" className="font-normal">
+                        {String(facilityRecord.paymentModel)}
                       </Badge>
                     ) : null}
                   </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={handleCopyId}>
+                  <Copy className="mr-1 h-4 w-4" />
+                  Copy id
                 </Button>
-              ))}
-              {filteredFacilities.length === 0 && !allFacilitiesLoading ? (
-                <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                  No facilities match the search.
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Selected facility context strip */}
-      {selectedFacilityId ? (
-        <div className="rounded-md border bg-background/95 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                {selectedFacility?.name ?? facilityRecord?.name ?? "Facility"}
-              </h3>
-              <p className="text-xs text-muted-foreground font-mono">
-                {selectedFacilityId}
-              </p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge variant="outline">
-                  {selectedFacility?.hasAfyaSolar
-                    ? "Afya Solar subscriber"
-                    : "No active Afya Solar"}
-                </Badge>
-                {facilityRecord?.paymentModel ? (
-                  <Badge variant="secondary" className="font-normal">
-                    {String(facilityRecord.paymentModel)}
-                  </Badge>
-                ) : null}
+                <Button type="button" variant="outline" size="sm" onClick={() => setSelectedFacilityId("")}>
+                  Clear
+                </Button>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCopyId}
-              >
-                <Copy className="h-4 w-4 mr-1" />
-                Copy id
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedFacilityId("")}
-              >
-                Clear selection
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+          </m.div>
+        ) : null}
 
-      {/* Two tabs only */}
-      <Tabs defaultValue="bills" className="w-full">
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
-          <TabsTrigger value="bills">Bills &amp; Subscription</TabsTrigger>
-          <TabsTrigger value="payg">PAYG &amp; Financing</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="bills" className="mt-4 space-y-4">
+        {/* Bills & Subscription */}
+        <m.div
+          key={selectedFacilityId || "portfolio-bills"}
+          variants={fadeInUp}
+          initial="hidden"
+          animate="show"
+          className="space-y-4"
+        >
           {selectedFacilityId ? (
             <BillsSubscriptionView
               afyaSolarSubscriber={afyaSolarSubscriber ?? null}
@@ -458,55 +484,12 @@ export function AdminPortfolioSolarBilling() {
             <SelectFacilityEmptyState
               icon={Wallet}
               title="Select a facility to view bills & subscription"
-              description="Pick a facility from the directory above. The admin sees the same Bills & Subscription view facility users have, with their package, payment history, invoice requests, and bills."
+              description="Pick a facility from the directory above. The admin sees the same Bills & Subscription view facility users have — package, payment history, invoice requests, and bills."
             />
           )}
-        </TabsContent>
-
-        <TabsContent value="payg" className="mt-4 space-y-4">
-          <AdminPaygFinancingSection
-            facilityId={selectedFacilityId || undefined}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
-  )
-}
-
-function MetricCard({
-  title,
-  subtitle,
-  value,
-  icon: Icon,
-  loading,
-}: {
-  title: string
-  subtitle: string
-  value: string
-  icon: typeof TrendingUp
-  loading: boolean
-}) {
-  return (
-    <Card>
-      <CardContent className="pt-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground">
-              {title}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-            <p className="text-xl font-bold mt-2 text-gray-900">
-              {loading ? (
-                <span className="inline-block h-7 w-24 animate-pulse rounded bg-gray-100" />
-              ) : (
-                value
-              )}
-            </p>
-          </div>
-          <Icon className="h-8 w-8 text-muted-foreground/40 flex-shrink-0" />
-        </div>
-      </CardContent>
-    </Card>
+        </m.div>
+      </div>
+    </LazyMotionProvider>
   )
 }
 
@@ -522,12 +505,12 @@ function SelectFacilityEmptyState({
   return (
     <Card>
       <CardContent className="py-12">
-        <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-          <div className="w-14 h-14 rounded-full bg-green-50 border border-green-100 flex items-center justify-center mb-4">
-            <Icon className="w-6 h-6 text-green-700" />
+        <div className="mx-auto flex max-w-md flex-col items-center justify-center text-center">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+            <Icon className="size-6 text-primary" />
           </div>
-          <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          <h3 className="text-base font-semibold text-foreground">{title}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
       </CardContent>
     </Card>
