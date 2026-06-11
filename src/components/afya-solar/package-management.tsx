@@ -1,28 +1,46 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import * as React from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { m } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Package, 
-  Zap, 
+import { Switch } from '@/components/ui/switch'
+import { Skeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components/ui/stat-card'
+import { AnimatedNumber } from '@/components/ui/animated-number'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Package,
   DollarSign,
-  Settings,
   CheckCircle,
-  XCircle,
+  PauseCircle,
+  Gauge,
   Save,
-  Loader2
+  Loader2,
+  Search,
+  RefreshCw,
+  X,
 } from 'lucide-react'
+import { LazyMotionProvider } from '@/components/motion/lazy-motion-provider'
+import { fadeInUp, scaleIn, staggerContainer } from '@/components/motion/variants'
 import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
+import { FOCUS_RING } from '@/lib/dashboard/facility-ui'
 
 interface SolarPackage {
   id: number
@@ -56,35 +74,44 @@ interface PackageFormData {
   isActive: boolean
 }
 
+const PLAN_BADGE: Record<string, string> = {
+  CASH: 'border-success/40 bg-success/15 text-success-foreground',
+  INSTALLMENT: 'border-primary/40 bg-primary/10 text-primary',
+  EAAS: 'border-warning/40 bg-warning/15 text-warning-foreground',
+}
+
+function planPrice(planTypeCode: string, pricing: SolarPackage['plans'][number]['pricing']): string {
+  if (planTypeCode === 'CASH' && pricing.cashPrice) return `TZS ${pricing.cashPrice.toLocaleString()}`
+  if (planTypeCode === 'INSTALLMENT' && pricing.defaultMonthlyAmount) return `TZS ${pricing.defaultMonthlyAmount.toLocaleString()}/mo`
+  if (planTypeCode === 'EAAS' && pricing.eaasMonthlyFee) return `TZS ${pricing.eaasMonthlyFee.toLocaleString()}/mo`
+  return '—'
+}
+
+const EMPTY_FORM: PackageFormData = { code: '', name: '', ratedKw: 0, suitableFor: '', isActive: true }
+
 export default function AfyaSolarPackageManagement() {
   const { toast } = useToast()
   const [packages, setPackages] = useState<SolarPackage[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [editingPackage, setEditingPackage] = useState<SolarPackage | null>(null)
-  const [formData, setFormData] = useState<PackageFormData>({
-    code: '',
-    name: '',
-    ratedKw: 0,
-    suitableFor: '',
-    isActive: true
-  })
+  const [deleteTarget, setDeleteTarget] = useState<SolarPackage | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [formData, setFormData] = useState<PackageFormData>(EMPTY_FORM)
+  const [search, setSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
-  // Function to map rated kW to package names
   const getPackageName = (ratedKw: number, originalName: string) => {
     switch (ratedKw) {
-      case 10:
-        return 'Ultra'
-      case 6:
-        return 'Pro'
-      case 4.2:
-        return 'Plus'
-      case 2:
-        return 'Essential'
-      default:
-        return originalName
+      case 10: return 'Ultra'
+      case 6: return 'Pro'
+      case 4.2: return 'Plus'
+      case 2: return 'Essential'
+      default: return originalName
     }
   }
 
@@ -94,11 +121,9 @@ export default function AfyaSolarPackageManagement() {
 
   const fetchPackages = async () => {
     try {
-      setLoading(true)
+      setRefreshing(true)
       const response = await fetch('/api/afya-solar/packages')
       const data = await response.json()
-      // Normalize API response to a safe array.
-      // API shape is: { success: true, data: { packages: [...] } } or mock data with same shape.
       const payload = data?.data
       const list: SolarPackage[] = Array.isArray(payload?.packages)
         ? payload.packages
@@ -112,490 +137,349 @@ export default function AfyaSolarPackageManagement() {
       console.error('Error fetching packages:', error)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
   const handleCreatePackage = async () => {
+    setIsCreating(true)
     try {
       const response = await fetch('/api/afya-solar/packages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           package: formData,
-          specs: {
-            panelType: 'MONO',
-            panelCapacity: formData.ratedKw,
-            inverterType: 'STRING',
-            mountingType: 'ROOFTOP',
-            warrantyYears: 10
-          },
+          specs: { panelType: 'MONO', panelCapacity: formData.ratedKw, inverterType: 'STRING', mountingType: 'ROOFTOP', warrantyYears: 10 },
           plans: [
-            {
-              planTypeCode: 'CASH',
-              currency: 'TZS',
-              pricing: {
-                cashPrice: 1000000,
-                includesShipping: true,
-                includesInstallation: true,
-                includesCommissioning: true,
-                includesMaintenance: false
-              }
-            },
-            {
-              planTypeCode: 'INSTALLMENT',
-              currency: 'TZS',
-              pricing: {
-                installmentDurationMonths: 12,
-                defaultUpfrontPercent: '20.00',
-                defaultMonthlyAmount: 100000,
-                includesShipping: true,
-                includesInstallation: true,
-                includesCommissioning: true,
-                includesMaintenance: false
-              }
-            },
-            {
-              planTypeCode: 'EAAS',
-              currency: 'TZS',
-              pricing: {
-                eaasMonthlyFee: 50000,
-                eaasBillingModel: 'FIXED_MONTHLY',
-                includesShipping: true,
-                includesInstallation: true,
-                includesCommissioning: true,
-                includesMaintenance: true
-              }
-            }
-          ]
-        })
+            { planTypeCode: 'CASH', currency: 'TZS', pricing: { cashPrice: 1000000, includesShipping: true, includesInstallation: true, includesCommissioning: true, includesMaintenance: false } },
+            { planTypeCode: 'INSTALLMENT', currency: 'TZS', pricing: { installmentDurationMonths: 12, defaultUpfrontPercent: '20.00', defaultMonthlyAmount: 100000, includesShipping: true, includesInstallation: true, includesCommissioning: true, includesMaintenance: false } },
+            { planTypeCode: 'EAAS', currency: 'TZS', pricing: { eaasMonthlyFee: 50000, eaasBillingModel: 'FIXED_MONTHLY', includesShipping: true, includesInstallation: true, includesCommissioning: true, includesMaintenance: true } },
+          ],
+        }),
       })
-
       if (response.ok) {
         setIsCreateDialogOpen(false)
-        setFormData({ code: '', name: '', ratedKw: 0, suitableFor: '', isActive: true })
+        setFormData(EMPTY_FORM)
         fetchPackages()
-        toast({
-          title: "Package Created",
-          description: `${formData.name} has been created successfully.`,
-          duration: 3000,
-        })
+        toast({ title: 'Package created', description: `${formData.name} has been created successfully.`, duration: 3000 })
       } else {
         const errorData = await response.json()
-        toast({
-          title: "Creation Failed",
-          description: errorData.error || "Failed to create package. Please try again.",
-          variant: "destructive",
-          duration: 5000,
-        })
+        toast({ title: 'Creation failed', description: errorData.error || 'Failed to create package. Please try again.', variant: 'destructive', duration: 5000 })
       }
     } catch (error) {
       console.error('Error creating package:', error)
+      toast({ title: 'Creation failed', description: 'Network error. Please try again.', variant: 'destructive', duration: 5000 })
+    } finally {
+      setIsCreating(false)
     }
   }
 
   const handleToggleActive = async (packageId: number, isActive: boolean) => {
+    // Optimistic UI; reconcile from the server afterwards.
+    setPackages((prev) => prev.map((p) => (p.id === packageId ? { ...p, isActive: !isActive } : p)))
     try {
       await fetch(`/api/afya-solar/packages/${packageId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isActive: !isActive })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !isActive }),
       })
       fetchPackages()
     } catch (error) {
       console.error('Error toggling package:', error)
+      fetchPackages()
     }
   }
 
-  const handleDeletePackage = async (packageId: number) => {
-    if (confirm('Are you sure you want to delete this package? This action cannot be undone.')) {
-      try {
-        const response = await fetch(`/api/afya-solar/packages/${packageId}`, {
-          method: 'DELETE'
-        })
-        
-        if (response.ok) {
-          fetchPackages()
-          toast({
-            title: "Package Deleted",
-            description: "Package has been deleted successfully.",
-            duration: 3000,
-          })
-        } else {
-          const errorData = await response.json()
-          toast({
-            title: "Deletion Failed",
-            description: errorData.error || "Failed to delete package. Please try again.",
-            variant: "destructive",
-            duration: 5000,
-          })
-        }
-      } catch (error) {
-        console.error('Error deleting package:', error)
-        toast({
-          title: "Deletion Failed",
-          description: "Network error. Please check your connection and try again.",
-          variant: "destructive",
-          duration: 5000,
-        })
+  const performDelete = async () => {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/afya-solar/packages/${deleteTarget.id}`, { method: 'DELETE' })
+      if (response.ok) {
+        setDeleteTarget(null)
+        fetchPackages()
+        toast({ title: 'Package deleted', description: 'Package has been deleted successfully.', duration: 3000 })
+      } else {
+        const errorData = await response.json()
+        toast({ title: 'Deletion failed', description: errorData.error || 'Failed to delete package. Please try again.', variant: 'destructive', duration: 5000 })
       }
+    } catch (error) {
+      console.error('Error deleting package:', error)
+      toast({ title: 'Deletion failed', description: 'Network error. Please try again.', variant: 'destructive', duration: 5000 })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
   const handleEditPackage = (pkg: SolarPackage) => {
-    console.log('Editing package:', pkg)
     setEditingPackage(pkg)
-    setFormData({
-      code: pkg.code,
-      name: pkg.name,
-      ratedKw: pkg.ratedKw,
-      suitableFor: pkg.suitableFor,
-      isActive: pkg.isActive
-    })
+    setFormData({ code: pkg.code, name: pkg.name, ratedKw: pkg.ratedKw, suitableFor: pkg.suitableFor, isActive: pkg.isActive })
     setIsEditDialogOpen(true)
   }
 
   const handleUpdatePackage = async () => {
     if (!editingPackage) return
-
     setIsUpdating(true)
     try {
       const response = await fetch(`/api/afya-solar/packages/${editingPackage.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: formData.code,
-          name: formData.name,
-          ratedKw: formData.ratedKw,
-          suitableFor: formData.suitableFor,
-          isActive: formData.isActive
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: formData.code, name: formData.name, ratedKw: formData.ratedKw, suitableFor: formData.suitableFor, isActive: formData.isActive }),
       })
-
       if (response.ok) {
         setIsEditDialogOpen(false)
         setEditingPackage(null)
-        setFormData({ code: '', name: '', ratedKw: 0, suitableFor: '', isActive: true })
+        setFormData(EMPTY_FORM)
         fetchPackages()
-        toast({
-          title: "Package Updated",
-          description: `${formData.name} has been updated successfully.`,
-          duration: 3000,
-        })
+        toast({ title: 'Package updated', description: `${formData.name} has been updated successfully.`, duration: 3000 })
       } else {
         const errorData = await response.json()
-        toast({
-          title: "Update Failed",
-          description: errorData.error || "Failed to update package. Please try again.",
-          variant: "destructive",
-          duration: 5000,
-        })
+        toast({ title: 'Update failed', description: errorData.error || 'Failed to update package. Please try again.', variant: 'destructive', duration: 5000 })
       }
     } catch (error) {
       console.error('Error updating package:', error)
-      toast({
-        title: "Update Failed",
-        description: "Network error. Please check your connection and try again.",
-        variant: "destructive",
-        duration: 5000,
-      })
+      toast({ title: 'Update failed', description: 'Network error. Please try again.', variant: 'destructive', duration: 5000 })
     } finally {
       setIsUpdating(false)
     }
   }
 
-  const getPlanTypeColor = (planTypeCode: string) => {
-    switch (planTypeCode) {
-      case 'CASH': return 'bg-green-100 text-green-800'
-      case 'INSTALLMENT': return 'bg-blue-100 text-blue-800'
-      case 'EAAS': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+  const metrics = useMemo(() => {
+    const active = packages.filter((p) => p.isActive).length
+    return {
+      total: packages.length,
+      active,
+      inactive: packages.length - active,
+      capacity: packages.reduce((s, p) => s + (Number(p.ratedKw) || 0), 0),
     }
-  }
+  }, [packages])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return packages.filter((p) => {
+      if (activeFilter === 'active' && !p.isActive) return false
+      if (activeFilter === 'inactive' && p.isActive) return false
+      if (q && ![p.name, p.code, p.suitableFor].some((v) => String(v || '').toLowerCase().includes(q))) return false
+      return true
+    })
+  }, [packages, search, activeFilter])
+
+  const hasFilters = search !== '' || activeFilter !== 'all'
+
+  // Shared form fields for the create/edit dialogs.
+  const formFields = (idPrefix: string) => (
+    <div className="grid gap-4 py-2">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-code`}>Package code</Label>
+          <Input id={`${idPrefix}-code`} value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} placeholder="e.g. SOLAR-6KW" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-name`}>Package name</Label>
+          <Input id={`${idPrefix}-name`} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Pro" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-ratedKw`}>Rated power (kW)</Label>
+          <Input id={`${idPrefix}-ratedKw`} type="number" value={formData.ratedKw} onChange={(e) => setFormData({ ...formData, ratedKw: Number(e.target.value) })} placeholder="6" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${idPrefix}-suitableFor`}>Suitable for</Label>
+          <Input id={`${idPrefix}-suitableFor`} value={formData.suitableFor} onChange={(e) => setFormData({ ...formData, suitableFor: e.target.value })} placeholder="e.g. Health centre" />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch id={`${idPrefix}-active`} checked={formData.isActive} onCheckedChange={(v) => setFormData({ ...formData, isActive: v })} />
+        <Label htmlFor={`${idPrefix}-active`}>Active package</Label>
+      </div>
+    </div>
+  )
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}><CardContent className="space-y-2 p-5"><Skeleton className="h-4 w-20" /><Skeleton className="h-7 w-16" /></CardContent></Card>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Card key={i}><CardContent className="space-y-3 p-5"><Skeleton className="h-6 w-32" /><Skeleton className="h-4 w-44" /><Skeleton className="h-20 w-full" /></CardContent></Card>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Package Management</h1>
-          <p className="text-gray-600">Manage solar package offerings and pricing</p>
-        </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Package
+    <LazyMotionProvider>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+              <Package className="size-6 text-primary" aria-hidden />
+              Package Management
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">Manage solar package offerings and pricing plans.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={fetchPackages} disabled={refreshing}>
+              <RefreshCw className={cn('mr-1 h-4 w-4', refreshing && 'animate-spin')} />
+              Refresh
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Package</DialogTitle>
-              <DialogDescription>
-                Add a new solar package with specifications and pricing plans
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="code">Package Code</Label>
-                  <Input
-                    id="code"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    placeholder="e.g., SOLAR-50W"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="name">Package Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., 50W Residential System"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="ratedKw">Rated Power (kW)</Label>
-                  <Input
-                    id="ratedKw"
-                    type="number"
-                    value={formData.ratedKw}
-                    onChange={(e) => setFormData({ ...formData, ratedKw: Number(e.target.value) })}
-                    placeholder="0.05"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="suitableFor">Suitable For</Label>
-                  <Input
-                    id="suitableFor"
-                    value={formData.suitableFor}
-                    onChange={(e) => setFormData({ ...formData, suitableFor: e.target.value })}
-                    placeholder="e.g., Residential, Small Business"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-                <Label htmlFor="isActive">Active Package</Label>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreatePackage}>
-                Create Package
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Package Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-          setIsEditDialogOpen(open)
-          if (!open) {
-            setEditingPackage(null)
-            setFormData({ code: '', name: '', ratedKw: 0, suitableFor: '', isActive: true })
-          }
-        }}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Package</DialogTitle>
-              <DialogDescription>
-                Update the solar package details and configuration
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-code">Package Code</Label>
-                  <Input
-                    id="edit-code"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    placeholder="e.g., SOLAR-50W"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-name">Package Name</Label>
-                  <Input
-                    id="edit-name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g., 50W Residential System"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-ratedKw">Rated Power (kW)</Label>
-                  <Input
-                    id="edit-ratedKw"
-                    type="number"
-                    value={formData.ratedKw}
-                    onChange={(e) => setFormData({ ...formData, ratedKw: Number(e.target.value) })}
-                    placeholder="0.05"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-suitableFor">Suitable For</Label>
-                  <Input
-                    id="edit-suitableFor"
-                    value={formData.suitableFor}
-                    onChange={(e) => setFormData({ ...formData, suitableFor: e.target.value })}
-                    placeholder="e.g., Residential, Small Business"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit-isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                />
-                <Label htmlFor="edit-isActive">Active Package</Label>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleUpdatePackage} disabled={isUpdating}>
-                {isUpdating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Update Package
-                  </>
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Packages Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(Array.isArray(packages) ? packages : []).map((pkg) => (
-          <Card key={pkg.id} className={pkg.isActive ? '' : 'opacity-60'}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Package className="h-5 w-5" />
-                  <CardTitle className="text-lg">{getPackageName(pkg.ratedKw, pkg.name)}</CardTitle>
-                </div>
-                <Badge variant={pkg.isActive ? 'default' : 'secondary'}>
-                  {pkg.isActive ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
-              <CardDescription>
-                {pkg.code} • {pkg.ratedKw} kW • {pkg.suitableFor}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Pricing Plans */}
-                <div>
-                  <h4 className="font-medium mb-2">Available Plans:</h4>
-                  <div className="space-y-2">
-                    {(pkg.plans ?? []).map((plan) => (
-                      <div key={plan.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getPlanTypeColor(plan.planTypeCode)}>
-                            {plan.planTypeCode}
-                          </Badge>
-                          <span className="text-sm">
-                            {plan.planTypeCode === 'CASH' && plan.pricing.cashPrice && 
-                              `TZS ${plan.pricing.cashPrice.toLocaleString()}`
-                            }
-                            {plan.planTypeCode === 'INSTALLMENT' && plan.pricing.defaultMonthlyAmount && 
-                              `TZS ${plan.pricing.defaultMonthlyAmount.toLocaleString()}/mo`
-                            }
-                            {plan.planTypeCode === 'EAAS' && plan.pricing.eaasMonthlyFee && 
-                              `TZS ${plan.pricing.eaasMonthlyFee.toLocaleString()}/mo`
-                            }
-                          </span>
-                        </div>
-                        <DollarSign className="h-4 w-4 text-green-600" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleToggleActive(pkg.id, pkg.isActive)}
-                    >
-                      {pkg.isActive ? (
-                        <XCircle className="h-4 w-4" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleEditPackage(pkg)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeletePackage(pkg.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
+            <Dialog open={isCreateDialogOpen} onOpenChange={(open) => { setIsCreateDialogOpen(open); if (!open) setFormData(EMPTY_FORM) }}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Plus className="mr-1 h-4 w-4" /> New package</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Create new package</DialogTitle>
+                  <DialogDescription>Add a new solar package with specifications and default pricing plans.</DialogDescription>
+                </DialogHeader>
+                {formFields('create')}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isCreating}>Cancel</Button>
+                  <Button onClick={handleCreatePackage} disabled={isCreating || !formData.name.trim()}>
+                    {isCreating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
+                    Create package
                   </Button>
-                </div>
-              </div>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <m.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <m.div variants={scaleIn}><StatCard title="Total packages" meta="Offerings" icon={<Package />} accent="primary" value={<AnimatedNumber value={metrics.total} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Active" meta="Available to facilities" icon={<CheckCircle />} accent="success" value={<AnimatedNumber value={metrics.active} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Inactive" meta="Hidden / retired" icon={<PauseCircle />} accent={metrics.inactive > 0 ? 'warning' : 'muted'} value={<AnimatedNumber value={metrics.inactive} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Total capacity" meta="Sum of rated power" icon={<Gauge />} accent="solar" value={<AnimatedNumber value={metrics.capacity} decimals={1} suffix=" kW" />} /></m.div>
+        </m.div>
+
+        {/* Toolbar */}
+        <m.div variants={fadeInUp} initial="hidden" animate="show" className="flex flex-wrap items-center gap-2">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input className="w-56 pl-9" placeholder="Search name, code, suitable for…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search packages" />
+          </div>
+          <select value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')} aria-label="Filter by status" className={cn('h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground', FOCUS_RING)}>
+            <option value="all">All packages</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          {hasFilters && (
+            <Button variant="ghost" size="sm" className="h-9" onClick={() => { setSearch(''); setActiveFilter('all') }}>
+              <X className="mr-1 h-3.5 w-3.5" /> Clear
+            </Button>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground">{filtered.length} of {packages.length}</span>
+        </m.div>
+
+        {/* Packages grid */}
+        {filtered.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center gap-3 py-14 text-center">
+              <Package className="size-10 text-muted-foreground" aria-hidden />
+              <p className="text-sm text-muted-foreground">{packages.length === 0 ? 'No packages yet.' : 'No packages match your filters.'}</p>
+              {packages.length === 0 && <Button onClick={() => setIsCreateDialogOpen(true)}><Plus className="mr-1 h-4 w-4" /> Create first package</Button>}
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          <m.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((pkg) => (
+              <m.div key={pkg.id} variants={scaleIn}>
+                <Card className={cn('h-full transition-shadow hover:shadow-md', !pkg.isActive && 'opacity-70')}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Package className="size-5" aria-hidden />
+                        </span>
+                        <CardTitle className="text-lg">{getPackageName(pkg.ratedKw, pkg.name)}</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={pkg.isActive ? 'border-success/40 bg-success/15 text-success-foreground' : 'border-border bg-muted text-muted-foreground'}>
+                          {pkg.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <Switch checked={pkg.isActive} onCheckedChange={() => handleToggleActive(pkg.id, pkg.isActive)} aria-label={`Toggle ${pkg.name} active`} />
+                      </div>
+                    </div>
+                    <CardDescription>{pkg.code} · {pkg.ratedKw} kW · {pkg.suitableFor}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Available plans</h4>
+                      <div className="space-y-2">
+                        {(pkg.plans ?? []).map((plan) => (
+                          <div key={plan.id} className="flex items-center justify-between rounded-md border border-border/60 bg-muted/30 p-2">
+                            <span className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium', PLAN_BADGE[plan.planTypeCode] ?? 'border-border bg-muted text-muted-foreground')}>
+                              {plan.planTypeCode}
+                            </span>
+                            <span className="flex items-center gap-1 text-sm tabular-nums text-foreground">
+                              <DollarSign className="size-3.5 text-muted-foreground" aria-hidden />
+                              {planPrice(plan.planTypeCode, plan.pricing)}
+                            </span>
+                          </div>
+                        ))}
+                        {(pkg.plans ?? []).length === 0 && <p className="text-xs text-muted-foreground">No pricing plans.</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
+                      <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => handleEditPackage(pkg)}>
+                        <Edit className="size-3.5" /> Edit
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-destructive hover:text-destructive" onClick={() => setDeleteTarget(pkg)}>
+                        <Trash2 className="size-3.5" /> Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </m.div>
+            ))}
+          </m.div>
+        )}
       </div>
 
-      {packages.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No packages found</p>
-            <Button className="mt-4" onClick={() => setIsCreateDialogOpen(true)}>
-              Create First Package
+      {/* Edit dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) { setEditingPackage(null); setFormData(EMPTY_FORM) } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit package</DialogTitle>
+            <DialogDescription>Update the solar package details and configuration.</DialogDescription>
+          </DialogHeader>
+          {formFields('edit')}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={isUpdating}>Cancel</Button>
+            <Button onClick={handleUpdatePackage} disabled={isUpdating}>
+              {isUpdating ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+              Update package
             </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirm */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete package?</DialogTitle>
+            <DialogDescription>
+              {deleteTarget ? `"${getPackageName(deleteTarget.ratedKw, deleteTarget.name)}" (${deleteTarget.code}) will be permanently removed. This cannot be undone.` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="destructive" onClick={performDelete} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Trash2 className="mr-1 h-4 w-4" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </LazyMotionProvider>
   )
 }

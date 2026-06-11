@@ -9,9 +9,15 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, Trash2, Phone } from "lucide-react"
+import { Users, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, Trash2, Phone, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
+import { m } from "framer-motion"
 import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatCard } from "@/components/ui/stat-card"
+import { AnimatedNumber } from "@/components/ui/animated-number"
+import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
+import { fadeInUp, scaleIn, staggerContainer } from "@/components/motion/variants"
 
 interface User {
   id: string
@@ -138,6 +144,13 @@ export function UserManagement() {
     })
   }, [users, searchQuery, roleFilter, statusFilter])
 
+  const metrics = useMemo(() => ({
+    total: users.length,
+    verified: users.filter((u) => u.emailVerified).length,
+    pending: users.filter((u) => !u.emailVerified && !!u.invitationSentAt).length,
+    admins: users.filter((u) => u.type === "admin" || u.role === "admin").length,
+  }), [users])
+
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
@@ -231,15 +244,31 @@ export function UserManagement() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="py-6">
-          <CardListSkeleton rows={5} />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}><CardContent className="space-y-2 p-5"><Skeleton className="h-4 w-20" /><Skeleton className="h-7 w-16" /></CardContent></Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="py-6">
+            <CardListSkeleton rows={5} />
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
+    <LazyMotionProvider>
+      <div className="space-y-4">
+        <m.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <m.div variants={scaleIn}><StatCard title="Total" meta="Users & admins" icon={<Users />} accent="primary" value={<AnimatedNumber value={metrics.total} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Verified" meta="Email confirmed" icon={<CheckCircle2 />} accent="success" value={<AnimatedNumber value={metrics.verified} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Pending invites" meta="Awaiting acceptance" icon={<Clock />} accent={metrics.pending > 0 ? "warning" : "muted"} value={<AnimatedNumber value={metrics.pending} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Admins" meta="Admin accounts" icon={<ShieldCheck />} accent="solar" value={<AnimatedNumber value={metrics.admins} />} /></m.div>
+        </m.div>
+        <m.div variants={fadeInUp} initial="hidden" animate="show">
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -505,5 +534,8 @@ export function UserManagement() {
         )}
       </CardContent>
     </Card>
+        </m.div>
+      </div>
+    </LazyMotionProvider>
   )
 }

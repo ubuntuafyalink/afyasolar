@@ -10,8 +10,14 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Wrench, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, UserCheck, UserX, Trash2, Star } from "lucide-react"
 import { toast } from "sonner"
+import { m } from "framer-motion"
 import { DeleteTechnicianDialog } from "./delete-technician-dialog"
 import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatCard } from "@/components/ui/stat-card"
+import { AnimatedNumber } from "@/components/ui/animated-number"
+import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
+import { fadeInUp, scaleIn, staggerContainer } from "@/components/motion/variants"
 import { cn } from "@/lib/utils"
 
 interface Technician {
@@ -117,6 +123,13 @@ export function TechnicianManagement() {
     })
   }, [technicians, searchQuery, statusFilter, availabilityFilter])
 
+  const metrics = useMemo(() => ({
+    total: technicians.length,
+    active: technicians.filter((t) => t.status === "active").length,
+    pending: technicians.filter((t) => t.user && !t.user.emailVerified).length,
+    inactive: technicians.filter((t) => t.status === "inactive" || t.status === "banned").length,
+  }), [technicians])
+
   // Pagination
   const totalPages = Math.ceil(filteredTechnicians.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
@@ -187,15 +200,31 @@ export function TechnicianManagement() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <CardListSkeleton rows={5} />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}><CardContent className="space-y-2 p-5"><Skeleton className="h-4 w-20" /><Skeleton className="h-7 w-16" /></CardContent></Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <CardListSkeleton rows={5} />
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
+    <LazyMotionProvider>
+      <div className="space-y-4">
+        <m.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <m.div variants={scaleIn}><StatCard title="Total technicians" meta="All registered" icon={<Wrench />} accent="primary" value={<AnimatedNumber value={metrics.total} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Active" meta="Operational" icon={<UserCheck />} accent="success" value={<AnimatedNumber value={metrics.active} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Pending invite" meta="Not yet registered" icon={<Clock />} accent={metrics.pending > 0 ? "warning" : "muted"} value={<AnimatedNumber value={metrics.pending} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard title="Inactive / banned" meta="Not operational" icon={<UserX />} accent={metrics.inactive > 0 ? "destructive" : "muted"} value={<AnimatedNumber value={metrics.inactive} />} /></m.div>
+        </m.div>
+        <m.div variants={fadeInUp} initial="hidden" animate="show">
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -219,7 +248,7 @@ export function TechnicianManagement() {
               <DialogHeader>
                 <DialogTitle className="text-sm">Invite Technician</DialogTitle>
                 <DialogDescription className="text-xs">
-                  Enter the technician's email address. They will receive an invitation to complete registration.
+                  Enter the technician&apos;s email address. They will receive an invitation to complete registration.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-3">
@@ -466,6 +495,9 @@ export function TechnicianManagement() {
         />
       )}
     </Card>
+        </m.div>
+      </div>
+    </LazyMotionProvider>
   )
 }
 
