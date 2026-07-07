@@ -1,7 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
+import { PT_Serif } from "next/font/google"
 import { Atkinson_Hyperlegible } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Providers } from "@/components/providers"
@@ -9,6 +8,17 @@ import { InstallPrompt } from "@/components/pwa/install-prompt"
 import { SessionGuard } from "@/components/auth/session-guard"
 import { PushNotificationPrompt } from "@/components/push-notification-prompt"
 import "../styles/globals.css"
+
+// PT Serif is the app-wide body/heading face (via --font-sans → the @theme stack
+// in globals.css). Numerals fall through to a restricted-range JetBrains Mono
+// face declared there, so amounts render mono while prose stays serif.
+const ptSerif = PT_Serif({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-pt-serif",
+  display: "swap",
+})
 
 // Atkinson Hyperlegible a dyslexia-friendly, high-legibility face exposed via
 // the accessibility menu (the `a11y-dyslexia-friendly` class swaps --font-sans).
@@ -63,7 +73,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${atkinson.variable} min-h-dvh overflow-x-hidden antialiased touch-manipulation`}
+        className={`font-sans ${ptSerif.variable} ${atkinson.variable} min-h-dvh overflow-x-hidden antialiased touch-manipulation`}
         suppressHydrationWarning
       >
         <Providers>

@@ -26,7 +26,33 @@ import { cn } from "@/lib/utils"
 import { FOCUS_RING, scoreBarColor } from "@/lib/dashboard/facility-ui"
 import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
 import { childServiceStatus } from "@/lib/dashboard/admin-portfolio-real"
+import { assessPortfolioFacilityRisk } from "@/lib/intelligence/risk-features"
+import type { RiskTier } from "@/lib/intelligence/risk-model"
 import type { PortfolioFacility, ResilienceTier } from "@/lib/dashboard/admin-portfolio-types"
+
+const RISK_TIER_BADGE: Record<RiskTier, "successSoft" | "primarySoft" | "warningSoft" | "destructiveSoft"> = {
+  Low: "successSoft",
+  Elevated: "primarySoft",
+  High: "warningSoft",
+  Severe: "destructiveSoft",
+}
+
+/** Modelled disruption-risk cell (tier + top driver). Calibrated prior, not a forecast. */
+function RiskCell({ row }: { row: PortfolioFacility }) {
+  const risk = assessPortfolioFacilityRisk(row)
+  if (!risk.sufficientData) {
+    return <span className="text-xs text-muted-foreground">Insufficient data</span>
+  }
+  const topDriver = risk.drivers.find((d) => d.direction === "increases")
+  return (
+    <div className="space-y-0.5">
+      <Badge variant={RISK_TIER_BADGE[risk.tier]} title="Modelled disruption-risk prior — not a validated forecast">
+        {risk.tier} · {Math.round(risk.probability * 100)}%
+      </Badge>
+      {topDriver ? <span className="block text-xs text-muted-foreground">{topDriver.label.en}</span> : null}
+    </div>
+  )
+}
 
 type SortKey = "name" | "rcs"
 type SortDir = "asc" | "desc"
@@ -45,11 +71,11 @@ const HAZARD_OPTIONS: { value: HazardFilter; label: string }[] = [
 ]
 const selectClass = "h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground"
 
-const TIER_BADGE: Record<string, "success" | "default" | "warning" | "destructive"> = {
-  Resilient: "success",
-  Developing: "default",
-  "At risk": "warning",
-  Critical: "destructive",
+const TIER_BADGE: Record<string, "successSoft" | "primarySoft" | "warningSoft" | "destructiveSoft"> = {
+  Resilient: "successSoft",
+  Developing: "primarySoft",
+  "At risk": "warningSoft",
+  Critical: "destructiveSoft",
 }
 const TIER_ICON: Record<string, LucideIcon> = {
   Resilient: ShieldCheck,
@@ -112,7 +138,7 @@ function ChildServicesCell({ row }: { row: PortfolioFacility }) {
   }
   if (failing === 0 && atRisk === 0) {
     return (
-      <Badge variant="success" className="gap-1">
+      <Badge variant="successSoft" className="gap-1">
         <ShieldCheck aria-hidden className="size-3" />
         All OK
       </Badge>
@@ -121,13 +147,13 @@ function ChildServicesCell({ row }: { row: PortfolioFacility }) {
   return (
     <div className="flex flex-wrap gap-1">
       {failing > 0 && (
-        <Badge variant="destructive" className="gap-1">
+        <Badge variant="destructiveSoft" className="gap-1">
           <OctagonAlert aria-hidden className="size-3" />
           {failing} failing
         </Badge>
       )}
       {atRisk > 0 && (
-        <Badge variant="warning" className="gap-1">
+        <Badge variant="warningSoft" className="gap-1">
           <TriangleAlert aria-hidden className="size-3" />
           {atRisk} at risk
         </Badge>
@@ -227,7 +253,7 @@ function PageSkeleton() {
         </div>
       </CardHeader>
       <CardContent className="px-3 pb-4 md:px-6">
-        <TableSkeleton rows={8} columns={6} />
+        <TableSkeleton rows={8} columns={7} />
       </CardContent>
     </Card>
   )
@@ -405,7 +431,7 @@ export function AdminFacilitiesRcsTable({
         </CardHeader>
         <CardContent className="px-0 pb-4">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] border-collapse text-sm">
+            <table className="w-full min-w-[980px] border-collapse text-sm">
               <thead className="border-b border-border bg-muted/40 text-xs">
                 <tr>
                   <SortHeader label="Facility" active={sortKey === "name"} dir={sortDir} onClick={() => toggleSort("name")} />
@@ -414,6 +440,7 @@ export function AdminFacilitiesRcsTable({
                   <SortHeader label="RCS" active={sortKey === "rcs"} dir={sortDir} onClick={() => toggleSort("rcs")} />
                   <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Child services</th>
                   <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Top hazard</th>
+                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Disruption risk</th>
                   <th scope="col" className="px-3 py-2 text-right font-medium text-muted-foreground">Details</th>
                 </tr>
               </thead>
@@ -458,6 +485,9 @@ export function AdminFacilitiesRcsTable({
                           "—"
                         )}
                       </td>
+                      <td className="px-3 py-2">
+                        {climateLoading && !row.climate ? <Skeleton className="h-6 w-24 rounded-full" /> : <RiskCell row={row} />}
+                      </td>
                       <td className="px-3 py-2 text-right">
                         <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => setSelected(row)}>
                           <Eye aria-hidden className="size-3.5" />
@@ -469,7 +499,7 @@ export function AdminFacilitiesRcsTable({
                 })}
                 {pageRows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                    <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
                       {facilities.length === 0 ? "No facilities yet." : "No facilities match the current filters."}
                     </td>
                   </tr>

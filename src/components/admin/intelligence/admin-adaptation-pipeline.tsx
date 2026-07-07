@@ -42,6 +42,10 @@ function PipelineCard({ item }: { item: AdaptationItem }) {
             {item.riskCategory}
           </Badge>
         )}
+        <Badge variant="outline" className="text-[10px] text-emerald-700">
+          {normalizeStatus(item.status) === "done" ? "+" : "up to +"}
+          {item.estimatedGainPoints} pts est.
+        </Badge>
       </div>
     </li>
   )
@@ -119,6 +123,13 @@ export function AdminAdaptationPipeline() {
                   · {data?.totalFacilitiesWithAdaptations ?? 0} facilities
                 </span>
               </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Estimated resilience gain:{" "}
+                <span className="font-semibold text-emerald-700">+{data?.totalRealizedGain ?? 0} pts realized</span>
+                {" · "}
+                <span className="font-semibold text-indigo-700">+{data?.totalPotentialGain ?? 0} pts available</span>{" "}
+                (documented per-hazard estimate)
+              </p>
               <div className="mt-4 space-y-1">
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>Measures implemented</span>

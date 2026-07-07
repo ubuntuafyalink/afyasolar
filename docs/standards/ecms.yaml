@@ -1,0 +1,54 @@
+# AfyaSolar — Energy Conservation Measures (ECM) catalogue
+# Canonical human-readable reference (CEO spec 9.5).
+# The AUTHORITATIVE, typed source the app consumes is
+# src/lib/dashboard/ecm-catalogue.ts (ECM_CATALOGUE). Keep this file in sync when
+# that changes; bump `version` together with ECM_CATALOGUE_VERSION.
+
+version: ecm-v1
+
+# Costings are for a REFERENCE small health facility (~30 kWh/day). The app scales
+# each measure to a facility's real daily load via `sizeScaling` (0 = fixed cost,
+# 1 = fully proportional) — see estimateEcmCostTsh / estimateEcmSavingsTsh.
+reference_daily_kwh: 30
+
+# Ranking (spec 10.4): prioritise resilience gain per cost; simple payback (months)
+# = size-scaled cost / size-scaled monthly saving is shown for context.
+
+fields:
+  - code
+  - title
+  - category
+  - description
+  - indicativeCostTsh      # reference-facility capital cost
+  - monthlySavingTsh       # reference-facility monthly saving
+  - resilienceGainPoints   # expected RCS gain
+  - dimension              # primary CRiPHC dimension (HES/CSF/ECPQ/EDC/RRC/WW)
+  - horizon                # immediate | medium | capital
+  - lifetimeYears
+  - sizeScaling            # 0..1
+
+measures:
+  - { code: ECM-001, title: LED lighting retrofit, category: Lighting, dimension: EDC, horizon: immediate }
+  - { code: ECM-002, title: Solar direct-drive vaccine refrigerator, category: Cold chain, dimension: CSF, horizon: capital }
+  - { code: ECM-003, title: Critical-load circuit isolation, category: Electrical, dimension: ECPQ, horizon: medium }
+  - { code: ECM-004, title: Cool-roof coating, category: Thermal, dimension: HES, horizon: medium }
+  - { code: ECM-005, title: Variable-frequency drive on water pump, category: Water, dimension: WW, horizon: medium }
+  - { code: ECM-006, title: Power-factor correction at main panel, category: Electrical, dimension: ECPQ, horizon: capital }
+  - { code: ECM-007, title: Surge protection & voltage stabilisation, category: Electrical, dimension: ECPQ, horizon: immediate }
+  - { code: ECM-008, title: Battery autonomy upgrade, category: Storage, dimension: ECPQ, horizon: capital }
+  - { code: ECM-009, title: Occupancy sensors & daylight controls, category: Controls, dimension: EDC, horizon: immediate }
+  - { code: ECM-010, title: Load scheduling to solar hours, category: Behaviour, dimension: EDC, horizon: immediate }
+  - { code: ECM-011, title: Staff switch-off protocol & signage, category: Behaviour, dimension: RRC, horizon: immediate }
+  - { code: ECM-012, title: Fridge gasket & door-seal renewal, category: Cold chain, dimension: CSF, horizon: immediate }
+  - { code: ECM-013, title: Continuous cold-chain temperature monitoring, category: Cold chain, dimension: CSF, horizon: medium }
+  - { code: ECM-014, title: Inverter (DC) air-conditioner upgrade, category: HVAC, dimension: EDC, horizon: capital }
+  - { code: ECM-015, title: Ceiling insulation & ventilation, category: Thermal, dimension: HES, horizon: medium }
+  - { code: ECM-016, title: External window shading, category: Thermal, dimension: HES, horizon: medium }
+  - { code: ECM-017, title: Scheduled solar array cleaning, category: Solar, dimension: ECPQ, horizon: immediate }
+  - { code: ECM-018, title: Solar array expansion, category: Solar, dimension: ECPQ, horizon: capital }
+  - { code: ECM-019, title: Right-size & service the generator, category: Electrical, dimension: ECPQ, horizon: medium }
+  - { code: ECM-020, title: Rainwater harvesting for non-clinical use, category: Water, dimension: WW, horizon: capital }
+  - { code: ECM-021, title: Water leak survey & repair, category: Water, dimension: WW, horizon: immediate }
+  - { code: ECM-022, title: Smart metering & sub-metering, category: Metering, dimension: EDC, horizon: medium }
+  - { code: ECM-023, title: Battery management & monitoring (BMS), category: Storage, dimension: ECPQ, horizon: medium }
+  - { code: ECM-024, title: Efficient water/space heating (solar or heat-pump), category: HVAC, dimension: EDC, horizon: capital }

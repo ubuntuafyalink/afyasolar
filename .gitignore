@@ -12,3 +12,10 @@ certs/
 AGENTS.md
 CLAUDE.md
 tsconfig.tsbuildinfo
+
+# tests (Vitest / Playwright)
+/e2e/.env.test
+/e2e/.auth/
+/test-results/
+/playwright-report/
+/coverage/

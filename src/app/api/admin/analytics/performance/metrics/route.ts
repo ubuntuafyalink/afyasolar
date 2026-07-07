@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
-import { deviceTelemetry, deviceHealth, devices, facilities } from '@/lib/db/schema'
-import { eq, and, gte, lte, desc, avg, sum, min, max } from 'drizzle-orm'
-import { format, subDays, subMonths, startOfDay, endOfDay } from 'date-fns'
+import { deviceTelemetry, devices, facilities } from '@/lib/db/schema'
+import { eq, and, gte, lte, desc, avg } from 'drizzle-orm'
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 
 interface PerformanceMetrics {
   deviceId: string
@@ -217,16 +217,16 @@ async function calculatePerformanceMetrics(
   const performanceRatio = calculatePerformanceRatio(energyGenerated, avgEfficiency, ratedCapacity)
   const availability = calculateAvailability(uptime)
   const reliability = calculateReliability(telemetryData)
-  const degradationRate = await calculateDegradationRate(deviceId || device.id, startDate)
+  const degradationRate = await calculateDegradationRate(deviceId || device.id, startDate, endDate)
 
-  // Get benchmarks
-  const benchmarks = includeBenchmarks 
-    ? await getBenchmarks(avgEfficiency, capacityFactor, performanceRatio, facilityId)
+  // Get benchmarks (real portfolio average over the window)
+  const benchmarks = includeBenchmarks
+    ? await getBenchmarks(startDate, endDate)
     : getDefaultBenchmarks()
 
-  // Get trends
-  const trends = includeTrends 
-    ? await getTrends(deviceId || device.id, period, startDate, energyGenerated, avgEfficiency, reliability)
+  // Get trends (vs the previous equal-length window)
+  const trends = includeTrends
+    ? await getTrends(deviceId || device.id, startDate, endDate, energyGenerated, avgEfficiency, reliability)
     : getDefaultTrends()
 
   return {
@@ -321,44 +321,56 @@ function calculateReliability(telemetryData: any[]): number {
   return reliabilityScore
 }
 
-/**
- * Calculate degradation rate
- */
-async function calculateDegradationRate(deviceId: string, startDate: string): Promise<number> {
-  // Mock implementation - in real implementation, analyze historical data
-  return 0.5 // % per year
+const r2 = (n: number) => Math.round(n * 100) / 100
+
+/** Average telemetry efficiency (%) for a device over a window, or null when no data. */
+async function avgEfficiencyForDevice(deviceId: string, start: Date, end: Date): Promise<number | null> {
+  const rows = await db
+    .select({ efficiency: deviceTelemetry.efficiency })
+    .from(deviceTelemetry)
+    .where(and(eq(deviceTelemetry.deviceId, deviceId), gte(deviceTelemetry.timestamp, start), lte(deviceTelemetry.timestamp, end)))
+  const effs = rows.map((r) => Number(r.efficiency) || 0).filter((e) => e > 0)
+  if (effs.length === 0) return null
+  return effs.reduce((s, e) => s + e, 0) / effs.length
 }
 
 /**
- * Get benchmarks
+ * Real degradation: annual %-drop in average efficiency vs the same window one year
+ * earlier. Returns 0 (not a fabricated constant) when there is no year-ago history.
  */
-async function getBenchmarks(
-  avgEfficiency: number,
-  capacityFactor: number,
-  performanceRatio: number,
-  facilityId?: string | null
-): Promise<any> {
-  // Mock benchmark data - in real implementation, fetch from benchmarks table
-  return {
-    industryAvg: {
-      energyGenerated: 1000,
-      avgEfficiency: 85,
-      capacityFactor: 20,
-      performanceRatio: 75
-    },
-    facilityAvg: {
-      energyGenerated: 1200,
-      avgEfficiency: 88,
-      capacityFactor: 22,
-      performanceRatio: 78
-    },
-    regionalAvg: {
-      energyGenerated: 950,
-      avgEfficiency: 83,
-      capacityFactor: 19,
-      performanceRatio: 73
-    }
+async function calculateDegradationRate(deviceId: string, startDate: string, endDate: string): Promise<number> {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const cur = await avgEfficiencyForDevice(deviceId, start, end)
+  const prev = await avgEfficiencyForDevice(deviceId, subMonths(start, 12), subMonths(end, 12))
+  if (cur == null || prev == null || prev <= 0) return 0
+  return Math.max(0, ((prev - cur) / prev) * 100)
+}
+
+type BenchmarkBucket = { energyGenerated: number; avgEfficiency: number; capacityFactor: number; performanceRatio: number }
+
+/**
+ * Real benchmark = the PORTFOLIO average over the same window, from live telemetry.
+ * We have no external industry/regional dataset, so the three buckets all carry the
+ * real portfolio average (labelled honestly in the docs) rather than fabricated
+ * constants. Falls back to zeros when the portfolio has no telemetry.
+ */
+async function getBenchmarks(startDate: string, endDate: string): Promise<{ industryAvg: BenchmarkBucket; facilityAvg: BenchmarkBucket; regionalAvg: BenchmarkBucket }> {
+  const [agg] = await db
+    .select({ avgEff: avg(deviceTelemetry.efficiency), avgPow: avg(deviceTelemetry.power) })
+    .from(deviceTelemetry)
+    .where(and(gte(deviceTelemetry.timestamp, new Date(startDate)), lte(deviceTelemetry.timestamp, new Date(endDate))))
+  const avgEfficiency = Number(agg?.avgEff ?? 0)
+  const avgPow = Number(agg?.avgPow ?? 0)
+  const hours = Math.max(1, (new Date(endDate).getTime() - new Date(startDate).getTime()) / 3_600_000)
+  const ratedCapacity = 5000
+  const bucket: BenchmarkBucket = {
+    energyGenerated: r2((avgPow * hours) / 1000),
+    avgEfficiency: r2(avgEfficiency),
+    capacityFactor: r2(ratedCapacity > 0 ? (avgPow / ratedCapacity) * 100 : 0),
+    performanceRatio: r2(avgEfficiency),
   }
+  return { industryAvg: bucket, facilityAvg: bucket, regionalAvg: bucket }
 }
 
 /**
@@ -388,22 +400,44 @@ function getDefaultBenchmarks(): any {
 }
 
 /**
- * Get trends
+ * Real trends: compare this window's energy / efficiency / reliability against the
+ * immediately preceding equal-length window (from live telemetry). ±5% deadband on
+ * energy; ±2 pts on efficiency/reliability. Falls back to 'stable' with no history.
  */
 async function getTrends(
   deviceId: string,
-  period: string,
   startDate: string,
+  endDate: string,
   energyGenerated: number,
   avgEfficiency: number,
   reliability: number
-): Promise<any> {
-  // Mock trend calculation - in real implementation, compare with previous periods
-  return {
-    energyTrend: 'stable',
-    efficiencyTrend: 'stable',
-    reliabilityTrend: 'stable'
-  }
+): Promise<PerformanceMetrics['trends']> {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const span = end.getTime() - start.getTime()
+  const stable: PerformanceMetrics['trends'] = { energyTrend: 'stable', efficiencyTrend: 'stable', reliabilityTrend: 'stable' }
+  if (!(span > 0)) return stable
+
+  const prev = await db
+    .select()
+    .from(deviceTelemetry)
+    .where(and(eq(deviceTelemetry.deviceId, deviceId), gte(deviceTelemetry.timestamp, new Date(start.getTime() - span)), lte(deviceTelemetry.timestamp, start)))
+  if (prev.length === 0) return stable
+
+  const prevEnergy = calculateEnergyGenerated(prev)
+  const prevEffVals = prev.map((d) => Number(d.efficiency || 0)).filter((e) => e > 0)
+  const prevEff = prevEffVals.length ? prevEffVals.reduce((s, e) => s + e, 0) / prevEffVals.length : 0
+  const prevReliability = calculateReliability(prev)
+
+  const energyTrend =
+    prevEnergy > 0 && Math.abs(energyGenerated - prevEnergy) / prevEnergy > 0.05
+      ? energyGenerated > prevEnergy ? 'increasing' : 'decreasing'
+      : 'stable'
+  const effDelta = avgEfficiency - prevEff
+  const efficiencyTrend = effDelta > 2 ? 'improving' : effDelta < -2 ? 'declining' : 'stable'
+  const relDelta = reliability - prevReliability
+  const reliabilityTrend = relDelta > 2 ? 'improving' : relDelta < -2 ? 'declining' : 'stable'
+  return { energyTrend, efficiencyTrend, reliabilityTrend }
 }
 
 /**
@@ -420,65 +454,36 @@ function getDefaultTrends(): any {
 /**
  * Get performance metrics
  */
+/**
+ * Real historical metrics: compute performance metrics for each of the last
+ * `limit` months from live telemetry, skipping months with no data. Returns an
+ * empty array (never fabricated) when no scope is given or no telemetry exists.
+ */
 async function getPerformanceMetrics(
   deviceId?: string | null,
   facilityId?: string | null,
   period: string = 'monthly',
   limit: number = 12
 ): Promise<PerformanceMetrics[]> {
-  // Mock data - in real implementation, fetch from performance_metrics table
-  const mockMetrics: PerformanceMetrics[] = [
-    {
-      deviceId: deviceId || 'device-1',
-      facilityId: facilityId || 'fac-1',
-      facilityName: 'Kigali Central Hospital',
-      deviceSerial: 'SN-001-AFYA',
-      period: '2024-01',
-      startDate: '2024-01-01',
-      endDate: '2024-01-31',
-      metrics: {
-        energyGenerated: 1240.5,
-        avgPower: 4500,
-        peakPower: 5200,
-        minPower: 1200,
-        avgEfficiency: 94.5,
-        peakEfficiency: 98.2,
-        minEfficiency: 78.5,
-        uptime: 98.5,
-        operatingHours: 720,
-        capacityFactor: 24.8,
-        performanceRatio: 89.5,
-        availability: 98.5,
-        reliability: 92.0,
-        degradationRate: 0.5
-      },
-      benchmarks: {
-        industryAvg: {
-          energyGenerated: 1000,
-          avgEfficiency: 85,
-          capacityFactor: 20,
-          performanceRatio: 75
-        },
-        facilityAvg: {
-          energyGenerated: 1200,
-          avgEfficiency: 88,
-          capacityFactor: 22,
-          performanceRatio: 78
-        },
-        regionalAvg: {
-          energyGenerated: 950,
-          avgEfficiency: 83,
-          capacityFactor: 19,
-          performanceRatio: 73
-        }
-      },
-      trends: {
-        energyTrend: 'stable',
-        efficiencyTrend: 'stable',
-        reliabilityTrend: 'stable'
-      }
+  if (!deviceId && !facilityId) return []
+  const out: PerformanceMetrics[] = []
+  const now = new Date()
+  for (let i = 0; i < Math.min(limit, 24); i++) {
+    const monthDate = subMonths(now, i)
+    try {
+      const m = await calculatePerformanceMetrics(
+        deviceId ?? null,
+        facilityId ?? null,
+        format(monthDate, 'yyyy-MM'),
+        startOfMonth(monthDate).toISOString(),
+        endOfMonth(monthDate).toISOString(),
+        true,
+        true,
+      )
+      out.push(m)
+    } catch {
+      // No telemetry for this month → honest gap, skip it.
     }
-  ]
-
-  return mockMetrics.slice(0, limit)
+  }
+  return out
 }

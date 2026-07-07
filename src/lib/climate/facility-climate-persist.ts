@@ -21,9 +21,10 @@ import { eq } from "drizzle-orm"
 import {
   REGION_COORDS,
   DEFAULT_COORDS,
-  rangeForPreset,
+  climatologyRange,
   NASA_POWER_PARAMETERS,
   toCvi,
+  NORMALIZATION_VERSION,
   type Coords,
 } from "@/lib/climate/nasa-power"
 import { fetchNasaPowerServer } from "@/lib/climate/nasa-power-server"
@@ -65,7 +66,7 @@ export function resolveServerCoords(opts: {
  * Returns null on any upstream/parse failure so callers can fall back.
  */
 export async function fetchRealClimateForCoords(coords: Coords): Promise<RealFacilityClimate | null> {
-  const range = rangeForPreset("10y") // monthly, small payloads; same range as the UI + portfolio
+  const range = climatologyRange() // ~30y monthly baseline for v2 anomaly calibration
   try {
     const resp = await fetchNasaPowerServer({
       lat: coords.lat,
@@ -98,6 +99,7 @@ export function climateToProfileValues(real: RealFacilityClimate) {
     latitude: String(real.coords.lat),
     longitude: String(real.coords.lon),
     dataSource: "real" as const,
+    normalizationVersion: NORMALIZATION_VERSION,
   }
 }
 

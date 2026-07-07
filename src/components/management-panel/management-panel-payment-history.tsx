@@ -175,7 +175,7 @@ export function ManagementPanelPaymentHistory() {
                       </td>
                       <td className="py-3">{p.paymentType}</td>
                       <td className="py-3">
-                        <Badge variant="success">{p.status}</Badge>
+                        <Badge variant="successSoft">{p.status}</Badge>
                       </td>
                     </tr>
                   ))}
