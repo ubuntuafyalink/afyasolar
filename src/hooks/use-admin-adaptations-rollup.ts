@@ -12,6 +12,7 @@ export type AdaptationItem = {
   status: string
   implementedAt: string | null
   createdAt: string | null
+  estimatedGainPoints: number
 }
 
 export type AdaptationsRollup = {
@@ -19,6 +20,9 @@ export type AdaptationsRollup = {
   byStatus: Record<string, number>
   byRiskCategory: { riskCategory: string; count: number }[]
   totalFacilitiesWithAdaptations: number
+  /** Estimated RCS points realized (completed measures) and still available (active). */
+  totalRealizedGain: number
+  totalPotentialGain: number
 }
 
 /** Real climate-adaptation measures across the portfolio (admin only). */

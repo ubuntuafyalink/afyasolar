@@ -71,10 +71,13 @@ import {
   ClipboardList,
   Satellite,
   PlugZap,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 // Resilience Intelligence (additive, simulated data) — consolidated into hubs
 import { FacilityPreferencesProvider } from "@/components/dashboard/facility/facility-preferences-provider"
 import { FacilityToolbar } from "@/components/dashboard/facility/facility-toolbar"
+import { MotionSection } from "@/components/motion/primitives"
 // Facility-mirror section components (portfolio-level)
 import { AdminChildServicesRollup } from "@/components/admin/intelligence/admin-child-services-rollup"
 import { AdminFacilitiesRcsTable } from "@/components/admin/intelligence/admin-facilities-rcs-table"
@@ -104,6 +107,7 @@ import { DeleteFacilityDialog } from "@/components/dashboard/delete-facility-dia
 import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { useQueryClient, useQuery } from "@tanstack/react-query"
 import AfyaSolarPackageManagement from '@/components/afya-solar/package-management'
@@ -222,6 +226,11 @@ const navGroups: Record<NavGroup, { items: { id: SectionId; label: string; icon:
 export function AdminDashboard({ initialSection = "overview" }: AdminDashboardProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
+  const sidebarUser = session?.user
+  const sidebarDisplayName = sidebarUser?.name || sidebarUser?.email || "Admin"
+  const sidebarInitial = (sidebarUser?.name || sidebarUser?.email || "A").charAt(0).toUpperCase()
+  const sidebarRole = sidebarUser?.role ? `${sidebarUser.role.charAt(0).toUpperCase()}${sidebarUser.role.slice(1)}` : "Administrator"
   const { data: facilities, isLoading } = useFacilities()
   const { data: deviceRequests } = useDeviceRequests()
   const updateDeviceRequest = useUpdateDeviceRequest()
@@ -320,14 +329,18 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="h-8 w-8 p-0 hidden lg:flex"
+              aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(false)}
               className="h-8 w-8 p-0 lg:hidden"
+              aria-label="Close menu"
+              title="Close menu"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -362,14 +375,20 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                         title={item.label}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                          "group w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg cursor-pointer transition-all duration-200",
                           !sidebarOpen && "justify-center",
                           isActive
                             ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                            : "text-muted-foreground hover:bg-primary/10 hover:text-foreground motion-safe:hover:translate-x-0.5",
                         )}
                       >
-                        <ItemIcon className="w-4 h-4 flex-shrink-0" aria-hidden />
+                        <ItemIcon
+                          className={cn(
+                            "w-4 h-4 flex-shrink-0 transition-transform duration-200",
+                            !isActive && "motion-safe:group-hover:scale-110",
+                          )}
+                          aria-hidden
+                        />
                         {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
                       </button>
                     )
@@ -379,12 +398,32 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
             })}
           </nav>
 
-          {/* Sidebar Footer */}
-          <div className="p-3 border-t border-border mt-auto">
+          {/* Sidebar Footer — current user + logout */}
+          <div className="p-3 border-t border-border mt-auto space-y-1">
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-2 py-2",
+                !sidebarOpen && "justify-center px-0",
+              )}
+              title={sidebarOpen ? undefined : `${sidebarDisplayName} · ${sidebarRole}`}
+            >
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+                <span className="text-sm font-semibold text-primary">{sidebarInitial}</span>
+              </div>
+              {sidebarOpen && (
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{sidebarDisplayName}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{sidebarRole}</p>
+                </div>
+              )}
+            </div>
             <LogoutButton
               variant="ghost"
-              className={cn("w-full justify-center text-xs", sidebarOpen && "justify-start")}
-              showIcon={false}
+              className={cn(
+                "w-full",
+                sidebarOpen ? "justify-start text-xs" : "justify-center [&>span]:hidden [&>svg]:!mr-0",
+              )}
+              showIcon={true}
               showTextOnMobile={true}
             />
           </div>
@@ -401,35 +440,32 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="bg-card border-b border-border shadow-sm sticky top-0 z-30">
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setSidebarOpen(true)
-                      setMobileMenuOpen(true)
-                    }}
-                    className="lg:hidden"
-                  >
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide sr-only">
-                      Admin Dashboard
-                    </p>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
-                      Management Panel
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate hidden sm:block">
-                      Monitor Afya Solar facilities and operations
-                    </p>
-                  </div>
-                </div>
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="max-w-7xl mx-auto space-y-4">
+            {/* In-page controls (relocated from the former top bar). On the
+                overview these actions live inside the section header instead, so
+                the strip only carries the mobile menu button there. */}
+            <div
+              className={cn(
+                "flex items-center justify-between gap-3",
+                activeSection === 'overview' && "lg:hidden",
+              )}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setSidebarOpen(true)
+                    setMobileMenuOpen(true)
+                  }}
+                  className="lg:hidden"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </div>
+              {activeSection !== 'overview' && (
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <FacilityToolbar />
                   <Button
@@ -443,14 +479,10 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                     <Home className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-        </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-7xl mx-auto space-y-4">
+            <MotionSection key={activeSection} className="space-y-4">
             {/* Overview Section */}
             {activeSection === 'overview' && <AdminOverview />}
 
@@ -519,6 +551,7 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
 
             {activeSection === 'solar-carbon-credits' && <AdminCarbonCredits />}
+            </MotionSection>
 
           </div>
         </main>

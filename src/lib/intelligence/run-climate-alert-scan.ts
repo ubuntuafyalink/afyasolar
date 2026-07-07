@@ -4,9 +4,11 @@
  * device_alerts rows. Dedupes against existing active alerts (one active alert per
  * facility + code). Pass { dryRun: true } to preview without writing.
  *
- * device_alerts is device-scoped (deviceId NOT NULL), so each climate alert is
- * attached to the facility's primary device; facilities with no device are
- * skipped and reported.
+ * Each climate alert is attached to the facility's primary device when it has one,
+ * otherwise it is written as a facility-level alert (deviceId = null). The latter
+ * requires the db:ensure-climate-alerts migration (relaxes the device_id NOT NULL
+ * constraint); until it runs, device-less inserts fail and are reported as skipped
+ * (noDevice) so the scan never throws.
  *
  * Used by:
  *  - POST /api/admin/intelligence/generate-alerts (admin session, the "Run climate scan" button)
@@ -34,7 +36,7 @@ export async function runClimateAlertScan(
 ): Promise<ClimateAlertScanResult> {
   const dryRun = Boolean(opts.dryRun)
 
-  const [climate, facilityRows, deviceRows, activeAlerts] = await Promise.all([
+  const [{ data: climate }, facilityRows, deviceRows, activeAlerts] = await Promise.all([
     computePortfolioClimate(),
     db.select({ id: facilities.id, name: facilities.name }).from(facilities),
     db.select({ id: devices.id, facilityId: devices.facilityId, status: devices.status }).from(devices),
@@ -70,34 +72,41 @@ export async function runClimateAlertScan(
     const candidates = evaluateClimateAlerts(c.byHazard, facilityName)
     if (candidates.length === 0) continue
 
-    const deviceId = deviceByFacility.get(c.facilityId)
+    // A primary device when the facility has one; otherwise null so the alert is
+    // written at the facility level (climate hazards are not device-specific).
+    const deviceId = deviceByFacility.get(c.facilityId) ?? null
     for (const cand of candidates) {
       const key = `${c.facilityId}:${cand.code}`
       if (activeSet.has(key)) {
         duplicate += 1
         continue
       }
-      if (!deviceId) {
-        noDevice += 1
-        continue
-      }
       activeSet.add(key) // avoid duplicates within this run
       if (!dryRun) {
-        await db.insert(deviceAlerts).values({
-          id: generateId(),
-          deviceId,
-          facilityId: c.facilityId,
-          alertType: cand.alertType,
-          severity: cand.severity,
-          code: cand.code,
-          title: cand.title,
-          message: cand.message,
-          status: "active",
-          threshold: String(cand.threshold),
-          actualValue: String(cand.score),
-          alertData: JSON.stringify({ source: "climate-engine", hazard: cand.hazard, score: cand.score }),
-          triggeredAt: now,
-        })
+        try {
+          await db.insert(deviceAlerts).values({
+            id: generateId(),
+            deviceId,
+            facilityId: c.facilityId,
+            alertType: cand.alertType,
+            severity: cand.severity,
+            code: cand.code,
+            title: cand.title,
+            message: cand.message,
+            status: "active",
+            threshold: String(cand.threshold),
+            actualValue: String(cand.score),
+            alertData: JSON.stringify({ source: "climate-engine", hazard: cand.hazard, score: cand.score }),
+            triggeredAt: now,
+          })
+        } catch (e) {
+          // Most likely the device_id NOT NULL constraint (device-less facility,
+          // before db:ensure-climate-alerts has run). Degrade gracefully.
+          activeSet.delete(key)
+          if (!deviceId) noDevice += 1
+          console.warn("[run-climate-alert-scan] insert skipped", c.facilityId, cand.code, e)
+          continue
+        }
       }
       created.push({
         facilityId: c.facilityId,
