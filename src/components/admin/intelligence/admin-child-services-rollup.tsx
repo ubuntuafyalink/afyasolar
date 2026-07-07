@@ -67,12 +67,12 @@ const SOURCE_LABEL: Record<"nasa" | "csf" | "edc", string> = {
 
 const STATUS_META: Record<
   ChildServiceStatus,
-  { label: string; variant: "destructive" | "warning" | "success" | "secondary"; icon: LucideIcon }
+  { label: string; variant: "destructiveSoft" | "warningSoft" | "successSoft" | "muted"; icon: LucideIcon }
 > = {
-  failing: { label: "Failing", variant: "destructive", icon: OctagonAlert },
-  "at-risk": { label: "At risk", variant: "warning", icon: TriangleAlert },
-  ok: { label: "OK", variant: "success", icon: ShieldCheck },
-  "not-assessed": { label: "Not assessed", variant: "secondary", icon: CircleDashed },
+  failing: { label: "Failing", variant: "destructiveSoft", icon: OctagonAlert },
+  "at-risk": { label: "At risk", variant: "warningSoft", icon: TriangleAlert },
+  ok: { label: "OK", variant: "successSoft", icon: ShieldCheck },
+  "not-assessed": { label: "Not assessed", variant: "muted", icon: CircleDashed },
 }
 
 function StatusBadge({ status, compact }: { status: ChildServiceStatus; compact?: boolean }) {

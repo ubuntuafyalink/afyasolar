@@ -138,7 +138,7 @@ function climateSections(
       ["Drought", cvi.byHazard.drought, now2030.byHazard.drought, fut2050.byHazard.drought],
       ["Storm", cvi.byHazard.storm, now2030.byHazard.storm, fut2050.byHazard.storm],
     ],
-    note: "Projection per AfyaSolar climate model (2050 applies a conservative exposure increase).",
+    note: "Forward projection is a transparent flat-scenario fallback (+12/hazard by 2050), not a climate-model forecast. Per-facility trend extrapolation is shown in the app.",
   })
 
   if (scope.kind === "facility") {

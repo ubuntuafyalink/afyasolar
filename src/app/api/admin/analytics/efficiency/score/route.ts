@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
-import { deviceTelemetry, deviceHealth, devices, facilities } from '@/lib/db/schema'
-import { eq, and, gte, lte, desc, avg, sum, inArray } from 'drizzle-orm'
-import { generateId } from '@/lib/utils'
-import { format, subDays, subMonths, startOfDay, endOfDay } from 'date-fns'
+import { deviceTelemetry, devices, facilities } from '@/lib/db/schema'
+import { deviceAlerts } from '@/lib/db/schema-telemetry'
+import { eq, and, gte, lte, desc, count, inArray } from 'drizzle-orm'
+import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns'
 
 interface EfficiencyScore {
   deviceId: string
@@ -47,14 +47,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { 
-      deviceId, 
-      facilityId, 
-      period, 
-      startDate, 
+    const {
+      deviceId,
+      facilityId,
+      period,
+      startDate,
       endDate,
       includeRecommendations = true,
-      benchmarkAgainst = 'industry' // 'industry', 'facility', 'regional'
     } = body
 
     // Validate input
@@ -72,13 +71,12 @@ export async function POST(request: NextRequest) {
 
     // Calculate efficiency score
     const score = await calculateEfficiencyScore(
-      deviceId, 
-      facilityId, 
-      period, 
-      startDate, 
-      endDate, 
+      deviceId,
+      facilityId,
+      period,
+      startDate,
+      endDate,
       includeRecommendations,
-      benchmarkAgainst
     )
 
     return NextResponse.json({
@@ -140,7 +138,6 @@ async function calculateEfficiencyScore(
   startDate: string,
   endDate: string,
   includeRecommendations: boolean = true,
-  benchmarkAgainst: string = 'industry'
 ): Promise<EfficiencyScore> {
   // Resolve device IDs for the scope (single device or all devices in a facility)
   let scopedDeviceIds: string[] = []
@@ -208,14 +205,14 @@ async function calculateEfficiencyScore(
     (maintenanceScore * 0.1)
   )
 
-  // Get benchmark score
-  const benchmarkScore = await getBenchmarkScore(overallScore, benchmarkAgainst)
+  // Get benchmark score (relative to the real portfolio average over the window)
+  const benchmarkScore = await getBenchmarkScore(overallScore, startDate, endDate)
 
   // Determine grade
   const grade = getGrade(overallScore)
 
-  // Calculate trend (compare with previous period)
-  const trend = await calculateTrend(deviceId || device.id, period, startDate)
+  // Calculate trend (compare with the previous equal-length window)
+  const trend = await calculateTrend(deviceId || device.id, startDate, endDate)
 
   // Generate recommendations
   const recommendations = includeRecommendations 
@@ -256,16 +253,8 @@ async function calculateEfficiencyScore(
 /**
  * Calculate efficiency component score
  */
-function calculateEfficiencyComponent(telemetryData: any[]): number {
-  const efficiencyValues = telemetryData
-    .map(d => Number(d.efficiency) || 0)
-    .filter(e => e > 0)
-
-  if (efficiencyValues.length === 0) return 0
-
-  const avgEfficiency = efficiencyValues.reduce((sum, e) => sum + e, 0) / efficiencyValues.length
-  
-  // Score based on efficiency percentage
+/** Map an average efficiency percentage onto a 0-100 component score (documented bands). */
+function efficiencyPctToScore(avgEfficiency: number): number {
   if (avgEfficiency >= 95) return 100
   if (avgEfficiency >= 90) return 90
   if (avgEfficiency >= 85) return 80
@@ -275,6 +264,17 @@ function calculateEfficiencyComponent(telemetryData: any[]): number {
   if (avgEfficiency >= 60) return 40
   if (avgEfficiency >= 50) return 30
   return 20
+}
+
+function calculateEfficiencyComponent(telemetryData: any[]): number {
+  const efficiencyValues = telemetryData
+    .map(d => Number(d.efficiency) || 0)
+    .filter(e => e > 0)
+
+  if (efficiencyValues.length === 0) return 0
+
+  const avgEfficiency = efficiencyValues.reduce((sum, e) => sum + e, 0) / efficiencyValues.length
+  return efficiencyPctToScore(avgEfficiency)
 }
 
 /**
@@ -344,18 +344,36 @@ function calculateUptime(telemetryData: any[]): number {
 }
 
 /**
- * Get benchmark score
+ * Real benchmark: the device/facility score relative to the PORTFOLIO's average
+ * efficiency over the same window (computed from live telemetry), expressed as an
+ * index (100 = at par). Falls back to par (100) when the portfolio has no telemetry.
  */
-async function getBenchmarkScore(score: number, benchmarkAgainst: string): Promise<number> {
-  // Mock benchmark data - in real implementation, fetch from benchmarks table
-  const industryAverages = {
-    industry: 75,
-    facility: 80,
-    regional: 72
-  }
+async function getBenchmarkScore(score: number, startDate: string, endDate: string): Promise<number> {
+  const rows = await db
+    .select({ efficiency: deviceTelemetry.efficiency })
+    .from(deviceTelemetry)
+    .where(
+      and(
+        gte(deviceTelemetry.timestamp, new Date(startDate)),
+        lte(deviceTelemetry.timestamp, new Date(endDate)),
+      ),
+    )
+  const effs = rows.map((r) => Number(r.efficiency) || 0).filter((e) => e > 0)
+  if (effs.length === 0) return 100
+  const portfolioAvg = effs.reduce((s, e) => s + e, 0) / effs.length
+  const benchmark = efficiencyPctToScore(portfolioAvg)
+  return benchmark > 0 ? Math.round((score / benchmark) * 100) : 100
+}
 
-  const benchmark = industryAverages[benchmarkAgainst as keyof typeof industryAverages] || 75
-  return Math.round((score / benchmark) * 100)
+/** Average telemetry efficiency (%) for a device over a window, or null when no data. */
+async function avgEfficiencyForDevice(deviceId: string, start: Date, end: Date): Promise<number | null> {
+  const rows = await db
+    .select({ efficiency: deviceTelemetry.efficiency })
+    .from(deviceTelemetry)
+    .where(and(eq(deviceTelemetry.deviceId, deviceId), gte(deviceTelemetry.timestamp, start), lte(deviceTelemetry.timestamp, end)))
+  const effs = rows.map((r) => Number(r.efficiency) || 0).filter((e) => e > 0)
+  if (effs.length === 0) return null
+  return effs.reduce((s, e) => s + e, 0) / effs.length
 }
 
 /**
@@ -373,10 +391,20 @@ function getGrade(score: number): 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | '
 }
 
 /**
- * Calculate trend
+ * Real trend: compare this window's average efficiency against the immediately
+ * preceding equal-length window (from live telemetry). ±2 pts deadband.
  */
-async function calculateTrend(deviceId: string, period: string, startDate: string): Promise<'improving' | 'stable' | 'declining'> {
-  // Mock trend calculation - in real implementation, compare with previous period
+async function calculateTrend(deviceId: string, startDate: string, endDate: string): Promise<'improving' | 'stable' | 'declining'> {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const span = end.getTime() - start.getTime()
+  if (!(span > 0)) return 'stable'
+  const cur = await avgEfficiencyForDevice(deviceId, start, end)
+  const prev = await avgEfficiencyForDevice(deviceId, new Date(start.getTime() - span), start)
+  if (cur == null || prev == null) return 'stable'
+  const delta = cur - prev
+  if (delta > 2) return 'improving'
+  if (delta < -2) return 'declining'
   return 'stable'
 }
 
@@ -420,24 +448,38 @@ function generateRecommendations(
   return recommendations
 }
 
-/**
- * Get alerts count for a device
- */
+/** Real count of device_alerts triggered for a device in the window. */
 async function getAlertsCount(deviceId: string, startDate: string, endDate: string): Promise<number> {
-  // Placeholder implementation - in real implementation, query alerts table
-  return 0
+  const [row] = await db
+    .select({ c: count() })
+    .from(deviceAlerts)
+    .where(and(eq(deviceAlerts.deviceId, deviceId), gte(deviceAlerts.triggeredAt, new Date(startDate)), lte(deviceAlerts.triggeredAt, new Date(endDate))))
+  return Number(row?.c ?? 0)
 }
 
-/**
- * Get maintenance events count for a device
- */
+/** Real count of maintenance-type alerts for a device in the window. */
 async function getMaintenanceEventsCount(deviceId: string, startDate: string, endDate: string): Promise<number> {
-  // Placeholder implementation - in real implementation, query maintenance table
-  return 0
+  const [row] = await db
+    .select({ c: count() })
+    .from(deviceAlerts)
+    .where(
+      and(
+        eq(deviceAlerts.deviceId, deviceId),
+        eq(deviceAlerts.alertType, 'maintenance'),
+        gte(deviceAlerts.triggeredAt, new Date(startDate)),
+        lte(deviceAlerts.triggeredAt, new Date(endDate)),
+      ),
+    )
+  return Number(row?.c ?? 0)
 }
 
 /**
  * Get efficiency scores
+ */
+/**
+ * Real historical scores: compute the efficiency score for each of the last
+ * `limit` months from live telemetry, skipping months with no data. Returns an
+ * empty array (never fabricated data) when no scope is given or no telemetry exists.
  */
 async function getEfficiencyScores(
   deviceId?: string | null,
@@ -445,35 +487,26 @@ async function getEfficiencyScores(
   period: string = 'monthly',
   limit: number = 12
 ): Promise<EfficiencyScore[]> {
-  // Mock data - in real implementation, fetch from efficiency_scores table
-  const mockScores: EfficiencyScore[] = [
-    {
-      deviceId: deviceId || 'device-1',
-      facilityId: facilityId || 'fac-1',
-      facilityName: 'Kigali Central Hospital',
-      deviceSerial: 'SN-001-AFYA',
-      period: '2024-01',
-      startDate: '2024-01-01',
-      endDate: '2024-01-31',
-      overallScore: 92,
-      efficiencyScore: 94,
-      reliabilityScore: 98,
-      performanceScore: 85,
-      maintenanceScore: 88,
-      grade: 'A',
-      trend: 'stable',
-      recommendations: ['Continue regular maintenance schedule'],
-      metadata: {
-        avgEfficiency: 94.5,
-        uptime: 98.5,
-        energyGenerated: 1240.5,
-        alertsCount: 2,
-        maintenanceEvents: 1,
-        operatingHours: 720,
-        benchmarkScore: 115
-      }
+  if (!deviceId && !facilityId) return []
+  const out: EfficiencyScore[] = []
+  const now = new Date()
+  for (let i = 0; i < Math.min(limit, 24); i++) {
+    const monthDate = subMonths(now, i)
+    const start = startOfMonth(monthDate)
+    const end = endOfMonth(monthDate)
+    try {
+      const score = await calculateEfficiencyScore(
+        deviceId ?? null,
+        facilityId ?? null,
+        format(monthDate, 'yyyy-MM'),
+        start.toISOString(),
+        end.toISOString(),
+        false,
+      )
+      out.push(score)
+    } catch {
+      // No telemetry for this month → honest gap, skip it.
     }
-  ]
-
-  return mockScores.slice(0, limit)
+  }
+  return out
 }

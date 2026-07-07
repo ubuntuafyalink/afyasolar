@@ -36,6 +36,7 @@ import {
   Wind,
   Sun,
   RefreshCcw,
+  Home,
 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -52,6 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
+import { FacilityToolbar } from "@/components/dashboard/facility/facility-toolbar"
 import { fadeInUp, scaleIn, staggerContainer } from "@/components/motion/variants"
 import { SwitchableChart, type ChartDatum } from "@/components/admin/intelligence/switchable-chart"
 import { cn, formatCurrency } from "@/lib/utils"
@@ -64,7 +66,7 @@ import { summarize, byRegion } from "@/lib/dashboard/admin-portfolio-real"
 import {
   resolveCoords,
   rangeForPreset,
-  projectCvi,
+  projectCviFromTrend,
   toSolarResource,
   NASA_POWER_PARAMETERS,
   SOLAR_PARAMETERS,
@@ -249,8 +251,10 @@ export function AdminOverview() {
     [aggregate],
   )
   const cvi = aggregate?.composite ?? 0
-  const cvi2030 = aggregate ? Math.round(projectCvi(aggregate, 2030).composite) : 0
-  const cvi2050 = aggregate ? Math.round(projectCvi(aggregate, 2050).composite) : 0
+  // Trend-extrapolated projection from the real per-year hazard trend; falls back
+  // to the current composite when no trend is available.
+  const cvi2030 = aggregate?.trend?.length ? Math.round(projectCviFromTrend(aggregate.trend, 2030).composite) : cvi
+  const cvi2050 = aggregate?.trend?.length ? Math.round(projectCviFromTrend(aggregate.trend, 2050).composite) : cvi
 
   const tierData = React.useMemo<ChartDatum[]>(
     () => (["Resilient", "Developing", "At risk", "Critical"] as const).map((t) => ({ label: t, value: summary.tierCounts[t], color: TIER_COLOR[t] })),
@@ -304,9 +308,18 @@ export function AdminOverview() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-foreground">System overview</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Live operational, climate and financial analytics — auto-refreshes every 15s.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <FacilityToolbar />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => { window.location.href = "/services/afya-solar" }}
+              aria-label="Go to Afya Solar"
+            >
+              <Home className="h-4 w-4" />
+            </Button>
+            <span className="mx-1 hidden h-6 w-px bg-border sm:block" aria-hidden />
             <Button variant="outline" size="sm" onClick={() => overview.refetch()} disabled={overview.isFetching}>
               <RefreshCcw className={cn("mr-1 h-4 w-4", overview.isFetching && "animate-spin")} />
               Refresh
@@ -319,14 +332,14 @@ export function AdminOverview() {
 
         {/* KPI band */}
         <m.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <m.div variants={scaleIn}><StatCard title="Facilities" meta={`${kpis?.facilitiesActive ?? 0} active`} icon={<Building2 />} accent="primary" value={<AnimatedNumber value={kpis?.facilitiesTotal ?? 0} />} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="Users" meta={`${kpis?.usersFacility ?? 0} facility · ${kpis?.usersAdmin ?? 0} admin`} icon={<Users />} accent="success" value={<AnimatedNumber value={kpis?.usersTotal ?? 0} />} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="Devices online" meta={`of ${kpis?.devicesTotal ?? 0}`} icon={<Zap />} accent="primary" value={<AnimatedNumber value={kpis?.devicesOnline ?? 0} />} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="Revenue (30d)" meta={`${formatCurrency(kpis?.revenueTotalCompleted ?? 0)} all-time`} icon={<DollarSign />} accent="solar" value={<AnimatedNumber value={kpis?.revenue30dCompleted ?? 0} prefix="TSh " />} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="Active alerts" meta={`${kpis?.criticalAlerts ?? 0} critical`} icon={<AlertTriangle />} accent={(kpis?.criticalAlerts ?? 0) > 0 ? "destructive" : (kpis?.activeAlerts ?? 0) > 0 ? "warning" : "muted"} value={<AnimatedNumber value={kpis?.activeAlerts ?? 0} />} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="Avg resilience (RCS)" meta={`${summary.assessed}/${summary.facilities} assessed`} icon={<ShieldCheck />} accent="primary" value={summary.avgRcs != null ? <AnimatedNumber value={summary.avgRcs} /> : "—"} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="CO₂ avoided" meta="Carbon credits" icon={<Leaf />} accent="success" value={<AnimatedNumber value={(carbon.data?.co2SavedKg ?? 0) / 1000} decimals={1} suffix=" t" />} /></m.div>
-          <m.div variants={scaleIn}><StatCard title="Active subscriptions" meta="Afya Solar" icon={<CreditCard />} accent="primary" value={<AnimatedNumber value={financial.data?.activeSubscriptions ?? 0} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Facilities" meta={`${kpis?.facilitiesActive ?? 0} active`} icon={<Building2 />} accent="primary" value={<AnimatedNumber value={kpis?.facilitiesTotal ?? 0} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Users" meta={`${kpis?.usersFacility ?? 0} facility · ${kpis?.usersAdmin ?? 0} admin`} icon={<Users />} accent="success" value={<AnimatedNumber value={kpis?.usersTotal ?? 0} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Devices online" meta={`of ${kpis?.devicesTotal ?? 0}`} icon={<Zap />} accent="primary" value={<AnimatedNumber value={kpis?.devicesOnline ?? 0} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Revenue (30d)" meta={`${formatCurrency(kpis?.revenueTotalCompleted ?? 0)} all-time`} icon={<DollarSign />} accent="solar" value={<AnimatedNumber value={kpis?.revenue30dCompleted ?? 0} prefix="TSh " />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Active alerts" meta={`${kpis?.criticalAlerts ?? 0} critical`} icon={<AlertTriangle />} accent={(kpis?.criticalAlerts ?? 0) > 0 ? "destructive" : (kpis?.activeAlerts ?? 0) > 0 ? "warning" : "muted"} value={<AnimatedNumber value={kpis?.activeAlerts ?? 0} />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Avg resilience (RCS)" meta={`${summary.assessed}/${summary.facilities} assessed`} icon={<ShieldCheck />} accent="primary" value={summary.avgRcs != null ? <AnimatedNumber value={summary.avgRcs} /> : "—"} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="CO₂ avoided" meta="Carbon credits" icon={<Leaf />} accent="success" value={<AnimatedNumber value={(carbon.data?.co2SavedKg ?? 0) / 1000} decimals={1} suffix=" t" />} /></m.div>
+          <m.div variants={scaleIn}><StatCard showAccent={false} title="Active subscriptions" meta="Afya Solar" icon={<CreditCard />} accent="primary" value={<AnimatedNumber value={financial.data?.activeSubscriptions ?? 0} />} /></m.div>
         </m.div>
 
         {/* NASA climate today */}
@@ -415,9 +428,9 @@ export function AdminOverview() {
             <ChartCard title="Assessment coverage"><SwitchableChart data={coverage} kinds={["pie", "bar", "number"]} valueLabel="Facilities" caption="Climate-assessed vs not" /></ChartCard>
           </m.div>
           <m.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3 sm:grid-cols-3">
-            <m.div variants={scaleIn}><StatCard title="Total solar capacity" meta="Assessed facilities" icon={<Sun />} accent="solar" value={<AnimatedNumber value={energyTotals.solarKw} decimals={1} suffix=" kW" />} /></m.div>
-            <m.div variants={scaleIn}><StatCard title="Modelled annual savings" meta="Across assessed" icon={<DollarSign />} accent="success" value={<AnimatedNumber value={energyTotals.savings} prefix="TSh " />} /></m.div>
-            <m.div variants={scaleIn}><StatCard title="Avg efficiency (BMI)" meta="Energy assessment" icon={<Zap />} accent={energyTotals.avgBmi != null && energyTotals.avgBmi < 60 ? "warning" : "primary"} value={energyTotals.avgBmi != null ? <AnimatedNumber value={energyTotals.avgBmi} suffix="%" /> : "—"} /></m.div>
+            <m.div variants={scaleIn}><StatCard showAccent={false} title="Total solar capacity" meta="Assessed facilities" icon={<Sun />} accent="solar" value={<AnimatedNumber value={energyTotals.solarKw} decimals={1} suffix=" kW" />} /></m.div>
+            <m.div variants={scaleIn}><StatCard showAccent={false} title="Modelled annual savings" meta="Across assessed" icon={<DollarSign />} accent="success" value={<AnimatedNumber value={energyTotals.savings} prefix="TSh " />} /></m.div>
+            <m.div variants={scaleIn}><StatCard showAccent={false} title="Avg efficiency (BMI)" meta="Energy assessment" icon={<Zap />} accent={energyTotals.avgBmi != null && energyTotals.avgBmi < 60 ? "warning" : "primary"} value={energyTotals.avgBmi != null ? <AnimatedNumber value={energyTotals.avgBmi} suffix="%" /> : "—"} /></m.div>
           </m.div>
         </section>
 
@@ -471,7 +484,7 @@ export function AdminOverview() {
                       <div className="truncate text-sm font-medium text-foreground">{String(row.facilityName ?? "—")}</div>
                       <div className="truncate text-[11px] text-muted-foreground">{[row.city, row.region].filter(Boolean).join(", ")}</div>
                     </div>
-                    <Badge variant="secondary">{String(row.loginCount ?? 0)} logins</Badge>
+                    <Badge variant="muted">{String(row.loginCount ?? 0)} logins</Badge>
                   </div>
                 ))}
                 {(!facilityActivity.data?.rows || facilityActivity.data.rows.length === 0) && <p className="text-xs text-muted-foreground">No login events yet.</p>}
@@ -485,7 +498,7 @@ export function AdminOverview() {
                       <div className="truncate text-sm font-medium text-foreground">{String(row.name ?? row.email ?? "—")}</div>
                       <div className="truncate text-[11px] text-muted-foreground">{String(row.email ?? "")} · {String(row.role ?? "")}</div>
                     </div>
-                    <Badge variant="success">{String(row.loginCount ?? 0)} logins</Badge>
+                    <Badge variant="successSoft">{String(row.loginCount ?? 0)} logins</Badge>
                   </div>
                 ))}
                 {(!userActivity.data?.rows || userActivity.data.rows.length === 0) && <p className="text-xs text-muted-foreground">No login events yet.</p>}
@@ -500,7 +513,7 @@ export function AdminOverview() {
                     <div className="truncate text-sm font-medium text-foreground">{String(row.facilityName ?? "—")}</div>
                     <div className="truncate text-[11px] text-muted-foreground">{String(row.planType ?? "")}{row.billingCycle ? ` · ${row.billingCycle}` : ""}</div>
                   </div>
-                  <Badge variant="success">Active</Badge>
+                  <Badge variant="successSoft">Active</Badge>
                 </div>
               ))}
               {(!activeSubs.data?.data || activeSubs.data.data.length === 0) && <p className="text-xs text-muted-foreground">No active subscriptions found.</p>}
