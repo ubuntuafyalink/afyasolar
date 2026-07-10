@@ -9,7 +9,6 @@
  * function here performs any network, DB, payment, SMS, or email side-effect.
  */
 import { hashSeed } from "@/lib/efficiency-climate/simulation"
-import { hourlySolarKw, SOLAR_PR, BATTERY_DOD, type PowerInputs } from "@/lib/dashboard/power-model"
 
 export const DEMO_DATA_NOTE = "Demo data sample values, not yet wired to a live source."
 
@@ -58,21 +57,12 @@ export type PowerToday = {
 }
 
 /** Power-forecast figures for today (spec 8.2 "card two"). */
-export function getPowerToday(facilityId?: string, inputs?: PowerInputs): PowerToday {
+export function getPowerToday(facilityId?: string): PowerToday {
   const seed = seedFor(facilityId, "power-today")
-  // Battery SoC has no real source in this build, so it stays seeded; the sky
-  // and expected sun hours come from the real Climate Outlook resource when set.
-  const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
-  if (inputs) {
-    return {
-      expectedHours: Math.round(Math.max(12, Math.min(20, 12 + inputs.peakSunHours)) * 10) / 10,
-      batterySocPct,
-      expectedSolar: inputs.sky,
-    }
-  }
   const skyRoll = rand(seed, 2)
   const expectedSolar = skyRoll > 0.66 ? "sunny" : skyRoll > 0.33 ? "partly" : "cloudy"
   const expectedHours = Math.round((skyRoll * 6 + 14) * 10) / 10 // ~1420h
+  const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
   return { expectedHours, batterySocPct, expectedSolar }
 }
 
@@ -115,9 +105,9 @@ export function getPendingTasks(facilityId?: string): FacilityTask[] {
       id: "task-assessment-due",
       kind: "assessment-due",
       title: "Quarterly resilience assessment due",
-      detail: "Review your Climate Outlook hazard trends for this quarter.",
+      detail: "Complete your climate-resilience review for this quarter.",
       dueLabel: "This week",
-      target: "climate-outlook",
+      target: "climate-resilience",
     },
   ]
   const count = Math.floor(rand(seed, 4) * (all.length + 1)) // 0..3
@@ -233,30 +223,12 @@ export type PowerSnapshot = {
 }
 
 /** Current instantaneous power picture for the source indicator + flow diagram. */
-export function getPowerSnapshot(
-  facilityId?: string,
-  batterySocOverride?: number,
-  inputs?: PowerInputs,
-): PowerSnapshot {
+export function getPowerSnapshot(facilityId?: string, batterySocOverride?: number): PowerSnapshot {
   const seed = seedFor(facilityId, "power-snapshot")
   const hour = new Date().getHours()
   const daytime = hour >= 7 && hour <= 18
-
-  // Solar + load: real (assessed load + sized solar + climate sun) when inputs
-  // are set, otherwise the seeded demo profile.
-  const solarKw = inputs
-    ? hourlySolarKw(hour, inputs.solarCapacityKw, inputs.peakSunHours)
-    : daytime
-      ? Math.round((1.5 + rand(seed, hour) * 4) * 10) / 10
-      : 0
-  const loadKw = inputs
-    ? Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 10) / 10
-    : Math.round((1.2 + rand(seed, 5) * 2.5) * 10) / 10
-
-  const batterySocPct =
-    typeof batterySocOverride === "number"
-      ? Math.round(batterySocOverride)
-      : getPowerToday(facilityId, inputs).batterySocPct
+  const solarKw = daytime ? Math.round((1.5 + rand(seed, hour) * 4) * 10) / 10 : 0
+  const loadKw = Math.round((1.2 + rand(seed, 5) * 2.5) * 10) / 10
 
   let gridKw = 0
   let batteryKw = 0
@@ -267,8 +239,7 @@ export function getPowerSnapshot(
   } else if (daytime) {
     activeSource = "solar"
     batteryKw = -Math.round((loadKw - solarKw) * 10) / 10 // battery tops up
-  } else if (inputs ? batterySocPct < 25 : rand(seed, 3) < 0.4) {
-    // Night with a low battery falls back to grid; otherwise run off battery.
+  } else if (rand(seed, 3) < 0.4) {
     activeSource = "grid"
     gridKw = loadKw
   } else {
@@ -276,6 +247,10 @@ export function getPowerSnapshot(
     batteryKw = -loadKw
   }
 
+  const batterySocPct =
+    typeof batterySocOverride === "number"
+      ? Math.round(batterySocOverride)
+      : getPowerToday(facilityId).batterySocPct
   return { activeSource, solarKw, gridKw, batteryKw, loadKw, batterySocPct }
 }
 
@@ -289,9 +264,8 @@ export function getLivePowerSnapshot(
   facilityId: string | undefined,
   tick: number,
   batterySocOverride?: number,
-  inputs?: PowerInputs,
 ): PowerSnapshot {
-  const base = getPowerSnapshot(facilityId, batterySocOverride, inputs)
+  const base = getPowerSnapshot(facilityId, batterySocOverride)
   const seed = seedFor(facilityId, "live-power")
   const j = (salt: number, amp: number) => (rand(seed, tick * 7 + salt) - 0.5) * 2 * amp
   const kw = (v: number) => Math.max(0, Math.round(v * 100) / 100)
@@ -316,26 +290,13 @@ export function getLiveFridgeTempC(facilityId: string | undefined, tick: number)
 export type PowerBySourcePoint = { time: string; solar: number; grid: number; battery: number }
 
 /** 24 hourly points of delivered power split by source, for the stacked-area chart. */
-export function get24hPowerBySource(facilityId?: string, inputs?: PowerInputs): PowerBySourcePoint[] {
+export function get24hPowerBySource(facilityId?: string): PowerBySourcePoint[] {
   const seed = seedFor(facilityId, "power-24h")
   const out: PowerBySourcePoint[] = []
   for (let h = 24; h >= 0; h--) {
     const t = new Date(Date.now() - h * 3_600_000)
     const hr = t.getHours()
     const daytime = hr >= 7 && hr <= 18
-
-    if (inputs) {
-      // Real: climate-shaped solar covers the assessed load; battery fills the
-      // gap (solar + storage). Grid only appears if the system is grid-tied and
-      // short, which we cannot know here, so it stays solar + battery.
-      const solar = hourlySolarKw(hr, inputs.solarCapacityKw, inputs.peakSunHours)
-      const load = Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 10) / 10
-      const deliveredSolar = Math.min(solar, load)
-      const battery = Math.max(0, Math.round((load - deliveredSolar) * 10) / 10)
-      out.push({ time: `${String(hr).padStart(2, "0")}:00`, solar: deliveredSolar, grid: 0, battery })
-      continue
-    }
-
     const solar = daytime
       ? Math.max(0, Math.round(Math.sin(((hr - 6) / 12) * Math.PI) * (3 + rand(seed, hr) * 2) * 10) / 10)
       : 0
@@ -355,36 +316,14 @@ export type PowerForecastPoint = {
 }
 
 /** Next-12-hours forecast of expected source and battery State of Charge. */
-export function getPower12hForecast(facilityId?: string, inputs?: PowerInputs): PowerForecastPoint[] {
+export function getPower12hForecast(facilityId?: string): PowerForecastPoint[] {
   const seed = seedFor(facilityId, "power-12h")
-  let soc = getPowerToday(facilityId, inputs).batterySocPct
+  let soc = getPowerToday(facilityId).batterySocPct
   const out: PowerForecastPoint[] = []
   for (let i = 1; i <= 12; i++) {
     const t = new Date(Date.now() + i * 3_600_000)
     const hr = t.getHours()
     const daytime = hr >= 7 && hr <= 18
-
-    if (inputs) {
-      // Real physics: SoC moves by the net energy over the hour relative to the
-      // assessed battery capacity. Solar from the climate-shaped curve.
-      const solar = hourlySolarKw(hr, inputs.solarCapacityKw, inputs.peakSunHours)
-      const load = Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 100) / 100
-      const netKwh = solar - load // over one hour
-      const socDelta = inputs.batteryCapacityKwh > 0 ? (netKwh / inputs.batteryCapacityKwh) * 100 : 0
-      soc = Math.max(5, Math.min(100, soc + socDelta))
-      let source: PowerSource
-      if (solar >= load) source = "solar"
-      else if (daytime) source = "solar"
-      else source = soc <= 20 ? "grid" : "battery"
-      out.push({
-        time: `${String(hr).padStart(2, "0")}:00`,
-        source,
-        batterySocPct: Math.round(soc),
-        expectedKw: Math.round((daytime ? solar : load) * 10) / 10,
-      })
-      continue
-    }
-
     const solar = daytime ? 2 + rand(seed, hr) * 3 : 0
     const load = 1.4 + rand(seed, i * 7) * 1.6
     let source: PowerSource
@@ -416,16 +355,12 @@ export type ServiceHoursEstimate = { hours: number; untilLabel: string; critical
 export function getServiceHoursRemaining(
   facilityId?: string,
   batterySocPct?: number,
-  inputs?: PowerInputs,
 ): ServiceHoursEstimate {
   const seed = seedFor(facilityId, "service-hours")
-  const soc = typeof batterySocPct === "number" ? batterySocPct : getPowerToday(facilityId, inputs).batterySocPct
-  // Real battery capacity + critical load from the assessment when available.
-  const batteryKwh = inputs ? inputs.batteryCapacityKwh : 5 + (seed % 5)
-  const criticalLoadKw = inputs
-    ? Math.max(0.05, Math.round(inputs.criticalLoadKw * 100) / 100)
-    : Math.round((0.6 + rand(seed, 2) * 0.8) * 100) / 100
-  const usableKwh = batteryKwh * (soc / 100) * (inputs ? BATTERY_DOD : 1)
+  const soc = typeof batterySocPct === "number" ? batterySocPct : getPowerToday(facilityId).batterySocPct
+  const batteryKwh = 5 + (seed % 5) // demo usable capacity
+  const criticalLoadKw = Math.round((0.6 + rand(seed, 2) * 0.8) * 100) / 100
+  const usableKwh = batteryKwh * (soc / 100)
   const hours = Math.max(0, usableKwh / criticalLoadKw)
   const until = new Date(Date.now() + hours * 3_600_000)
   const hh = String(until.getHours()).padStart(2, "0")
@@ -437,23 +372,12 @@ export function getServiceHoursRemaining(
 export type SolarDayForecast = { day: string; expectedKwh: number; sky: "sunny" | "partly" | "cloudy" }
 
 /** 7-day solar generation forecast (spec C16 / 11.3 "Forecast"). */
-export function get7daySolarForecast(facilityId?: string, inputs?: PowerInputs): SolarDayForecast[] {
+export function get7daySolarForecast(facilityId?: string): SolarDayForecast[] {
   const seed = seedFor(facilityId, "solar-7d")
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
   const out: SolarDayForecast[] = []
   for (let i = 0; i < 7; i++) {
     const t = new Date(Date.now() + i * 86_400_000)
-
-    if (inputs) {
-      // Real: capacity x PSH x PR, with the day's PSH varied +/-15% around the
-      // measured Climate Outlook mean.
-      const dayPsh = Math.max(0, inputs.peakSunHours * (0.85 + rand(seed, i * 11) * 0.3))
-      const sky: SolarDayForecast["sky"] = dayPsh >= 5.5 ? "sunny" : dayPsh >= 4 ? "partly" : "cloudy"
-      const expectedKwh = Math.round(inputs.solarCapacityKw * dayPsh * SOLAR_PR)
-      out.push({ day: days[t.getDay()], expectedKwh, sky })
-      continue
-    }
-
     const r = rand(seed, i * 11)
     const sky = r > 0.66 ? "sunny" : r > 0.33 ? "partly" : "cloudy"
     const factor = sky === "sunny" ? 1 : sky === "partly" ? 0.75 : 0.5
@@ -577,16 +501,8 @@ export type CrphcResult = {
   tier: string
 }
 
-/**
- * Optional real-data overrides for the otherwise-seeded RCS dimensions. Today
- * only `hesScore` is supported: the Hazard Exposure capacity derived from the
- * facility's real Climate Outlook data (see getRcsExplainer callers). When
- * omitted, every value is seeded demo data exactly as before.
- */
-export type RcsOverrides = { hesScore?: number }
-
 /** Demo scores for the five existing CRiPHC dimensions (the two new ones are user-scored). */
-export function getCrphcBaseDimensions(facilityId?: string, overrides?: RcsOverrides): CrphcDimension[] {
+export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
   const seed = seedFor(facilityId, "crphc-v2")
   const defs: [string, string, number][] = [
     ["HES", "Hazard Exposure", 0.15],
@@ -602,13 +518,12 @@ export function getCrphcBaseDimensions(facilityId?: string, overrides?: RcsOverr
   const bias = (rand(seed, 101) - 0.5) * 70
   return defs.map(([code, label, weight], i) => {
     const raw = 30 + rand(seed, i * 7) * 55 + bias
-    // HES (Hazard Exposure capacity) can be driven by real climate data when
-    // provided: higher measured exposure -> lower capacity score.
-    const score =
-      code === "HES" && overrides?.hesScore != null
-        ? Math.max(0, Math.min(100, Math.round(overrides.hesScore)))
-        : Math.max(5, Math.min(98, Math.round(raw)))
-    return { code, label, weight, score }
+    return {
+      code,
+      label,
+      weight,
+      score: Math.max(5, Math.min(98, Math.round(raw))),
+    }
   })
 }
 
@@ -1189,48 +1104,14 @@ function statusFromHeadroom(headroom: number): ChildServiceStatus {
 }
 
 /**
- * Optional real-data overrides for the child-services board. `byHazard` is the
- * facility's measured 0-100 Climate Outlook hazard index per type; when present
- * it drives the headroom of the two climate-sensitive services (cold-chain from
- * heat, water-pumping from drought/flood). Omitted -> fully seeded demo.
- */
-export type ChildServicesOverrides = { byHazard?: CviByHazard }
-
-/** Plain-language climate driver shown when a climate-driven service is at risk. */
-const CLIMATE_DRIVER: Partial<Record<ChildServiceKey, Bilingual>> = {
-  "cold-chain": {
-    en: "Measured heat exposure is high in your Climate Outlook data, raising fridge cooling load and spoilage risk.",
-    sw: "Kukabiliwa na joto kulikopimwa ni kwa juu katika data yako ya Mtazamo wa Hali ya Hewa, kunaongeza mzigo wa kupoza friji na hatari ya kuharibika.",
-  },
-  "water-pumping": {
-    en: "Measured drought and flood exposure is high in your Climate Outlook data, stressing water supply.",
-    sw: "Kukabiliwa na ukame na mafuriko kulikopimwa ni kwa juu katika data yako ya Mtazamo wa Hali ya Hewa, kunaathiri upatikanaji wa maji.",
-  },
-}
-
-/** Real headroom for a climate-sensitive service = inverse of its measured hazard. */
-function climateHeadroom(key: ChildServiceKey, byHazard: CviByHazard): number | undefined {
-  if (key === "cold-chain") return Math.max(0, Math.min(100, Math.round(100 - byHazard.heat)))
-  if (key === "water-pumping")
-    return Math.max(0, Math.min(100, Math.round(100 - Math.max(byHazard.drought, byHazard.flood))))
-  return undefined
-}
-
-/**
  * Per-facility status board for the five child-critical services. Deterministic
  * from the facilityId so demos are stable. Each at-risk/failing service gets an
- * about-to-fail prediction window; protected services get none. When `overrides.
- * byHazard` is supplied, cold-chain and water-pumping headroom come from real
- * Climate Outlook data instead of seeded values.
+ * about-to-fail prediction window; protected services get none.
  */
-export function getChildServicesAtRisk(
-  facilityId?: string,
-  overrides?: ChildServicesOverrides,
-): ChildServiceRisk[] {
+export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] {
   const seed = seedFor(facilityId, "child-services")
   return CHILD_SERVICE_DEFS.map((def, i) => {
-    const climate = overrides?.byHazard ? climateHeadroom(def.key, overrides.byHazard) : undefined
-    const headroomPct = climate != null ? climate : Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
+    const headroomPct = Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
     const status = statusFromHeadroom(headroomPct)
     const prediction: ChildServicePrediction | null =
       status === "ok"
@@ -1246,17 +1127,12 @@ export function getChildServicesAtRisk(
             )
             return { etaDaysMin, etaDaysMax, confidencePct, signal: def.signal }
           })()
-    // Drivers: seeded reasons, with a real-climate driver prepended for the
-    // climate-driven services when they are not protected.
-    const baseDrivers = status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1)
-    const climateDriver = climate != null && status !== "ok" ? CLIMATE_DRIVER[def.key] : undefined
-    const drivers = climateDriver ? [climateDriver, ...baseDrivers].slice(0, 2) : baseDrivers
     return {
       key: def.key,
       status,
       headroomPct,
       dependsOn: def.dependsOn,
-      drivers,
+      drivers: status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1),
       prediction,
       linkedDimension: def.linkedDimension,
     }
@@ -1266,12 +1142,9 @@ export function getChildServicesAtRisk(
 export type ChildServicesSummary = { failing: number; atRisk: number; ok: number }
 
 /** Roll-up counts for the board header. */
-export function getChildServicesSummary(
-  facilityId?: string,
-  overrides?: ChildServicesOverrides,
-): ChildServicesSummary {
+export function getChildServicesSummary(facilityId?: string): ChildServicesSummary {
   const out: ChildServicesSummary = { failing: 0, atRisk: 0, ok: 0 }
-  for (const s of getChildServicesAtRisk(facilityId, overrides)) {
+  for (const s of getChildServicesAtRisk(facilityId)) {
     if (s.status === "failing") out.failing += 1
     else if (s.status === "at-risk") out.atRisk += 1
     else out.ok += 1
@@ -1397,8 +1270,8 @@ const RCS_DIMENSION_COPY: Record<
  * dimensions use the same default (60) as the interactive widget so the RCS
  * headline matches across the dashboard.
  */
-export function getRcsExplainer(facilityId?: string, overrides?: RcsOverrides): RcsExplainer {
-  const base = getCrphcBaseDimensions(facilityId, overrides)
+export function getRcsExplainer(facilityId?: string): RcsExplainer {
+  const base = getCrphcBaseDimensions(facilityId)
   const dims: CrphcDimension[] = [
     ...base,
     ...CRPHC_NEW_DIMENSIONS.map((d) => ({ ...d, score: 60, isNew: true })),
@@ -1431,9 +1304,9 @@ export type RcsTrendPoint = { label: string; rcs: number }
  * Quarterly RCS history ending at the facility's current score, trending up from
  * a lower baseline with mild seeded noise. Simulated for the RCS trend chart.
  */
-export function getRcsTrend(facilityId?: string, overrides?: RcsOverrides): RcsTrendPoint[] {
+export function getRcsTrend(facilityId?: string): RcsTrendPoint[] {
   const seed = seedFor(facilityId, "rcs-trend")
-  const current = getRcsExplainer(facilityId, overrides).rcs
+  const current = getRcsExplainer(facilityId).rcs
   const now = new Date()
   const n = 6
   const baseline = Math.max(0, current - 12)

@@ -562,40 +562,27 @@ export function AdminBulkSMS() {
               ) : (
                 <div className="border border-border rounded-lg max-h-96 overflow-y-auto">
                   <div className="divide-y divide-border">
-                    {filteredFacilities.map((facility) => {
-                      const noPhone = !hasPhone(facility)
-                      return (
-                        <label
-                          key={facility.id}
-                          className={cn(
-                            "flex items-center gap-3 p-3 transition-colors",
-                            noPhone ? "cursor-not-allowed opacity-60" : "hover:bg-muted/50 cursor-pointer",
-                          )}
-                        >
-                          <Checkbox
-                            checked={selectedFacilities.has(facility.id)}
-                            onCheckedChange={() => toggleFacility(facility.id)}
-                            disabled={noPhone}
-                            aria-label={`Select ${facility.name}`}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
-                              {facility.name}
-                              {noPhone && (
-                                <Badge variant="outline" className="border-destructive/40 text-destructive text-[10px]">
-                                  No phone
-                                </Badge>
-                              )}
-                            </p>
-                            <div className="flex items-center gap-3 mt-1">
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Phone className="w-3 h-3" aria-hidden="true" />
-                                {noPhone ? "—" : facility.phone}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {facility.city}, {facility.region}
-                              </span>
-                            </div>
+                    {filteredFacilities.map((facility) => (
+                      <label
+                        key={facility.id}
+                        className="flex items-center gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                      >
+                        <Checkbox
+                          checked={selectedFacilities.has(facility.id)}
+                          onCheckedChange={() => toggleFacility(facility.id)}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {facility.name}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Phone className="w-3 h-3" aria-hidden="true" />
+                              {facility.phone}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {facility.city}, {facility.region}
+                            </span>
                           </div>
                         </label>
                       )
@@ -765,51 +752,19 @@ export function AdminBulkSMS() {
             </div>
           )}
 
-          {/* Message Input + live preview */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="space-y-2">
-              <label htmlFor="bulk-message" className="text-sm font-medium">Message</label>
-              <Textarea
-                id="bulk-message"
-                placeholder="Type your message here... The greeting and signature are added automatically."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="min-h-[160px] text-sm"
-                maxLength={1000}
-              />
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Greeting &amp; signature auto-added per facility</span>
-                <span>{message.length}/1000</span>
-              </div>
-            </div>
-
-            {/* Preview */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />
-                Preview
-              </div>
-              <div className="rounded-lg border border-border bg-muted/30 p-3">
-                <p className="whitespace-pre-wrap rounded-2xl rounded-tl-sm bg-background px-3 py-2 text-sm text-foreground shadow-sm">
-                  {previewText}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-                <span>
-                  ≈ {seg.segments} segment{seg.segments !== 1 ? 's' : ''}/SMS · {seg.chars} chars
-                  {seg.unicode ? ' · Unicode' : ''}
-                </span>
-                {selectedCount > 0 && (
-                  <span className="font-medium text-foreground">
-                    ~{totalUnits} SMS unit{totalUnits !== 1 ? 's' : ''} for {selectedCount} recipient{selectedCount !== 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
-              {seg.unicode && (
-                <p className="text-[11px] text-warning-foreground">
-                  Non-GSM characters (e.g. emoji) shorten each segment to 70 characters and cost more.
-                </p>
-              )}
+          {/* Message Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Message</label>
+            <Textarea
+              placeholder="Type your message here... The facility name will be automatically included in each SMS."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="min-h-[120px] text-sm"
+              maxLength={1000}
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Each SMS will include the facility name</span>
+              <span>{message.length}/1000</span>
             </div>
           </div>
 
@@ -835,7 +790,7 @@ export function AdminBulkSMS() {
           {/* Results */}
           {sendResults && (
             <div className="border border-border rounded-lg p-4 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium">Send Results</h3>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1 text-primary">
@@ -843,16 +798,10 @@ export function AdminBulkSMS() {
                     <span className="text-xs">{sendResults.success} successful</span>
                   </div>
                   {sendResults.failed > 0 && (
-                    <>
-                      <div className="flex items-center gap-1 text-destructive">
-                        <XCircle className="w-4 h-4" aria-hidden="true" />
-                        <span className="text-xs">{sendResults.failed} failed</span>
-                      </div>
-                      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={copyFailed}>
-                        {copiedFailed ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
-                        {copiedFailed ? 'Copied' : 'Copy failed numbers'}
-                      </Button>
-                    </>
+                    <div className="flex items-center gap-1 text-destructive">
+                      <XCircle className="w-4 h-4" aria-hidden="true" />
+                      <span className="text-xs">{sendResults.failed} failed</span>
+                    </div>
                   )}
                 </div>
               </div>

@@ -4,8 +4,8 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import { Cloud, CloudSun, Sun } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { get7daySolarForecast } from "@/lib/dashboard/facility-demo-data"
-import type { PowerInputs } from "@/lib/dashboard/power-model"
 
 const SKY_ICON = { sunny: Sun, partly: CloudSun, cloudy: Cloud } as const
 const SKY_COLOR = {
@@ -20,14 +20,15 @@ const SKY_COLOR = {
  * [data] fed by the local demo module. TODO: wire the real forecast
  * (NASA POWER + pvlib generation model) per spec Parts 5 & 9.
  */
-export function SolarForecast7d({ facilityId, inputs }: { facilityId?: string; inputs?: PowerInputs | null }) {
-  const data = get7daySolarForecast(facilityId, inputs ?? undefined)
+export function SolarForecast7d({ facilityId }: { facilityId?: string }) {
+  const data = get7daySolarForecast(facilityId)
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">7-day solar forecast</CardTitle>
+          <DemoDataBadge />
         </div>
         <p className="text-xs text-muted-foreground">Expected generation (kWh) per day.</p>
       </CardHeader>

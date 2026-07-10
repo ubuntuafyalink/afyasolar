@@ -17,12 +17,9 @@ import { getRcsTrend } from "@/lib/dashboard/facility-demo-data"
 import { useFacilityPreferences } from "./facility-preferences-provider"
 
 /** RCS-over-time line chart (quarterly), reusing the recharts conventions. */
-export function RcsTrend({ facilityId, hesScore }: { facilityId?: string; hesScore?: number }) {
+export function RcsTrend({ facilityId }: { facilityId?: string }) {
   const { t } = useFacilityPreferences()
-  const data = useMemo(
-    () => getRcsTrend(facilityId, hesScore != null ? { hesScore } : undefined),
-    [facilityId, hesScore],
-  )
+  const data = useMemo(() => getRcsTrend(facilityId), [facilityId])
   const first = data[0]?.rcs ?? 0
   const last = data[data.length - 1]?.rcs ?? 0
   const change = last - first

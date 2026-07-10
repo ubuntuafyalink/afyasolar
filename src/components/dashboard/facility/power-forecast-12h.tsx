@@ -14,7 +14,6 @@ import type { LucideIcon } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPower12hForecast, type PowerSource } from "@/lib/dashboard/facility-demo-data"
-import type { PowerInputs } from "@/lib/dashboard/power-model"
 
 const SOURCE_ICON: Record<PowerSource, LucideIcon> = {
   solar: Sun,
@@ -28,14 +27,8 @@ const SOURCE_COLOR: Record<PowerSource, string> = {
 }
 
 /** Spec 8.2 "Umeme detail": 12h forecast of expected source and battery SoC. */
-export function PowerForecast12h({
-  facilityId,
-  inputs,
-}: {
-  facilityId?: string
-  inputs?: PowerInputs | null
-}) {
-  const data = getPower12hForecast(facilityId, inputs ?? undefined)
+export function PowerForecast12h({ facilityId }: { facilityId?: string }) {
+  const data = getPower12hForecast(facilityId)
 
   return (
     <Card>

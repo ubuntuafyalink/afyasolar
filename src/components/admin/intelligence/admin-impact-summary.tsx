@@ -1,48 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { ClipboardList, Leaf, ShieldCheck, Wrench } from "lucide-react"
+import { ClipboardList, Leaf, ShieldCheck, TrendingUp } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { StatCard } from "@/components/ui/stat-card"
-import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
-import { useAdminAdaptationsRollup } from "@/hooks/use-admin-adaptations-rollup"
-import { useAdminCarbonCredits } from "@/hooks/use-admin-carbon-credits"
-import { summarize, childServiceRollup } from "@/lib/dashboard/admin-portfolio-real"
-
-function isImplemented(status: string): boolean {
-  const s = status.toLowerCase()
-  return s.includes("implement") || s.includes("complete") || s.includes("done")
-}
+import { getImpactSummary } from "@/lib/dashboard/admin-portfolio-data"
 
 export function AdminImpactSummary() {
-  const { facilities, isLoading, isError } = useAdminPortfolio()
-  const adaptations = useAdminAdaptationsRollup()
-  const carbon = useAdminCarbonCredits()
-
-  const summary = React.useMemo(() => summarize(facilities), [facilities])
-
-  // Services protected: cold-chain + water-pumping currently "ok" (real climate-derived).
-  const servicesProtected = React.useMemo(() => {
-    const roll = childServiceRollup(facilities)
-    return roll
-      .filter((r) => r.key === "cold-chain" || r.key === "water-pumping")
-      .reduce((s, r) => s + r.ok, 0)
-  }, [facilities])
-
-  const adaptationsImplemented = React.useMemo(
-    () => (adaptations.data?.items ?? []).filter((i) => isImplemented(i.status)).length,
-    [adaptations.data],
-  )
-
-  const co2Tons = carbon.data ? Math.round(carbon.data.creditsEarnedTons) : null
-
-  if (isLoading) {
-    return <div className="h-40 animate-pulse rounded-lg bg-muted" />
-  }
-  if (isError) {
-    return <p className="text-sm text-destructive">Could not load impact data. Please retry.</p>
-  }
+  const summary = React.useMemo(() => getImpactSummary(), [])
 
   return (
     <Card>
@@ -51,39 +18,39 @@ export function AdminImpactSummary() {
           <ShieldCheck aria-hidden className="size-5 text-primary" />
           Resilience impact summary
         </CardTitle>
+        <DemoDataBadge />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Facilities assessed"
-            value={`${summary.assessed}/${summary.facilities}`}
+            value={summary.facilitiesAssessed}
             icon={<ClipboardList aria-hidden />}
             accent="primary"
           />
           <StatCard
             title="Services protected"
-            value={servicesProtected}
+            value={summary.servicesProtected}
             icon={<ShieldCheck aria-hidden />}
             accent="success"
-            meta="Cold-chain & water at low risk"
           />
           <StatCard
-            title="Adaptations implemented"
-            value={adaptations.isLoading ? "…" : adaptationsImplemented}
-            icon={<Wrench aria-hidden />}
+            title="Resilience points gained"
+            value={summary.resiliencePointsGained}
+            icon={<TrendingUp aria-hidden />}
             accent="solar"
           />
           <StatCard
             title="CO2 avoided (tons)"
-            value={carbon.isLoading ? "…" : co2Tons != null ? co2Tons : "N/A"}
+            value={summary.co2AvoidedTons}
             icon={<Leaf aria-hidden />}
             accent="success"
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Portfolio outcomes from real data: completed climate assessments, child-health services kept at
-          low climate risk (cold-chain &amp; water, from NASA POWER exposure), adaptation measures
-          implemented, and CO2 avoided from recorded carbon credits.
+          Portfolio-level outcomes aggregated across all assessed facilities: completed assessments,
+          essential child-health services kept resilient, cumulative resilience score (RCS) points
+          delivered by adaptation measures, and estimated CO2 emissions avoided.
         </p>
       </CardContent>
     </Card>

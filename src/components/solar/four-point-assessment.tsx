@@ -555,7 +555,7 @@ export function FourPointAssessment({
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div className="text-center">
-              <p className="text-4xl font-bold text-primary">
+              <p className="text-4xl font-bold text-emerald-700">
                 {assessmentScore !== null && bmiPercent !== null ? `${assessmentScore}/40` : ""}
               </p>
               {bmiPercent !== null && <p className="text-xs text-muted-foreground mt-1">{bmiPercent}% of best-practice checklist</p>}

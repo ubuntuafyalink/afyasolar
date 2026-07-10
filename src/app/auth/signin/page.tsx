@@ -121,137 +121,151 @@ function SignInContent() {
   const busy = isLoading || isRedirecting
 
   return (
-    <LazyMotionProvider>
-      <SolarBackground index={bgIndex} animated={!reduce} />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-primary/15 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none" />
+      <div
+        className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-primary/10 to-primary/5 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none"
+        style={{ animationDelay: "1s" }}
+      />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-primary/5 to-primary/10 rounded-full blur-3xl -z-10 animate-pulse motion-reduce:animate-none"
+        style={{ animationDelay: "0.5s" }}
+      />
 
       {isRedirecting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="size-6 animate-spin text-white" aria-hidden />
-            <p className="text-sm font-medium text-white/90">Opening Afya Solar…</p>
+            <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden />
+            <p className="text-sm text-muted-foreground font-medium">Opening Afya Solar…</p>
           </div>
         </div>
       )}
 
-      <div className="relative z-10 min-h-screen lg:grid lg:grid-cols-2">
-        {/* Brand panel (desktop) — over the photo */}
-        <AuthBrandPanel
-          headline="Climate-resilient solar power for health facilities."
-          bgIndex={bgIndex}
-          onSelectBg={setBgIndex}
-        />
-
-        {/* Form panel */}
-        <main className="flex min-h-screen items-center justify-center p-6">
-          <m.div variants={fadeInUp} initial="hidden" animate="show" className="w-full max-w-md">
-            {/* Mobile brand header (brand panel hidden < lg) */}
-            <AuthMobileBrand />
-
-            <div className="overflow-hidden rounded-2xl border border-white/15 bg-card/90 shadow-2xl ring-1 ring-black/5 backdrop-blur-xl">
-              <div className="h-1 w-full bg-gradient-to-r from-primary via-primary/60 to-solar" />
-              <div className="p-7 sm:p-9">
-                <div className="mb-7 text-center">
-                  <h2 className="text-3xl font-bold tracking-tight text-foreground">Welcome back</h2>
-                  <p className="mt-2 text-sm text-muted-foreground">Sign in to your Afya Solar dashboard.</p>
+      <div className="w-full max-w-sm relative z-10">
+        <Card className="border border-border shadow-xl bg-card/90 backdrop-blur-sm">
+          <CardHeader className="text-center pb-5">
+            <div className="relative mx-auto mb-4 w-20 h-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/20 bg-card shadow-lg">
+              <Image
+                src="/images/services/logo.png"
+                alt="Afya Solar"
+                fill
+                className="object-contain p-2"
+                priority
+              />
+            </div>
+            <div className="flex items-center justify-center gap-2 text-primary mb-1">
+              <Sun className="w-5 h-5 text-primary" aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-wide">Afya Solar</span>
+            </div>
+            <CardTitle className="text-2xl font-semibold text-foreground mb-1.5">Sign in</CardTitle>
+            <CardDescription className="text-sm text-muted-foreground">
+              Solar energy dashboards and monitoring for your healthcare facility
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-primary" aria-hidden />
+                  Email address
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    {...register("email")}
+                    disabled={isLoading || isRedirecting}
+                    className="h-11 pl-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
+                  />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
                 </div>
-
-                <m.form variants={staggerContainer} initial="hidden" animate="show" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                  <m.div variants={scaleIn} className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                      Email address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-primary" aria-hidden />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        autoComplete="email"
-                        {...register("email")}
-                        disabled={busy}
-                        className="h-12 border border-border bg-muted/40 pl-11 text-[15px] transition-all focus:bg-card"
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-sm text-destructive">
-                        <AlertCircle className="size-4 shrink-0" aria-hidden />
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </m.div>
-
-                  <m.div variants={scaleIn} className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium text-foreground">
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-primary" aria-hidden />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        autoComplete="current-password"
-                        {...register("password")}
-                        disabled={busy}
-                        className="h-12 border border-border bg-muted/40 pl-11 pr-11 text-[15px] transition-all focus:bg-card"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-                        aria-label={showPassword ? "Hide password" : "Show password"}
-                      >
-                        {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-                      </button>
-                    </div>
-                    {errors.password && (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-sm text-destructive">
-                        <AlertCircle className="size-4 shrink-0" aria-hidden />
-                        {errors.password.message}
-                      </p>
-                    )}
-                  </m.div>
-
-                  <m.div variants={scaleIn} className="flex items-center justify-end text-sm">
-                    <Link href="/auth/forgot-password" className="font-medium text-primary transition-colors hover:underline">
-                      Forgot password?
-                    </Link>
-                  </m.div>
-
-                  <m.div variants={scaleIn}>
-                    <Button type="submit" className="h-12 w-full text-[15px] font-semibold" disabled={busy}>
-                      {busy ? (
-                        <>
-                          <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
-                          {isRedirecting ? "Redirecting…" : "Signing in…"}
-                        </>
-                      ) : (
-                        "Sign in"
-                      )}
-                    </Button>
-                  </m.div>
-                </m.form>
-
-                <div className="mt-6 space-y-2 border-t border-border pt-6">
-                  <p className="text-center text-sm text-muted-foreground">
-                    Need an account?{" "}
-                    <Link href="/auth/signup" className="font-bold text-primary underline-offset-2 hover:underline">
-                      Register your facility
-                    </Link>
+                {errors.email && (
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
+                    {errors.email.message}
                   </p>
-                  <p className="text-center text-[11px] text-muted-foreground">
-                    By signing in, you agree to our{" "}
-                    <Link href="/terms" className="font-semibold text-primary underline-offset-2 hover:underline">
-                      Terms &amp; Conditions
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy-policy" className="font-semibold text-primary underline-offset-2 hover:underline">
-                      Privacy Policy
-                    </Link>
-                    .
-                  </p>
-                </div>
+                )}
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" aria-hidden />
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    {...register("password")}
+                    disabled={isLoading || isRedirecting}
+                    className="h-11 pl-10 pr-10 border border-border bg-muted/40 focus:bg-card transition-all text-sm"
+                  />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" aria-hidden />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" aria-hidden /> : <Eye className="w-4 h-4" aria-hidden />}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive mt-1.5 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden />
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <Link href="/auth/forgot-password" className="text-primary hover:underline font-medium transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-11 text-sm font-semibold"
+                disabled={isLoading || isRedirecting}
+              >
+                {isLoading || isRedirecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden />
+                    {isRedirecting ? "Redirecting…" : "Signing in…"}
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-5 pt-5 border-t border-border space-y-2">
+              <p className="text-center text-xs text-muted-foreground">
+                Need an account?{" "}
+                <Link
+                  href="/auth/signup"
+                  className="text-primary hover:underline font-bold underline-offset-2"
+                >
+                  Register your facility
+                </Link>
+              </p>
+              <p className="text-center text-[11px] text-muted-foreground">
+                By signing in, you agree to our{" "}
+                <Link href="/terms" className="text-primary hover:underline font-semibold underline-offset-2">
+                  Terms &amp; Conditions
+                </Link>{" "}
+                and{" "}
+                <Link
+                  href="/privacy-policy"
+                  className="text-primary hover:underline font-semibold underline-offset-2"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </p>
             </div>
           </m.div>
         </main>
@@ -264,13 +278,15 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <div className="relative flex min-h-screen items-center justify-center p-4">
-          <SolarBackground />
-          <div className="relative z-10 flex flex-col items-center gap-3">
-            <BrandLogo size={64} glass />
-            <Loader2 className="size-5 animate-spin text-white" aria-hidden />
-            <p className="text-sm text-white/80">Loading…</p>
-          </div>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-secondary/30 to-primary/5 p-4">
+          <Card className="w-full max-w-sm border border-border shadow-xl bg-card/90 backdrop-blur-sm">
+            <CardHeader className="text-center">
+              <div className="relative mx-auto mb-4 w-20 h-20 flex-shrink-0 rounded-full overflow-hidden border-2 border-primary/20 bg-card shadow-lg">
+                <Image src="/images/services/logo.png" alt="Afya Solar" fill className="object-contain p-2" priority />
+              </div>
+              <CardTitle className="text-xl text-foreground">Loading…</CardTitle>
+            </CardHeader>
+          </Card>
         </div>
       }
     >

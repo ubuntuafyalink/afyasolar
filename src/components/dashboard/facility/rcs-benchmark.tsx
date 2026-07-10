@@ -36,12 +36,9 @@ function BenchmarkBar({ label, value }: { label: string; value: number }) {
  * reusing the NGO portfolio rollup. Difference is shown with icon + text, never
  * colour alone.
  */
-export function RcsBenchmark({ facilityId, hesScore }: { facilityId?: string; hesScore?: number }) {
+export function RcsBenchmark({ facilityId }: { facilityId?: string }) {
   const { t } = useFacilityPreferences()
-  const mine = useMemo(
-    () => getRcsExplainer(facilityId, hesScore != null ? { hesScore } : undefined).rcs,
-    [facilityId, hesScore],
-  )
+  const mine = useMemo(() => getRcsExplainer(facilityId).rcs, [facilityId])
   const networkAvg = useMemo(() => getPortfolioSummary().avgRcs, [])
   const diff = mine - networkAvg
 

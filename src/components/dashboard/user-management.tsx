@@ -11,13 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Loader2, Mail, CheckCircle2, Clock, XCircle, Search, ChevronLeft, ChevronRight, Trash2, Phone, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
-import { m } from "framer-motion"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Skeleton } from "@/components/ui/skeleton"
-import { StatCard } from "@/components/ui/stat-card"
-import { AnimatedNumber } from "@/components/ui/animated-number"
-import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
-import { fadeInUp, scaleIn, staggerContainer } from "@/components/motion/variants"
 
 interface User {
   id: string
@@ -244,18 +238,11 @@ export function UserManagement() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="space-y-2 p-5"><Skeleton className="h-4 w-20" /><Skeleton className="h-7 w-16" /></CardContent></Card>
-          ))}
-        </div>
-        <Card>
-          <CardContent className="py-6">
-            <CardListSkeleton rows={5} />
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardContent className="py-6">
+          <CardListSkeleton rows={5} />
+        </CardContent>
+      </Card>
     )
   }
 

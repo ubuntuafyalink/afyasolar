@@ -18,17 +18,11 @@ export function ResilienceReportButton({
   facilityId,
   facilityName,
   region,
-  hesScore,
-  hazardByHazard,
   className,
 }: {
   facilityId?: string
   facilityName?: string | null
   region?: string | null
-  /** Real Hazard Exposure capacity from Climate Outlook, so the PDF matches the screen. */
-  hesScore?: number
-  /** Real per-hazard climate indices, so the PDF's child services match the screen. */
-  hazardByHazard?: import("@/lib/dashboard/facility-demo-data").CviByHazard
   className?: string
 }) {
   const { t, locale } = useFacilityPreferences()
@@ -38,7 +32,7 @@ export function ResilienceReportButton({
     setBusy(true)
     try {
       const { generateResilienceReport } = await import("@/lib/dashboard/resilience-report")
-      await generateResilienceReport({ facilityId, facilityName, region, locale, t, hesScore, hazardByHazard })
+      await generateResilienceReport({ facilityId, facilityName, region, locale, t })
       toast.success(t("report.ready"))
     } catch (err) {
       toast.error(`${t("report.failed")}: ${getErrorMessage(err)}`)

@@ -5,57 +5,35 @@ import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StatCard } from "@/components/ui/stat-card"
-import { Snowflake, Thermometer, TriangleAlert, Info } from "lucide-react"
-import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
-import { coldChainProjection } from "@/lib/dashboard/admin-portfolio-real"
-import type { ColdChainRisk } from "@/lib/dashboard/admin-portfolio-types"
+import { DemoDataBadge } from "@/components/ui/demo-data-badge"
+import { Snowflake, Thermometer, TriangleAlert } from "lucide-react"
+import {
+  getColdChainFleet,
+  type ColdChainFleetRow,
+} from "@/lib/dashboard/admin-portfolio-data"
 
-function RiskBadge({ risk }: { risk: ColdChainRisk }) {
-  if (risk === "high") {
+function TempBadge({ row }: { row: ColdChainFleetRow }) {
+  if (row.status === "danger") {
     return (
       <Badge variant="destructive">
         <TriangleAlert aria-hidden className="size-3" />
-        High risk
+        Out of range
       </Badge>
     )
   }
-  if (risk === "elevated") {
-    return (
-      <Badge variant="warning">
-        <Thermometer aria-hidden className="size-3" />
-        Elevated
-      </Badge>
-    )
-  }
-  if (risk === "low") {
-    return (
-      <Badge variant="success">
-        <Snowflake aria-hidden className="size-3" />
-        Low risk
-      </Badge>
-    )
-  }
-  return <Badge variant="secondary">No data</Badge>
+  return (
+    <Badge variant="success">
+      <Snowflake aria-hidden className="size-3" />
+      Safe (28°C)
+    </Badge>
+  )
 }
 
-/**
- * Cold-chain risk PROJECTED from real NASA POWER heat exposure. There is no
- * fridge temperature telemetry, so this is an exposure proxy, not a measured
- * temperature - labeled accordingly (plan decision 1).
- */
 export function AdminColdChainMonitor() {
-  const { facilities, isLoading, isError, climateLoading } = useAdminPortfolio()
-  const fleet = useMemo(() => coldChainProjection(facilities), [facilities])
+  const fleet = useMemo(() => getColdChainFleet(), [])
 
-  const high = fleet.filter((r) => r.risk === "high").length
-  const elevated = fleet.filter((r) => r.risk === "elevated").length
-
-  if (isLoading) {
-    return <div className="h-64 animate-pulse rounded-lg bg-muted" />
-  }
-  if (isError) {
-    return <p className="text-sm text-destructive">Could not load portfolio data. Please retry.</p>
-  }
+  const inDanger = fleet.filter((r) => r.status === "danger").length
+  const atRisk = fleet.filter((r) => r.atRisk && r.status !== "danger").length
 
   return (
     <Card>
@@ -63,32 +41,29 @@ export function AdminColdChainMonitor() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
             <Snowflake aria-hidden className="size-5 text-primary" />
-            Cold-chain risk
+            Cold-Chain Monitor
           </CardTitle>
-          <Badge variant="outline" className="gap-1 text-muted-foreground">
-            <Info aria-hidden className="size-3" />
-            Projected from climate heat - no fridge telemetry
-          </Badge>
+          <DemoDataBadge />
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-3">
           <StatCard
-            title="High risk (projected)"
-            value={high}
+            title="Fridges out of range"
+            value={inDanger}
             icon={<TriangleAlert />}
             accent="destructive"
-            meta="High heat exposure"
+            meta="Outside the 28°C safe band"
           />
           <StatCard
-            title="Elevated risk"
-            value={elevated}
+            title="At-risk (predicted)"
+            value={atRisk}
             icon={<Thermometer />}
             accent="warning"
-            meta="Moderate heat exposure"
+            meta="Excursion forecast ahead"
           />
           <StatCard
-            title="Facilities"
+            title="Total fridges"
             value={fleet.length}
             icon={<Snowflake />}
             accent="muted"
@@ -96,28 +71,33 @@ export function AdminColdChainMonitor() {
           />
         </div>
 
-        {climateLoading && (
-          <p className="text-xs text-muted-foreground">Loading climate exposure from NASA POWER...</p>
-        )}
-
         <ul className="space-y-2">
           {fleet.map((row) => (
             <li key={row.facility.id} className="rounded-lg border border-border p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
                   <span className="font-medium text-foreground">{row.facility.name}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{row.facility.region ?? "—"}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {row.facility.region}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  {row.heatScore != null && (
-                    <span className="text-xs text-muted-foreground">
-                      heat <span className="font-semibold tabular-nums text-foreground">{row.heatScore}</span>/100
-                    </span>
-                  )}
-                  <RiskBadge risk={row.risk} />
+                  <span className="text-sm font-semibold tabular-nums text-foreground">
+                    {row.tempC.toFixed(1)}°C
+                  </span>
+                  <TempBadge row={row} />
                 </div>
               </div>
-              <p className="mt-1.5 text-xs text-muted-foreground">{row.note}</p>
+              {row.atRisk ? (
+                <p className="mt-1.5 flex items-center gap-1.5 text-xs text-warning-foreground">
+                  <Thermometer aria-hidden className="size-3.5" />
+                  Predicted excursion in {row.etaDaysMin}{row.etaDaysMax} days
+                  {" "}
+                  <span className="text-muted-foreground">
+                    ({row.confidencePct}% confidence)
+                  </span>
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
