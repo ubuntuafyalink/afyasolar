@@ -17,17 +17,44 @@ import { Badge } from "@/components/ui/badge"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING, scoreBarColor } from "@/lib/dashboard/facility-ui"
-import { getPortfolioRows, type PortfolioRow } from "@/lib/dashboard/admin-portfolio-data"
-import { NgoFacilityDetail } from "@/components/ngo/ngo-facility-detail"
+import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
+import { childServiceStatus } from "@/lib/dashboard/admin-portfolio-real"
+import { assessPortfolioFacilityRisk } from "@/lib/intelligence/risk-features"
+import type { RiskTier } from "@/lib/intelligence/risk-model"
+import type { PortfolioFacility, ResilienceTier } from "@/lib/dashboard/admin-portfolio-types"
+
+const RISK_TIER_BADGE: Record<RiskTier, "successSoft" | "primarySoft" | "warningSoft" | "destructiveSoft"> = {
+  Low: "successSoft",
+  Elevated: "primarySoft",
+  High: "warningSoft",
+  Severe: "destructiveSoft",
+}
+
+/** Modelled disruption-risk cell (tier + top driver). Calibrated prior, not a forecast. */
+function RiskCell({ row }: { row: PortfolioFacility }) {
+  const risk = assessPortfolioFacilityRisk(row)
+  if (!risk.sufficientData) {
+    return <span className="text-xs text-muted-foreground">Insufficient data</span>
+  }
+  const topDriver = risk.drivers.find((d) => d.direction === "increases")
+  return (
+    <div className="space-y-0.5">
+      <Badge variant={RISK_TIER_BADGE[risk.tier]} title="Modelled disruption-risk prior — not a validated forecast">
+        {risk.tier} · {Math.round(risk.probability * 100)}%
+      </Badge>
+      {topDriver ? <span className="block text-xs text-muted-foreground">{topDriver.label.en}</span> : null}
+    </div>
+  )
+}
 
 type SortKey = "name" | "rcs"
 type SortDir = "asc" | "desc"
 
-const TIER_BADGE: Record<string, "success" | "default" | "warning" | "destructive"> = {
-  Resilient: "success",
-  Developing: "default",
-  "At risk": "warning",
-  Critical: "destructive",
+const TIER_BADGE: Record<string, "successSoft" | "primarySoft" | "warningSoft" | "destructiveSoft"> = {
+  Resilient: "successSoft",
+  Developing: "primarySoft",
+  "At risk": "warningSoft",
+  Critical: "destructiveSoft",
 }
 
 const TIER_ICON: Record<string, LucideIcon> = {
@@ -72,7 +99,7 @@ function SortHeader({
 function ChildServicesCell({ row }: { row: PortfolioRow }) {
   if (row.childFailing === 0 && row.childAtRisk === 0) {
     return (
-      <Badge variant="success" className="gap-1">
+      <Badge variant="successSoft" className="gap-1">
         <ShieldCheck aria-hidden className="size-3" />
         All OK
       </Badge>
@@ -80,14 +107,14 @@ function ChildServicesCell({ row }: { row: PortfolioRow }) {
   }
   return (
     <div className="flex flex-wrap gap-1">
-      {row.childFailing > 0 && (
-        <Badge variant="destructive" className="gap-1">
+      {failing > 0 && (
+        <Badge variant="destructiveSoft" className="gap-1">
           <OctagonAlert aria-hidden className="size-3" />
           {row.childFailing} failing
         </Badge>
       )}
-      {row.childAtRisk > 0 && (
-        <Badge variant="warning" className="gap-1">
+      {atRisk > 0 && (
+        <Badge variant="warningSoft" className="gap-1">
           <TriangleAlert aria-hidden className="size-3" />
           {row.childAtRisk} at risk
         </Badge>
@@ -96,9 +123,112 @@ function ChildServicesCell({ row }: { row: PortfolioRow }) {
   )
 }
 
-/** Sortable, filterable RCS table of every facility; rows open a detail drawer. */
-export function AdminFacilitiesRcsTable() {
-  const allRows = React.useMemo(() => getPortfolioRows(), [])
+function RcsBar({ value }: { value: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="h-2 w-16 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div className={cn("h-full rounded-full", scoreBarColor(value))} style={{ width: `${value}%` }} />
+      </div>
+      <span className="w-9 shrink-0 text-right tabular-nums font-medium text-foreground">{value}</span>
+    </div>
+  )
+}
+
+/** Detail body shown in the per-facility modal: CRiPHC dimensions + hazards. */
+function FacilityRcsDetail({ facility }: { facility: PortfolioFacility }) {
+  return (
+    <div className="space-y-5">
+      <section>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">Resilience dimensions (CRiPHC)</h3>
+        {facility.dimensions == null ? (
+          <p className="text-sm text-muted-foreground">Not assessed yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {DIMENSIONS.map((d) => {
+              const v = facility.dimensions?.[d.key]
+              return (
+                <li key={d.key} className="flex items-center justify-between gap-3 rounded-lg border border-border p-2.5">
+                  <span className="text-sm text-foreground">{d.label}</span>
+                  {v == null ? (
+                    <span className="text-xs text-muted-foreground">N/A</span>
+                  ) : (
+                    <RcsBar value={v} />
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-sm font-semibold text-foreground">Climate hazards (NASA POWER)</h3>
+        {!facility.climate || facility.climate.hazardScores.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Climate data pending for this facility.</p>
+        ) : (
+          <ul className="space-y-2">
+            {facility.climate.hazardScores.map((h) => (
+              <li key={h.type} className="flex items-center justify-between gap-3 rounded-lg border border-border p-2.5">
+                <span className="text-sm text-foreground">
+                  {h.type}
+                  <span className="ml-2 text-xs text-muted-foreground">({h.trend})</span>
+                </span>
+                <RcsBar value={h.score} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <Button asChild variant="outline" size="sm" className="gap-1">
+        <Link href={`/dashboard/admin/facility/${facility.id}`}>
+          <ExternalLink aria-hidden className="size-3.5" />
+          Open full facility dashboard
+        </Link>
+      </Button>
+    </div>
+  )
+}
+
+/** Full-page skeleton matching the Resilience Score layout. */
+function PageSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="space-y-3 pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-9 w-44" />
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-32" />
+          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-9 w-28" />
+        </div>
+      </CardHeader>
+      <CardContent className="px-3 pb-4 md:px-6">
+        <TableSkeleton rows={8} columns={7} />
+      </CardContent>
+    </Card>
+  )
+}
+
+/** Sortable, filterable, paginated RCS table; each row opens a detail modal. */
+export function AdminFacilitiesRcsTable({
+  focusFacilityId,
+  onFocusHandled,
+}: {
+  focusFacilityId?: string | null
+  onFocusHandled?: () => void
+} = {}) {
+  const { facilities, isLoading, isError, climateLoading } = useAdminPortfolio()
   const [query, setQuery] = React.useState("")
   const [sortKey, setSortKey] = React.useState<SortKey>("rcs")
   const [sortDir, setSortDir] = React.useState<SortDir>("asc")
@@ -158,33 +288,17 @@ export function AdminFacilitiesRcsTable() {
         </CardHeader>
         <CardContent className="px-0 pb-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse text-sm">
+            <table className="w-full min-w-[980px] border-collapse text-sm">
               <thead className="border-b border-border bg-muted/40 text-xs">
                 <tr>
-                  <SortHeader
-                    label="Facility"
-                    active={sortKey === "name"}
-                    dir={sortDir}
-                    onClick={() => toggleSort("name")}
-                  />
-                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">
-                    Region
-                  </th>
-                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">
-                    Network
-                  </th>
-                  <SortHeader
-                    label="RCS"
-                    active={sortKey === "rcs"}
-                    dir={sortDir}
-                    onClick={() => toggleSort("rcs")}
-                  />
-                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">
-                    Child services
-                  </th>
-                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">
-                    Top hazard
-                  </th>
+                  <SortHeader label="Facility" active={sortKey === "name"} dir={sortDir} onClick={() => toggleSort("name")} />
+                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Region</th>
+                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Category</th>
+                  <SortHeader label="RCS" active={sortKey === "rcs"} dir={sortDir} onClick={() => toggleSort("rcs")} />
+                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Child services</th>
+                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Top hazard</th>
+                  <th scope="col" className="px-3 py-2 text-left font-medium text-muted-foreground">Disruption risk</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium text-muted-foreground">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -236,16 +350,33 @@ export function AdminFacilitiesRcsTable() {
                         <ChildServicesCell row={row} />
                       </td>
                       <td className="px-3 py-2 text-muted-foreground">
-                        {row.topHazard.type}{" "}
-                        <span className="tabular-nums text-foreground">({row.topHazard.score})</span>
+                        {climateLoading && !row.climate ? (
+                          <Skeleton className="h-4 w-24" />
+                        ) : row.climate ? (
+                          <>
+                            {row.climate.topHazard.type}{" "}
+                            <span className="tabular-nums text-foreground">({row.climate.topHazard.score})</span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        {climateLoading && !row.climate ? <Skeleton className="h-6 w-24 rounded-full" /> : <RiskCell row={row} />}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={() => setSelected(row)}>
+                          <Eye aria-hidden className="size-3.5" />
+                          View
+                        </Button>
                       </td>
                     </tr>
                   )
                 })}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                      No facilities match “{query}”.
+                    <td colSpan={8} className="px-3 py-8 text-center text-sm text-muted-foreground">
+                      {facilities.length === 0 ? "No facilities yet." : "No facilities match the current filters."}
                     </td>
                   </tr>
                 )}

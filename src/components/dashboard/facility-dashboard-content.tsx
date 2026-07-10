@@ -108,6 +108,11 @@ const RcsExplainerSection = dynamic(
     ),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const DisruptionRiskCard = dynamic(
+  () =>
+    import("@/components/dashboard/facility/disruption-risk-card").then((m) => m.DisruptionRiskCard),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 const ClimateOutlookSection = dynamic(
   () =>
     import("@/components/dashboard/facility/climate-outlook-section").then(
@@ -1135,12 +1140,20 @@ export function FacilityDashboardContent({
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'rcs' && (
-              <RcsExplainerSection
-                facilityId={facilityId}
-                facilityName={facility?.name ?? null}
-                region={facility?.region ?? null}
-                onNavigate={setCurrentSection}
-              />
+              <div className="space-y-4">
+                <DisruptionRiskCard
+                  facilityId={facilityId}
+                  region={facility?.region ?? null}
+                  meuSummary={meuSummary}
+                  sizingSummary={sizingSummary}
+                />
+                <RcsExplainerSection
+                  facilityId={facilityId}
+                  facilityName={facility?.name ?? null}
+                  region={facility?.region ?? null}
+                  onNavigate={setCurrentSection}
+                />
+              </div>
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'climate-outlook' && (
@@ -1435,7 +1448,12 @@ export function FacilityDashboardContent({
                     {/* Additive (CEO spec Part 7 & 9.6): MVA audit, three-output
                         report, bill OCR, Eco-Pulse. Mounted below existing content. */}
                     {FACILITY_V2_ENABLED && facilityId && (
-                      <AuditEnhancements facilityId={facilityId} />
+                      <AuditEnhancements
+                        facilityId={facilityId}
+                        meuSummary={meuSummary}
+                        sizingSummary={sizingSummary}
+                        region={facility?.region ?? null}
+                      />
                     )}
                   </>
                 )}

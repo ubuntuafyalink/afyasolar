@@ -16,11 +16,18 @@ import { TypingCursor } from "@/components/assistant/typing-cursor"
 import {
   resolveCoords,
   rangeForPreset,
+  climatologyRange,
   toSolarResource,
+  toCvi,
+  toHazardScores,
   SOLAR_PARAMETERS,
+  NASA_POWER_PARAMETERS,
 } from "@/lib/climate/nasa-power"
 import { useNasaPower } from "@/hooks/use-nasa-power"
+import { useFacilityRcsSummary } from "@/hooks/use-facility-rcs-summary"
 import { deriveEnergyProfile, DEFAULT_ENERGY_PROFILE, BATTERY_DOD } from "@/lib/dashboard/power-model"
+import { featuresFromFacilityData } from "@/lib/intelligence/risk-features"
+import { assessRisk } from "@/lib/intelligence/risk-model"
 import type { MeuSummary, SizingSummary } from "@/components/solar/afya-solar-sizing-tool"
 import { useFacilityPreferences } from "./facility-preferences-provider"
 
@@ -73,20 +80,88 @@ export function AssistantChat({
     end: range.end,
     parameters: SOLAR_PARAMETERS,
   })
+  // Real hazard exposure over the ~30y climatology baseline (same query key as the
+  // RCS explainer, so React Query dedupes / shares the cache).
+  const hazardRange = useMemo(() => climatologyRange(), [])
+  const hazards = useNasaPower({
+    lat: coords.lat,
+    lon: coords.lon,
+    temporal: hazardRange.temporal,
+    start: hazardRange.start,
+    end: hazardRange.end,
+    parameters: NASA_POWER_PARAMETERS,
+  })
+  const rcs = useFacilityRcsSummary(facilityId)
+
   const facilityContext = useMemo(() => {
     const profile = deriveEnergyProfile(meuSummary, sizingSummary) ?? DEFAULT_ENERGY_PROFILE
     const solar = climate.data ? toSolarResource(climate.data) : null
     const psh = solar?.peakSunHours ?? 4.2
     const autonomyH =
       profile.criticalLoadKw > 0 ? (profile.batteryCapacityKwh * BATTERY_DOD * 0.9) / profile.criticalLoadKw : 0
-    return (
+
+    let line =
       `Facility id: ${facilityId ?? "unknown"}. ` +
       `Sized solar ${profile.solarCapacityKw} kW, daily load ${(profile.avgLoadKw * 24).toFixed(1)} kWh, ` +
       `usable battery ${profile.batteryCapacityKwh} kWh, critical load ${profile.criticalLoadKw} kW, ` +
       `peak sun hours ${psh.toFixed(1)} (${solar?.sky ?? "partly"}), ` +
       `critical-load battery autonomy about ${autonomyH.toFixed(1)} hours.`
-    )
-  }, [facilityId, meuSummary, sizingSummary, climate.data])
+
+    // Real Resilience Capacity Score (only when the facility has been assessed).
+    const s = rcs.data
+    if (s) {
+      const tierLabel = s.tier === 3 ? "Resilient" : s.tier === 2 ? "Developing" : s.tier === 1 ? "At risk" : "Critical"
+      const dims: [string, number][] = [
+        ["Critical service fragility", s.csf],
+        ["Energy continuity", s.ecpq],
+        ["Efficiency & demand", s.edc],
+        ["Readiness & response", s.rrc],
+      ]
+      const weakest = [...dims].sort((a, b) => a[1] - b[1]).slice(0, 2)
+      line +=
+        ` Resilience Capacity Score ${s.rcs}/100 (${tierLabel} tier), Hazard Exposure capacity ${s.hes}/100; ` +
+        `weakest dimensions: ${weakest.map(([n, v]) => `${n} ${v}/100`).join(", ")}.` +
+        (s.criticalAttention ? " Flagged for critical attention." : "")
+    } else {
+      line += " Resilience Capacity Score: not yet assessed (do not invent one)."
+    }
+
+    // Real climate hazard exposure + the most concerning hazard.
+    const cvi = hazards.data ? toCvi(hazards.data) : null
+    if (hazards.data && cvi) {
+      const scores = toHazardScores(hazards.data)
+      const top = [...scores].sort((a, b) => b.score - a.score)[0]
+      line += ` Climate Vulnerability Index ${cvi.composite}/100.`
+      if (top) {
+        line +=
+          ` Most concerning hazard: ${top.type} ${top.score}/100 (${top.trend})` +
+          (top.returnPeriodYears != null ? `, latest ~1-in-${top.returnPeriodYears}-yr level` : "") +
+          "."
+      }
+    }
+
+    // Modelled disruption-risk prior (transparent; ordinal tier + drivers).
+    const realEnergy = deriveEnergyProfile(meuSummary, sizingSummary)
+    const { features, completeness } = featuresFromFacilityData({
+      rcs: s ? { csf: s.csf, ecpq: s.ecpq, rrc: s.rrc, criticalAttention: s.criticalAttention } : null,
+      cvi: cvi ? { composite: cvi.composite, byHazard: { heat: cvi.byHazard.heat } } : null,
+      energy: realEnergy
+        ? { batteryCapacityKwh: realEnergy.batteryCapacityKwh, criticalLoadKw: realEnergy.criticalLoadKw }
+        : null,
+    })
+    const risk = assessRisk(features, completeness)
+    if (risk.sufficientData) {
+      line +=
+        ` Modelled disruption risk: ${risk.tier} tier (${Math.round(risk.probability * 100)}% modelled prior, ` +
+        `${risk.confidence} confidence; not a validated forecast). Top drivers: ${risk.drivers
+          .slice(0, 3)
+          .map((d) => d.label.en)
+          .join(", ")}.`
+    } else {
+      line += " Modelled disruption risk: not enough data yet (complete the assessments)."
+    }
+    return line
+  }, [facilityId, meuSummary, sizingSummary, climate.data, hazards.data, rcs.data])
 
   function scrollToEnd() {
     requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }))
