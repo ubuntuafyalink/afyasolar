@@ -9,7 +9,12 @@ import { Badge } from "@/components/ui/badge"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
-import { getResiHealthCvi } from "@/lib/dashboard/facility-demo-data"
+import {
+  getResiHealthCvi,
+  type ResiHealthCvi,
+  type HazardTrendPoint,
+} from "@/lib/dashboard/facility-demo-data"
+import { projectCvi, projectCviFromTrend } from "@/lib/climate/nasa-power"
 
 const HAZARD_META: { key: keyof ReturnType<typeof getResiHealthCvi>["byHazard"]; label: string; icon: LucideIcon }[] = [
   { key: "flood", label: "Flood", icon: Droplets },
@@ -25,15 +30,27 @@ function cviColor(v: number): string {
 }
 
 /**
- * Spec 10.5: the Resi-Health Grid Climate Vulnerability Index (0100), stratified
- * by hazard and projected to 2030 / 2050.
- *
- * [data] fed by the local demo module. TODO: wire the real Resi-Health Grid
- * (NASA POWER, ERA5, CHIRPS, flood layers, Bayesian model) per spec Part 10.5.
+ * Climate Vulnerability Index (0100), stratified by hazard and projected to
+ * 2030 / 2050. On the live path the projection extrapolates the facility's real
+ * NASA POWER hazard trend (projectCviFromTrend) with an uncertainty band; the
+ * demo path uses seeded values. See docs/CLIMATE_RESILIENCE_METHODOLOGY.md.
  */
-export function CviPanel({ facilityId }: { facilityId?: string }) {
+export function CviPanel({
+  facilityId,
+  baseCvi,
+  trend,
+  live = false,
+}: {
+  facilityId?: string
+  /** Real current CVI baseline (used for the flat fallback when no trend is given). */
+  baseCvi?: ResiHealthCvi
+  /** Real per-year hazard trend; when present the projection is trend-extrapolated. */
+  trend?: HazardTrendPoint[]
+  live?: boolean
+}) {
   const [year, setYear] = useState<2030 | 2050>(2030)
-  const cvi = getResiHealthCvi(facilityId, year)
+  const projected = trend && trend.length ? projectCviFromTrend(trend, year) : null
+  const cvi = projected ?? (baseCvi ? projectCvi(baseCvi, year) : getResiHealthCvi(facilityId, year))
 
   return (
     <Card>
@@ -81,6 +98,13 @@ export function CviPanel({ facilityId }: { facilityId?: string }) {
             {cvi.composite >= 66 ? "High" : cvi.composite >= 40 ? "Moderate" : "Lower"} vulnerability
           </Badge>
         </div>
+
+        {live && projected ? (
+          <p className="text-[11px] text-muted-foreground">
+            {year}: trend extrapolation of the real NASA POWER baseline (±{projected.band} index pts over a{" "}
+            {projected.horizonYears}-yr horizon) not a climate forecast.
+          </p>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           {HAZARD_META.map((h) => {
