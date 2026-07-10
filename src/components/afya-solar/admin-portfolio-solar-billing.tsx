@@ -226,16 +226,119 @@ export function AdminPortfolioSolarBilling() {
   const metricSkeleton = <Skeleton className="h-7 w-24" />
 
   return (
-    <LazyMotionProvider>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground">Bills &amp; Payment</h2>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Select a facility from the directory to inspect the same Bills &amp; Subscription view that facility
-              users see.
-            </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Bills &amp; Payment</h2>
+          <p className="text-gray-600 text-sm mt-1 max-w-2xl">
+            Select a facility from the directory to inspect the same Bills
+            &amp; Subscription and PAYG &amp; Financing view that facility users
+            see.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {busy ? (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              Updating
+            </span>
+          ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={refreshAll}
+            disabled={busy}
+          >
+            <RefreshCw className={cn("h-4 w-4 mr-1", busy && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Admin metrics summary */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title="Active facilities"
+          subtitle={`${portfolioMetrics.solarSubscribers} on Afya Solar`}
+          value={String(portfolioMetrics.totalFacilities || "")}
+          icon={Building2}
+          loading={allFacilitiesLoading || eligibleLoading}
+        />
+        <MetricCard
+          title="Recognized revenue"
+          subtitle="Portfolio · last 30 days"
+          value={formatCurrency(portfolioMetrics.recognizedRevenue)}
+          icon={TrendingUp}
+          loading={summaryLoading}
+        />
+        <MetricCard
+          title="Pending / at risk"
+          subtitle="Pending + overdue (30d)"
+          value={formatCurrency(portfolioMetrics.pendingPayments)}
+          icon={AlertCircle}
+          loading={summaryLoading}
+        />
+        <MetricCard
+          title="Active subscriptions"
+          subtitle="Solar customers"
+          value={String(portfolioMetrics.activeSubscriptions || "")}
+          icon={CheckCircle}
+          loading={summaryLoading}
+        />
+      </div>
+
+      {/* Facility selector */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Facility selection</CardTitle>
+          <CardDescription>
+            All active facilities from the facilities table. Afya Solar
+            subscribers are listed first.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 lg:grid-cols-[minmax(280px,360px)_1fr]">
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Search</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Name, city, region, or id…"
+                value={facilitySearch}
+                onChange={(e) => setFacilitySearch(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">
+                Select facility (dropdown)
+              </Label>
+              <Select
+                value={selectedFacilityId || "__portfolio__"}
+                onValueChange={(v) =>
+                  setSelectedFacilityId(v === "__portfolio__" ? "" : v)
+                }
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Choose facility" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__portfolio__">
+                    No facility selected
+                  </SelectItem>
+                  {filteredFacilities.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                      {f.hasAfyaSolar ? "" : " (no Afya Solar)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Matches: {filteredFacilities.length}
+              </p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {busy ? (

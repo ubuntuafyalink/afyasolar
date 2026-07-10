@@ -27,17 +27,8 @@ function scoreColor(score: number): string {
  * [data] fed by the local demo module. TODO: wire NASA POWER + ERA5 + IPCC AR6
  * projections per spec Parts 5 & 10.3.
  */
-export function HazardScorePanel({
-  facilityId,
-  scores,
-  live = false,
-}: {
-  facilityId?: string
-  /** When provided (real NASA POWER data), render these instead of demo data. */
-  scores?: HazardScore[]
-  live?: boolean
-}) {
-  const hazards = scores ?? getHazardScores(facilityId)
+export function HazardScorePanel({ facilityId }: { facilityId?: string }) {
+  const hazards = getHazardScores(facilityId)
 
   return (
     <Card>
@@ -46,13 +37,7 @@ export function HazardScorePanel({
           <CardTitle className="flex items-center gap-2 text-base">
             <Satellite className="size-5 text-primary" aria-hidden /> Quantitative hazard exposure
           </CardTitle>
-          {live ? (
-            <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-              <Satellite className="size-3" aria-hidden /> NASA POWER · real data
-            </span>
-          ) : (
-            <DemoDataBadge label="Demo data · NASA POWER/ERA5" />
-          )}
+          <DemoDataBadge label="Demo data · NASA POWER/ERA5" />
         </div>
         <p className="text-xs text-muted-foreground">
           Literature-backed scores from the long-term climate record (0 = low, 100 = high).

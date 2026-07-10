@@ -4,11 +4,11 @@ import { BookOpen } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import {
   getCrphcBaseDimensions,
   CRPHC_NEW_DIMENSIONS,
 } from "@/lib/dashboard/facility-demo-data"
-import { NORMALIZATION_VERSION } from "@/lib/climate/nasa-power"
 
 /**
  * Read-only, transparent view of the CRiPHC resilience model: the scoring
@@ -55,9 +55,7 @@ export function AdminMethodologyConfig() {
             <BookOpen aria-hidden className="size-5 text-primary" />
             Methodology &amp; model configuration
           </CardTitle>
-          <Badge variant="outline" className="font-mono text-muted-foreground">
-            Climate model {NORMALIZATION_VERSION}
-          </Badge>
+          <DemoDataBadge />
         </div>
       </CardHeader>
       <CardContent className="space-y-5">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Gauge, ShieldCheck, TrendingUp, Lightbulb, ArrowRight, Sigma, Satellite } from "lucide-react"
+import { Gauge, ShieldCheck, TrendingUp, Lightbulb, ArrowRight, Sigma } from "lucide-react"
 import { m } from "framer-motion"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,13 +16,6 @@ import {
   type Bilingual,
   type RcsDimensionInsight,
 } from "@/lib/dashboard/facility-demo-data"
-import {
-  resolveCoords,
-  rangeForPreset,
-  toCvi,
-  NASA_POWER_PARAMETERS,
-} from "@/lib/climate/nasa-power"
-import { useNasaPower } from "@/hooks/use-nasa-power"
 import type { NavSection } from "@/lib/dashboard/facility-nav"
 import { useFacilityPreferences } from "./facility-preferences-provider"
 import { OfflineReadyBadge } from "./offline-ready-badge"
@@ -71,29 +64,7 @@ export function RcsExplainerSection({
   const { t, locale } = useFacilityPreferences()
   const pick = (b: Bilingual) => (locale === "sw" ? b.sw : b.en)
 
-  // Real Hazard Exposure: fetch the facility's NASA POWER climate (same pipeline
-  // as Climate Outlook) and derive the HES capacity as the inverse of the
-  // measured Climate Vulnerability Index composite (higher exposure -> lower
-  // capacity). Falls back to seeded demo when the data is unavailable.
-  const coords = useMemo(() => resolveCoords({ facilityId, region }), [facilityId, region])
-  const range = useMemo(() => rangeForPreset("10y"), [])
-  const climate = useNasaPower({
-    lat: coords.lat,
-    lon: coords.lon,
-    temporal: range.temporal,
-    start: range.start,
-    end: range.end,
-    parameters: NASA_POWER_PARAMETERS,
-  })
-  const realCvi = useMemo(() => (climate.data ? toCvi(climate.data) : null), [climate.data])
-  const hesScore =
-    realCvi ? Math.max(0, Math.min(100, Math.round(100 - realCvi.composite))) : undefined
-  const isLive = hesScore != null
-
-  const model = useMemo(
-    () => getRcsExplainer(facilityId, isLive ? { hesScore } : undefined),
-    [facilityId, hesScore, isLive],
-  )
+  const model = useMemo(() => getRcsExplainer(facilityId), [facilityId])
   const core = model.dimensions.filter((d) => !d.isNew)
   const v2 = model.dimensions.filter((d) => d.isNew)
   const opportunities = useMemo(
@@ -137,17 +108,9 @@ export function RcsExplainerSection({
               facilityId={facilityId}
               facilityName={facilityName}
               region={region}
-              hesScore={hesScore}
-              hazardByHazard={realCvi?.byHazard}
             />
             <OfflineReadyBadge />
-            {isLive ? (
-              <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-                <Satellite className="size-3" aria-hidden /> {t("rcs.liveFromClimate")}
-              </span>
-            ) : (
-              <DemoDataBadge />
-            )}
+            <DemoDataBadge />
           </div>
         </div>
 
@@ -168,26 +131,6 @@ export function RcsExplainerSection({
                 {model.tier}
               </Badge>
             </div>
-
-            {/* Relationship to Climate Outlook: HES is driven by the measured CVI. */}
-            {isLive && realCvi ? (
-              <p className="flex flex-wrap items-center gap-1.5 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs text-foreground">
-                <Satellite className="size-3.5 shrink-0" aria-hidden />
-                <span>
-                  {t("rcs.hazardFromClimate")}{" "}
-                  {t("rcs.measuredExposure", { value: realCvi.composite })}
-                </span>
-                {onNavigate ? (
-                  <button
-                    type="button"
-                    onClick={() => onNavigate("climate-outlook")}
-                    className={cn("font-medium underline", FOCUS_RING)}
-                  >
-                    {t("rcs.openClimateOutlook")}
-                  </button>
-                ) : null}
-              </p>
-            ) : null}
 
             {/* Stacked contribution bar (segments sum to the RCS out of 100) */}
             <div>
@@ -296,10 +239,10 @@ export function RcsExplainerSection({
         />
 
         {/* Resilience analytics: interactive what-if, trend history, benchmark */}
-        <RcsWhatIf facilityId={facilityId} hesScore={hesScore} />
+        <RcsWhatIf facilityId={facilityId} />
         <div className="grid gap-4 lg:grid-cols-2">
-          <RcsTrend facilityId={facilityId} hesScore={hesScore} />
-          <RcsBenchmark facilityId={facilityId} hesScore={hesScore} />
+          <RcsTrend facilityId={facilityId} />
+          <RcsBenchmark facilityId={facilityId} />
         </div>
 
         {/* Action */}
@@ -307,7 +250,7 @@ export function RcsExplainerSection({
           <div className="flex justify-end">
             <Button
               variant="outline"
-              onClick={() => onNavigate("climate-outlook")}
+              onClick={() => onNavigate("climate-resilience")}
               className={cn("gap-1.5", FOCUS_RING)}
             >
               <Lightbulb className="size-4" aria-hidden />

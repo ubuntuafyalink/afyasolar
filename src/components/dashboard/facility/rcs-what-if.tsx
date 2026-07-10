@@ -22,16 +22,10 @@ import { useFacilityPreferences } from "./facility-preferences-provider"
  * (computeCrphcResult). The two v2.0 dimensions stay at their baseline so the
  * starting RCS matches the rest of the dashboard.
  */
-export function RcsWhatIf({ facilityId, hesScore }: { facilityId?: string; hesScore?: number }) {
+export function RcsWhatIf({ facilityId }: { facilityId?: string }) {
   const { t } = useFacilityPreferences()
-  const base = useMemo(
-    () => getCrphcBaseDimensions(facilityId, hesScore != null ? { hesScore } : undefined),
-    [facilityId, hesScore],
-  )
-  const baselineRcs = useMemo(
-    () => getRcsExplainer(facilityId, hesScore != null ? { hesScore } : undefined).rcs,
-    [facilityId, hesScore],
-  )
+  const base = useMemo(() => getCrphcBaseDimensions(facilityId), [facilityId])
+  const baselineRcs = useMemo(() => getRcsExplainer(facilityId).rcs, [facilityId])
 
   const [scores, setScores] = useState<Record<string, number>>(() =>
     Object.fromEntries(base.map((d) => [d.code, d.score])),

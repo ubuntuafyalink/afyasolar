@@ -2,68 +2,74 @@
 
 import type { ReactNode } from "react"
 import { useMemo, useState } from "react"
-import { useSession } from "next-auth/react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { StatCard } from "@/components/ui/stat-card"
+import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
-import { toast } from "sonner"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
-import { Bell, Info, Loader2, OctagonAlert, Radar, TriangleAlert } from "lucide-react"
-import { useAdminSolarAlerts, type SolarAlert } from "@/hooks/use-admin-solar-alerts"
+import { Bell, Info, OctagonAlert, TriangleAlert } from "lucide-react"
+import {
+  getPortfolioAlerts,
+  type IncidentStatus,
+  type PortfolioIncident,
+} from "@/lib/dashboard/admin-portfolio-data"
 
-type Severity = "critical" | "high" | "medium" | "low"
-type Status = "active" | "acknowledged" | "resolved" | "dismissed"
+type Severity = PortfolioIncident["severity"]
 type SeverityFilter = "all" | Severity
-type StatusFilter = "all" | Status
+type StatusFilter = "all" | IncidentStatus
 
-const SEVERITY_FILTERS: SeverityFilter[] = ["all", "critical", "high", "medium", "low"]
-const STATUS_FILTERS: StatusFilter[] = ["all", "active", "acknowledged", "resolved"]
+const SEVERITY_FILTERS: SeverityFilter[] = ["all", "danger", "warning", "info"]
+const STATUS_FILTERS: StatusFilter[] = ["all", "open", "ack", "resolved"]
 
 const SEVERITY_LABEL: Record<Severity, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
+  danger: "Critical",
+  warning: "Warning",
+  info: "Info",
 }
-const STATUS_LABEL: Record<Status, string> = {
-  active: "Active",
-  acknowledged: "Acknowledged",
+const STATUS_LABEL: Record<IncidentStatus, string> = {
+  open: "Open",
+  ack: "Acknowledged",
   resolved: "Resolved",
-  dismissed: "Dismissed",
+}
+const NEXT_STATUS: Record<IncidentStatus, IncidentStatus> = {
+  open: "ack",
+  ack: "resolved",
+  resolved: "open",
 }
 
-function severityIcon(severity: string): ReactNode {
-  if (severity === "critical") return <OctagonAlert aria-hidden className="size-4 text-destructive" />
-  if (severity === "high" || severity === "medium")
-    return <TriangleAlert aria-hidden className="size-4 text-warning-foreground" />
+function severityIcon(severity: Severity): ReactNode {
+  if (severity === "danger") return <OctagonAlert aria-hidden className="size-4 text-destructive" />
+  if (severity === "warning") return <TriangleAlert aria-hidden className="size-4 text-warning-foreground" />
   return <Info aria-hidden className="size-4 text-muted-foreground" />
 }
 
-function SeverityBadge({ severity }: { severity: string }) {
-  const variant =
-    severity === "critical"
-      ? "destructive"
-      : severity === "high" || severity === "medium"
-        ? "warning"
-        : "secondary"
+function SeverityBadge({ severity }: { severity: Severity }) {
+  const variant = severity === "danger" ? "destructive" : severity === "warning" ? "warning" : "secondary"
   return (
     <Badge variant={variant}>
       {severityIcon(severity)}
-      {SEVERITY_LABEL[severity as Severity] ?? severity}
+      {SEVERITY_LABEL[severity]}
     </Badge>
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const variant =
-    status === "active" ? "destructive" : status === "acknowledged" ? "warning" : "success"
-  return <Badge variant={variant}>{STATUS_LABEL[status as Status] ?? status}</Badge>
+function StatusBadge({ status }: { status: IncidentStatus }) {
+  const variant = status === "open" ? "destructive" : status === "ack" ? "warning" : "success"
+  return <Badge variant={variant}>{STATUS_LABEL[status]}</Badge>
 }
 
-function FilterChip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+function FilterChip({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  onClick: () => void
+}) {
   return (
     <button
       type="button"
@@ -83,52 +89,25 @@ function FilterChip({ active, label, onClick }: { active: boolean; label: string
 }
 
 export function AdminAlertsConsole() {
-  const { data: session } = useSession()
-  const { query, acknowledge, resolve, generate } = useAdminSolarAlerts()
-  const alerts = useMemo(() => query.data ?? [], [query.data])
+  const incidents = useMemo(() => getPortfolioAlerts(), [])
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>("all")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
+  // In-memory status overrides keyed by incident id (no backend).
+  const [overrides, setOverrides] = useState<Record<string, IncidentStatus>>({})
 
-  const actor = session?.user?.name || session?.user?.email || "admin"
+  const statusOf = (inc: PortfolioIncident): IncidentStatus => overrides[inc.id] ?? inc.status
 
-  const activeCount = alerts.filter((i) => i.status === "active").length
-  const ackCount = alerts.filter((i) => i.status === "acknowledged").length
+  const openCount = incidents.filter((i) => statusOf(i) === "open").length
+  const ackCount = incidents.filter((i) => statusOf(i) === "ack").length
 
-  const visible = alerts.filter((inc) => {
+  const visible = incidents.filter((inc) => {
     const sevOk = severityFilter === "all" || inc.severity === severityFilter
-    const statusOk = statusFilter === "all" || inc.status === statusFilter
+    const statusOk = statusFilter === "all" || statusOf(inc) === statusFilter
     return sevOk && statusOk
   })
 
-  const pending = (id: string) =>
-    (acknowledge.isPending && acknowledge.variables?.id === id) ||
-    (resolve.isPending && resolve.variables?.id === id)
-
-  const runScan = () => {
-    generate.mutate(
-      { dryRun: false },
-      {
-        onSuccess: (res) => {
-          if (res.created > 0) {
-            toast.success(`${res.created} climate alert${res.created === 1 ? "" : "s"} created`, {
-              description: `Scanned ${res.scanned} facilities. ${res.skipped.duplicate} already active, ${res.skipped.noDevice} skipped (no device).`,
-            })
-          } else {
-            toast.success("No new climate alerts", {
-              description: `Scanned ${res.scanned} facilities. ${res.skipped.duplicate} already active, ${res.skipped.noDevice} skipped (no device).`,
-            })
-          }
-        },
-        onError: () => toast.error("Climate alert scan failed"),
-      },
-    )
-  }
-
-  if (query.isLoading) {
-    return <div className="h-64 animate-pulse rounded-lg bg-muted" />
-  }
-  if (query.isError) {
-    return <p className="text-sm text-destructive">Could not load alerts. Please retry.</p>
+  const cycleStatus = (inc: PortfolioIncident) => {
+    setOverrides((prev) => ({ ...prev, [inc.id]: NEXT_STATUS[statusOf(inc)] }))
   }
 
   return (
@@ -139,21 +118,32 @@ export function AdminAlertsConsole() {
             <Bell aria-hidden className="size-5 text-primary" />
             Alerts &amp; Incidents Console
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={runScan} disabled={generate.isPending}>
-            {generate.isPending ? (
-              <Loader2 aria-hidden className="size-4 animate-spin" />
-            ) : (
-              <Radar aria-hidden className="size-4" />
-            )}
-            Run climate scan
-          </Button>
+          <DemoDataBadge />
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard title="Active alerts" value={activeCount} icon={<OctagonAlert />} accent="destructive" meta="Awaiting action" />
-          <StatCard title="Acknowledged" value={ackCount} icon={<TriangleAlert />} accent="warning" meta="In progress" />
-          <StatCard title="Total alerts" value={alerts.length} icon={<Bell />} accent="muted" meta="Across the portfolio" />
+          <StatCard
+            title="Open incidents"
+            value={openCount}
+            icon={<OctagonAlert />}
+            accent="destructive"
+            meta="Awaiting action"
+          />
+          <StatCard
+            title="Acknowledged"
+            value={ackCount}
+            icon={<TriangleAlert />}
+            accent="warning"
+            meta="In progress"
+          />
+          <StatCard
+            title="Total incidents"
+            value={incidents.length}
+            icon={<Bell />}
+            accent="muted"
+            meta="Across the portfolio"
+          />
         </div>
 
         <div className="space-y-2">
@@ -184,54 +174,41 @@ export function AdminAlertsConsole() {
         <ul className="space-y-2">
           {visible.length === 0 ? (
             <li className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-              {alerts.length === 0 ? "No alerts recorded yet." : "No alerts match the current filters."}
+              No incidents match the current filters.
             </li>
           ) : (
-            visible.map((inc: SolarAlert) => (
-              <li key={inc.id} className="rounded-lg border border-border p-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-foreground">{inc.facilityName}</span>
-                      <Badge variant="outline">{inc.type}</Badge>
-                      {inc.timestamp && (
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(inc.timestamp).toLocaleString()}
-                        </span>
-                      )}
+            visible.map((inc) => {
+              const status = statusOf(inc)
+              return (
+                <li
+                  key={inc.id}
+                  className="rounded-lg border border-border p-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium text-foreground">{inc.facility.name}</span>
+                        <span className="text-xs text-muted-foreground">{inc.facility.region}</span>
+                        <Badge variant="outline">{inc.kind}</Badge>
+                      </div>
+                      <p className="text-sm font-medium text-foreground">{inc.title}</p>
+                      <p className="text-sm text-muted-foreground">{inc.detail}</p>
                     </div>
-                    <p className="text-sm font-medium text-foreground">{inc.title}</p>
-                    <p className="text-sm text-muted-foreground">{inc.message}</p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    <SeverityBadge severity={inc.severity} />
-                    <StatusBadge status={inc.status} />
-                    <div className="flex gap-2">
-                      {inc.status === "active" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={pending(inc.id)}
-                          onClick={() => acknowledge.mutate({ id: inc.id, acknowledgedBy: actor })}
-                        >
-                          Acknowledge
-                        </Button>
-                      )}
-                      {(inc.status === "active" || inc.status === "acknowledged") && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={pending(inc.id)}
-                          onClick={() => resolve.mutate({ id: inc.id, resolvedBy: actor })}
-                        >
-                          Resolve
-                        </Button>
-                      )}
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <SeverityBadge severity={inc.severity} />
+                      <StatusBadge status={status} />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => cycleStatus(inc)}
+                      >
+                        Mark {STATUS_LABEL[NEXT_STATUS[status]]}
+                      </Button>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))
+                </li>
+              )
+            })
           )}
         </ul>
       </CardContent>
