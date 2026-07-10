@@ -8,6 +8,7 @@ import { GlobalAsyncStatus } from '@/components/global-async-status'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { ResponsiveAppToaster } from '@/components/responsive-app-toaster'
 import { AssistantWidget } from '@/components/assistant/assistant-widget'
+import { LazyMotionProvider } from '@/components/motion/lazy-motion-provider'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,11 +31,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider attribute="class" defaultTheme="light" forcedTheme="light" enableSystem={false}>
-          <NavigationProgress />
-          <GlobalAsyncStatus />
-          {children}
-          <AssistantWidget />
-          <ResponsiveAppToaster />
+          <LazyMotionProvider>
+            <NavigationProgress />
+            <GlobalAsyncStatus />
+            {children}
+            <AssistantWidget />
+            <ResponsiveAppToaster />
+          </LazyMotionProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </SessionProvider>

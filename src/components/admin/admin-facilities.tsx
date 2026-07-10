@@ -205,12 +205,12 @@ export function AdminFacilities() {
                             <div className="min-w-0 flex-1">
                               <h3 className="truncate text-base font-semibold text-foreground">{facility.name}</h3>
                               <div className="mt-1 flex flex-wrap items-center gap-2">
-                                <Badge variant={facility.status === "active" ? "success" : "secondary"} className="gap-1">
+                                <Badge variant={facility.status === "active" ? "successSoft" : "muted"} className="gap-1">
                                   {facility.status === "active" && <CheckCircle2 aria-hidden className="size-3" />}
                                   {facility.status === "active" ? "Active" : facility.status}
                                 </Badge>
                                 {low && (
-                                  <Badge variant="warning" className="gap-1">
+                                  <Badge variant="warningSoft" className="gap-1">
                                     <AlertTriangle aria-hidden className="size-3" /> Low credit
                                   </Badge>
                                 )}

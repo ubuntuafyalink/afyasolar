@@ -16,8 +16,71 @@ const SERVICE_LABELS: Record<ServiceRollup["key"], string> = {
   "water-pumping": "Water pumping",
 }
 
-function ServiceRow({ row }: { row: ServiceRollup }) {
-  const total = row.failing + row.atRisk + row.ok
+const SERVICES: ServiceMeta[] = [
+  { key: "cold-chain", label: "Vaccine cold-chain", icon: Snowflake, dependsOn: "Continuous power to the vaccine fridge", dimension: "ECPQ" },
+  { key: "maternity", label: "Maternity", icon: Baby, dependsOn: "Power for delivery, lighting and warmers", dimension: "CSF" },
+  { key: "neonatal", label: "Neonatal care", icon: HeartPulse, dependsOn: "Power for warmers, oxygen and monitoring", dimension: "CSF" },
+  { key: "diagnostics", label: "Diagnostics (lab)", icon: Microscope, dependsOn: "Power for lab equipment and analysers", dimension: "EDC" },
+  { key: "water-pumping", label: "Water pumping", icon: Droplets, dependsOn: "Power and supply for water pumping and storage", dimension: "HES" },
+]
+const SERVICE_LABELS = Object.fromEntries(SERVICES.map((s) => [s.key, s.label])) as Record<ChildServiceKey, string>
+
+const SOURCE_LABEL: Record<"nasa" | "csf" | "edc", string> = {
+  nasa: "Climate exposure (NASA POWER)",
+  csf: "From CSF assessment",
+  edc: "From EDC assessment",
+}
+
+const STATUS_META: Record<
+  ChildServiceStatus,
+  { label: string; variant: "destructiveSoft" | "warningSoft" | "successSoft" | "muted"; icon: LucideIcon }
+> = {
+  failing: { label: "Failing", variant: "destructiveSoft", icon: OctagonAlert },
+  "at-risk": { label: "At risk", variant: "warningSoft", icon: TriangleAlert },
+  ok: { label: "OK", variant: "successSoft", icon: ShieldCheck },
+  "not-assessed": { label: "Not assessed", variant: "muted", icon: CircleDashed },
+}
+
+function StatusBadge({ status, compact }: { status: ChildServiceStatus; compact?: boolean }) {
+  const m = STATUS_META[status]
+  const Icon = m.icon
+  return (
+    <Badge variant={m.variant} className="gap-1">
+      <Icon aria-hidden className="size-3" />
+      {compact && status === "not-assessed" ? "—" : m.label}
+    </Badge>
+  )
+}
+
+function HeadroomBar({ headroom }: { headroom: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="h-2 w-16 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+        aria-valuenow={headroom}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div className={cn("h-full rounded-full", scoreBarColor(headroom))} style={{ width: `${headroom}%` }} />
+      </div>
+      <span className="w-9 shrink-0 text-right text-xs font-semibold tabular-nums text-foreground">{headroom}</span>
+    </div>
+  )
+}
+
+// --- portfolio summary (per-service rollup) ---------------------------------
+
+const CLIMATE_DERIVED: Record<ChildServiceKey, boolean> = {
+  "cold-chain": true,
+  maternity: false,
+  neonatal: false,
+  diagnostics: false,
+  "water-pumping": true,
+}
+
+function ServiceRollupRow({ row, loading }: { row: ServiceRollup; loading?: boolean }) {
+  const total = row.failing + row.atRisk + row.ok + row.notAssessed
   const pct = (n: number) => (total ? (n / total) * 100 : 0)
   const label = SERVICE_LABELS[row.key]
   return (

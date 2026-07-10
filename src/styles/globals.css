@@ -1,6 +1,32 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/*
+ * JetBrains Mono (self-hosted variable, latin). Two faces share one woff2 file:
+ *  - "JetBrains Mono" (full range) backs --font-mono for explicit font-mono use
+ *    (IDs, serials, referral codes).
+ *  - "JetBrains Mono Numeric" is restricted to numeric glyphs and sits FIRST in
+ *    the --font-sans stack, so digits/separators render mono while all other
+ *    characters fall through to PT Serif. No component/call-site changes needed.
+ * The variable weight range lets numerals inherit the surrounding text weight.
+ */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-variable-latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono Numeric";
+  src: url("/fonts/jetbrains-mono-variable-latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  /* digits + grouping/decimal separators + sign + percent */
+  unicode-range: U+0030-0039, U+002C, U+002E, U+002D, U+002B, U+0025;
+}
+
 :root {
   color-scheme: light;
   /* Afya Solar - Light theme (white + green) */
@@ -43,11 +69,15 @@
   --warning-foreground: oklch(0.20 0.02 150);
   --solar: oklch(0.78 0.13 85);
   --solar-foreground: oklch(0.20 0.02 150);
+  /* Raised surface tints for layered cards (subtle green-neutral, still white-ish) */
+  --surface: oklch(0.985 0.006 145);
+  --surface-2: oklch(0.97 0.008 145);
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "JetBrains Mono Numeric", var(--font-pt-serif), ui-serif, Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-pt-serif), ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -68,6 +98,17 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-solar: var(--solar);
   --color-solar-foreground: var(--solar-foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  /* Premium elevation scale — faint green-neutral tint (not pure black). Overrides
+     Tailwind's default shadow tokens, so existing shadow-xs/sm/md/lg/xl utilities
+     across the app inherit the upgrade automatically. */
+  --shadow-2xs: 0 1px 1px 0 oklch(0.20 0.03 150 / 0.04);
+  --shadow-xs: 0 1px 2px 0 oklch(0.20 0.03 150 / 0.05);
+  --shadow-sm: 0 1px 3px 0 oklch(0.20 0.03 150 / 0.08), 0 1px 2px -1px oklch(0.20 0.03 150 / 0.06);
+  --shadow-md: 0 4px 12px -2px oklch(0.20 0.03 150 / 0.10), 0 2px 6px -2px oklch(0.20 0.03 150 / 0.06);
+  --shadow-lg: 0 12px 28px -6px oklch(0.20 0.03 150 / 0.13), 0 4px 10px -4px oklch(0.20 0.03 150 / 0.08);
+  --shadow-xl: 0 24px 48px -12px oklch(0.20 0.03 150 / 0.16), 0 8px 20px -8px oklch(0.20 0.03 150 / 0.10);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -237,9 +278,10 @@
   border-color: var(--border);
 }
 
-/* Dyslexia-friendly: swap the sans stack for Atkinson Hyperlegible. */
+/* Dyslexia-friendly: swap the serif stack for Atkinson Hyperlegible, while
+ * keeping numerals in the mono numeric face. */
 .a11y-dyslexia-friendly {
-  --font-sans: var(--font-atkinson), var(--font-geist-sans), system-ui, sans-serif;
+  --font-sans: "JetBrains Mono Numeric", var(--font-atkinson), system-ui, sans-serif;
 }
 
 /*

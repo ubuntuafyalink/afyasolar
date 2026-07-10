@@ -365,7 +365,7 @@ export function ManagementPanelEnergyEfficiency() {
                         Avg efficiency {meterInsight.summary.avgEfficiencyPct}% · Underperforming days:{" "}
                         {meterInsight.summary.underperformingDays}
                         {meterInsight.summary.latestUnderperforming && (
-                          <Badge variant="warning" className="ml-2">Latest: low</Badge>
+                          <Badge variant="warningSoft" className="ml-2">Latest: low</Badge>
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground">{meterInsight.billingContext}</p>

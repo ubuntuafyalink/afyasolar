@@ -23,6 +23,19 @@ const badgeVariants = cva(
           'border-transparent bg-warning text-warning-foreground [a&]:hover:bg-warning/90',
         solar:
           'border-transparent bg-solar text-solar-foreground [a&]:hover:bg-solar/90',
+        // Soft tonal variants — quieter, premium status pills (tint + coloured text)
+        primarySoft:
+          'border-primary/15 bg-primary/10 text-primary [a&]:hover:bg-primary/15',
+        successSoft:
+          'border-success/15 bg-success/10 text-success [a&]:hover:bg-success/15',
+        warningSoft:
+          'border-warning/20 bg-warning/15 text-warning-foreground [a&]:hover:bg-warning/20',
+        solarSoft:
+          'border-solar/20 bg-solar/15 text-solar-foreground [a&]:hover:bg-solar/20',
+        destructiveSoft:
+          'border-destructive/15 bg-destructive/10 text-destructive [a&]:hover:bg-destructive/15',
+        muted:
+          'border-transparent bg-muted text-muted-foreground [a&]:hover:bg-muted/80',
       },
     },
     defaultVariants: {

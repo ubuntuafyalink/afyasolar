@@ -71,14 +71,24 @@ import {
   ClipboardList,
   Satellite,
   PlugZap,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 // Resilience Intelligence (additive, simulated data) — consolidated into hubs
 import { FacilityPreferencesProvider } from "@/components/dashboard/facility/facility-preferences-provider"
 import { FacilityToolbar } from "@/components/dashboard/facility/facility-toolbar"
-import { AdminIntelPortfolioHub } from "@/components/admin/intelligence/admin-intel-portfolio-hub"
-import { AdminIntelRiskHub } from "@/components/admin/intelligence/admin-intel-risk-hub"
-import { AdminIntelAdaptationHub } from "@/components/admin/intelligence/admin-intel-adaptation-hub"
-import { AdminIntelMethodologyHub } from "@/components/admin/intelligence/admin-intel-methodology-hub"
+import { MotionSection } from "@/components/motion/primitives"
+// Facility-mirror section components (portfolio-level)
+import { AdminChildServicesRollup } from "@/components/admin/intelligence/admin-child-services-rollup"
+import { AdminFacilitiesRcsTable } from "@/components/admin/intelligence/admin-facilities-rcs-table"
+import { AdminClimateOutlook } from "@/components/admin/intelligence/admin-climate-outlook"
+import { AdminNotificationsCenter } from "@/components/admin/notifications/admin-notifications-center"
+import { AdminReportCenter } from "@/components/admin/reports/admin-report-center"
+import { AdminAssistant } from "@/components/admin/admin-assistant"
+import { AdminChannels } from "@/components/admin/admin-channels"
+import { AdminHelp } from "@/components/admin/admin-help"
+import { AdminFacilities } from "@/components/admin/admin-facilities"
+import { AdminOverview } from "@/components/admin/admin-overview"
 import { useDeviceRequests, useUpdateDeviceRequest } from "@/hooks/use-device-requests"
 import { LogoutButton } from "@/components/logout-button"
 import { UserManagement } from "@/components/dashboard/user-management"
@@ -97,6 +107,7 @@ import { DeleteFacilityDialog } from "@/components/dashboard/delete-facility-dia
 import { format } from "date-fns"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { useQueryClient, useQuery } from "@tanstack/react-query"
 import AfyaSolarPackageManagement from '@/components/afya-solar/package-management'
@@ -262,6 +273,11 @@ const getSectionGroup = (section: SectionId): NavGroup => {
 export function AdminDashboard({ initialSection = "overview" }: AdminDashboardProps) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { data: session } = useSession()
+  const sidebarUser = session?.user
+  const sidebarDisplayName = sidebarUser?.name || sidebarUser?.email || "Admin"
+  const sidebarInitial = (sidebarUser?.name || sidebarUser?.email || "A").charAt(0).toUpperCase()
+  const sidebarRole = sidebarUser?.role ? `${sidebarUser.role.charAt(0).toUpperCase()}${sidebarUser.role.slice(1)}` : "Administrator"
   const { data: facilities, isLoading } = useFacilities()
   const { data: deviceRequests } = useDeviceRequests()
   const updateDeviceRequest = useUpdateDeviceRequest()
@@ -369,14 +385,18 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="h-8 w-8 p-0 hidden lg:flex"
+              aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+              title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
             >
-              {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(false)}
               className="h-8 w-8 p-0 lg:hidden"
+              aria-label="Close menu"
+              title="Close menu"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -384,83 +404,82 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
           {/* Navigation */}
           <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
-            {/* Workspace switcher — pick one area; the list below shows only that area */}
-            <div className="space-y-1">
-              {(Object.keys(navGroups) as NavGroup[]).map((groupKey) => {
-                const group = navGroups[groupKey]
-                const GroupIcon = group.icon
-                const isActiveWs = activeWorkspace === groupKey
-                return (
-                  <button
-                    key={groupKey}
-                    onClick={() => goToSection(group.items[0].id)}
-                    aria-current={isActiveWs ? "page" : undefined}
-                    title={group.label}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-semibold rounded-lg transition-colors",
-                      isActiveWs
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    <GroupIcon className="w-4 h-4 flex-shrink-0" />
-                    {sidebarOpen && <span className="flex-1 text-left">{group.label}</span>}
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="my-2 border-t border-border" />
-
-            {/* Items for the active workspace only */}
-            <div className="space-y-1">
-              {navGroups[activeWorkspace].items.map((item) => {
-                const ItemIcon = item.icon
-                const isActive = activeSection === item.id
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (item.id === 'service-visibility') {
-                        setActiveSection('service-visibility')
-                        setMobileMenuOpen(false)
-                        return
-                      }
-                      goToSection(item.id)
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : item.id === 'notifications'
-                          ? "text-destructive hover:bg-destructive/10 border border-destructive/20"
-                          : "text-muted-foreground hover:bg-muted"
-                    )}
-                  >
-                    <ItemIcon className={cn("w-4 h-4 flex-shrink-0", item.id === 'notifications' && !isActive && "text-destructive")} />
-                    {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
-                    {item.id === 'transactions' && pendingWithdrawalsCount > 0 && (
-                      <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                        {pendingWithdrawalsCount}
-                      </Badge>
-                    )}
-                    {item.id === 'notifications' && unreadNotificationCount > 0 && (
-                      <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
-                        {unreadNotificationCount}
-                      </Badge>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+            {/* All groups shown at once, mirroring the facility dashboard sidebar. */}
+            {NAV_GROUP_ORDER.map((groupKey, groupIndex) => {
+              const group = navGroups[groupKey]
+              return (
+                <div key={groupKey} role="group" aria-label={NAV_GROUP_LABELS[groupKey]} className="space-y-1">
+                  {sidebarOpen ? (
+                    <p
+                      className={cn(
+                        "px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+                        groupIndex === 0 ? "pt-1" : "pt-4",
+                      )}
+                    >
+                      {NAV_GROUP_LABELS[groupKey]}
+                    </p>
+                  ) : (
+                    groupIndex > 0 && <div className="mx-2 my-2 border-t border-border/60" aria-hidden />
+                  )}
+                  {group.items.map((item) => {
+                    const ItemIcon = item.icon
+                    const isActive = activeSection === item.id
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => goToSection(item.id)}
+                        title={item.label}
+                        aria-current={isActive ? "page" : undefined}
+                        className={cn(
+                          "group w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg cursor-pointer transition-all duration-200",
+                          !sidebarOpen && "justify-center",
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:bg-primary/10 hover:text-foreground motion-safe:hover:translate-x-0.5",
+                        )}
+                      >
+                        <ItemIcon
+                          className={cn(
+                            "w-4 h-4 flex-shrink-0 transition-transform duration-200",
+                            !isActive && "motion-safe:group-hover:scale-110",
+                          )}
+                          aria-hidden
+                        />
+                        {sidebarOpen && <span className="flex-1 text-left">{item.label}</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
           </nav>
 
-          {/* Sidebar Footer */}
-          <div className="p-3 border-t border-border mt-auto">
+          {/* Sidebar Footer — current user + logout */}
+          <div className="p-3 border-t border-border mt-auto space-y-1">
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-2 py-2",
+                !sidebarOpen && "justify-center px-0",
+              )}
+              title={sidebarOpen ? undefined : `${sidebarDisplayName} · ${sidebarRole}`}
+            >
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+                <span className="text-sm font-semibold text-primary">{sidebarInitial}</span>
+              </div>
+              {sidebarOpen && (
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{sidebarDisplayName}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{sidebarRole}</p>
+                </div>
+              )}
+            </div>
             <LogoutButton
               variant="ghost"
-              className={cn("w-full justify-center text-xs", sidebarOpen && "justify-start")}
-              showIcon={false}
+              className={cn(
+                "w-full",
+                sidebarOpen ? "justify-start text-xs" : "justify-center [&>span]:hidden [&>svg]:!mr-0",
+              )}
+              showIcon={true}
               showTextOnMobile={true}
             />
           </div>
@@ -477,35 +496,32 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="bg-card border-b border-border shadow-sm sticky top-0 z-30">
-          <div className="px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setSidebarOpen(true)
-                      setMobileMenuOpen(true)
-                    }}
-                    className="lg:hidden"
-                  >
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide sr-only">
-                      Admin Dashboard
-                    </p>
-                    <h1 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
-                      Management Panel
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate hidden sm:block">
-                      Monitor Afya Solar facilities and operations
-                    </p>
-                  </div>
-                </div>
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="max-w-7xl mx-auto space-y-4">
+            {/* In-page controls (relocated from the former top bar). On the
+                overview these actions live inside the section header instead, so
+                the strip only carries the mobile menu button there. */}
+            <div
+              className={cn(
+                "flex items-center justify-between gap-3",
+                activeSection === 'overview' && "lg:hidden",
+              )}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setSidebarOpen(true)
+                    setMobileMenuOpen(true)
+                  }}
+                  className="lg:hidden"
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </div>
+              {activeSection !== 'overview' && (
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <FacilityToolbar />
                   <Button
@@ -519,14 +535,10 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
                     <Home className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-        </header>
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="max-w-7xl mx-auto space-y-4">
+            <MotionSection key={activeSection} className="space-y-4">
             {/* Overview Section */}
             {activeSection === 'overview' && (
               <div className="space-y-6">
@@ -994,163 +1006,8 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
             {activeSection === 'solar-live-monitoring' && <AdminPower />}
 
 
-            {activeSection === 'solar-alerts' && (
-              <AdminSolarAlerts />
-            )}
-
-            {activeSection === 'solar-maintenance' && (
-              <AdminSolarMaintenance />
-            )}
-
-            {activeSection === 'solar-performance' && (
-              <AdminSolarPerformance />
-            )}
-
-            {activeSection === 'solar-energy-reports' && (
-              <AdminSolarEnergyReports />
-            )}
-
-            {activeSection === 'solar-carbon-credits' && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Leaf aria-hidden className="w-5 h-5 text-primary" />
-                      Carbon Credits Assessment
-                    </CardTitle>
-                    <CardDescription>
-                      Calculate and manage carbon credits for any facility in the system.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Facility Selection */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Select Facility</Label>
-                      <Select value={carbonCreditsFacility} onValueChange={setCarbonCreditsFacility}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Choose a facility for carbon credits assessment...">
-                            {isLoading && (
-                              <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                <span>Loading facilities...</span>
-                              </div>
-                            )}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {facilities?.map((facility) => (
-                            <SelectItem key={facility.id} value={facility.id}>
-                              <div className="flex flex-col">
-                                <span className="font-medium">{facility.name}</span>
-                                <span className="text-xs text-muted-foreground">{facility.city}, {facility.region}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {facilities?.length === 0 && !isLoading && (
-                        <p className="text-sm text-muted-foreground">No facilities found. Please ensure facilities are registered in the system.</p>
-                      )}
-                    </div>
-
-                    {/* Assessment Content */}
-                    {carbonCreditsFacility && (
-                      <div className="border border-border rounded-lg p-4">
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Performing carbon credits assessment for:
-                          <strong> {facilities?.find(f => f.id === carbonCreditsFacility)?.name}</strong>
-                        </p>
-                        <FacilityCarbonCredits facilityId={carbonCreditsFacility} />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Device Requests */}
-            {activeSection === 'device-requests' && (
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-base">Device Requests</CardTitle>
-                      <CardDescription className="text-xs">Facility requests for new devices</CardDescription>
-                    </div>
-                    <select
-                      value={deviceStatusFilter}
-                      onChange={(e) => setDeviceStatusFilter(e.target.value)}
-                      className="text-xs h-8 px-2 border border-border rounded-lg bg-background text-foreground w-full sm:w-auto"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="fulfilled">Fulfilled</option>
-                    </select>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {deviceRequests && deviceRequests.length > 0 ? (
-                    <div className="space-y-3">
-                      {(deviceStatusFilter === 'all' 
-                        ? deviceRequests 
-                        : deviceRequests.filter(r => r.status === deviceStatusFilter)
-                      ).map((request) => (
-                        <div
-                          key={request.id}
-                          className="p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                <h3 className="font-medium text-sm truncate">{request.facilityName || 'Unknown Facility'}</h3>
-                                <Badge
-                                  variant={
-                                    request.status === 'pending'
-                                      ? 'warning'
-                                      : request.status === 'fulfilled'
-                                      ? 'success'
-                                      : request.status === 'approved'
-                                      ? 'secondary'
-                                      : 'destructive'
-                                  }
-                                  className="flex-shrink-0"
-                                >
-                                  {request.status}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground mb-2">
-                                <strong>Request:</strong> {request.quantity} {request.deviceType || 'device(s)'}
-                              </p>
-                              {request.message && (
-                                <p className="text-xs text-muted-foreground mb-2 break-words">{request.message}</p>
-                              )}
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs text-muted-foreground mb-2">
-                                <span className="break-words"><strong>From:</strong> {request.name} ({request.email})</span>
-                                <span><strong>Phone:</strong> {request.phone}</span>
-                                <span><strong>Date:</strong> {new Date(request.createdAt).toLocaleString()}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon={<Package />}
-                      title="No device requests found"
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Resilience Intelligence hubs (additive, simulated data) */}
-            {activeSection === 'intel-portfolio' && <AdminIntelPortfolioHub />}
-            {activeSection === 'intel-risk' && <AdminIntelRiskHub />}
-            {activeSection === 'intel-adaptation' && <AdminIntelAdaptationHub />}
-            {activeSection === 'intel-methodology' && <AdminIntelMethodologyHub />}
+            {activeSection === 'solar-carbon-credits' && <AdminCarbonCredits />}
+            </MotionSection>
 
           </div>
         </main>

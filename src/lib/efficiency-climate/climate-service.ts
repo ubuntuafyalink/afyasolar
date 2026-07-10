@@ -13,6 +13,11 @@ import {
   simulateResilienceTrend,
 } from "@/lib/efficiency-climate/simulation"
 import { persistRealClimateProfile } from "@/lib/climate/facility-climate-persist"
+import {
+  computeAdaptationEffectiveness,
+  estimatedGainPoints,
+  type AdaptationEffectiveness,
+} from "@/lib/climate/adaptation-effectiveness"
 import { generateId } from "@/lib/utils"
 
 export type AdaptationPayload = {
@@ -22,6 +27,8 @@ export type AdaptationPayload = {
   status: string
   implementedAt: string | null
   effectivenessNote: string | null
+  /** Estimated RCS points a completed measure in this category adds (documented model). */
+  estimatedGainPoints: number
 }
 
 export type ClimateResiliencePayload = {
@@ -39,6 +46,8 @@ export type ClimateResiliencePayload = {
   adaptations: AdaptationPayload[]
   monthlyTrend: { periodMonth: string; resilienceScore: number; adaptationCompletionPct: number }[]
   completionPct: number
+  /** Estimated + observed impact of the adaptation programme (see adaptation-effectiveness). */
+  effectiveness: AdaptationEffectiveness
 }
 
 async function seedAdaptationsIfEmpty(facilityId: string, profile: ReturnType<typeof simulateClimateProfile>) {
@@ -204,6 +213,22 @@ export async function buildClimateResiliencePayload(
 
   const profile = profileRow!
 
+  const adaptations: AdaptationPayload[] = adaptationRows.map((a) => ({
+    id: a.id,
+    riskCategory: a.riskCategory,
+    recommendation: a.recommendation,
+    status: a.status,
+    implementedAt: a.implementedAt ? new Date(a.implementedAt).toISOString() : null,
+    effectivenessNote: a.effectivenessNote,
+    estimatedGainPoints: estimatedGainPoints(a.riskCategory),
+  }))
+
+  // Observed effectiveness reads REAL snapshot history (empty until enough accrues).
+  const effectiveness = computeAdaptationEffectiveness(
+    adaptations,
+    snapshots.map((s) => ({ periodMonth: s.periodMonth, resilienceScore: Number(s.resilienceScore) })),
+  )
+
   return {
     facilityId,
     profile: {
@@ -216,16 +241,10 @@ export async function buildClimateResiliencePayload(
       longitude: profile.longitude != null ? Number(profile.longitude) : null,
       dataSource: profile.dataSource,
     },
-    adaptations: adaptationRows.map((a) => ({
-      id: a.id,
-      riskCategory: a.riskCategory,
-      recommendation: a.recommendation,
-      status: a.status,
-      implementedAt: a.implementedAt ? new Date(a.implementedAt).toISOString() : null,
-      effectivenessNote: a.effectivenessNote,
-    })),
+    adaptations,
     monthlyTrend,
     completionPct,
+    effectiveness,
   }
 }
 
@@ -266,5 +285,6 @@ export async function updateAdaptationStatus(
     status: row.status,
     implementedAt: row.implementedAt ? new Date(row.implementedAt).toISOString() : null,
     effectivenessNote: row.effectivenessNote,
+    estimatedGainPoints: estimatedGainPoints(row.riskCategory),
   }
 }

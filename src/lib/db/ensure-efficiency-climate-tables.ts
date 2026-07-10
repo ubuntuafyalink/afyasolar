@@ -45,6 +45,7 @@ export async function ensureEfficiencyClimateTables(): Promise<void> {
       \`latitude\` DECIMAL(10,6) NULL,
       \`longitude\` DECIMAL(10,6) NULL,
       \`data_source\` VARCHAR(20) NOT NULL DEFAULT 'simulated',
+      \`normalization_version\` VARCHAR(8) NOT NULL DEFAULT 'v1',
       \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (\`facility_id\`),
       KEY \`fcp_resilience_idx\` (\`overall_resilience_score\`)

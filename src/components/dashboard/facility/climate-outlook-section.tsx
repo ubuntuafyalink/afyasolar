@@ -112,10 +112,22 @@ export function ClimateOutlookSection({
       </Card>
 
       {/* Hazard scores + CVI (reused panels) */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <HazardScorePanel facilityId={facilityId} />
-        <CviPanel facilityId={facilityId} />
-      </div>
+      {showSkeleton ? (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="h-64 animate-pulse rounded-md bg-muted" aria-hidden />
+          <div className="h-64 animate-pulse rounded-md bg-muted" aria-hidden />
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <HazardScorePanel facilityId={facilityId} scores={showReal ? realScores ?? undefined : undefined} live={showReal} />
+          <CviPanel
+            facilityId={facilityId}
+            baseCvi={showReal ? realCvi ?? undefined : undefined}
+            trend={showReal ? realTrend ?? undefined : undefined}
+            live={showReal}
+          />
+        </div>
+      )}
 
       {/* Locator map */}
       <Card>

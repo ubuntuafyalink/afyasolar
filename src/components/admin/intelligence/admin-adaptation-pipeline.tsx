@@ -33,10 +33,20 @@ const COLUMNS: PipelineStatus[] = ["planned", "in-progress", "done"]
 function PipelineCard({ item }: { item: PipelineItem }) {
   return (
     <li className="rounded-md border bg-card p-3">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-foreground">{item.ecmTitle}</p>
-        <Badge variant="solar" className="shrink-0">
-          +{item.resilienceGainPoints} pts
+      <p className="text-sm font-medium text-foreground">{item.recommendation}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <p className="text-xs text-muted-foreground">
+          {item.facilityName ?? "Unknown facility"}
+          {item.region ? ` · ${item.region}` : ""}
+        </p>
+        {item.riskCategory && (
+          <Badge variant="outline" className="text-[10px]">
+            {item.riskCategory}
+          </Badge>
+        )}
+        <Badge variant="outline" className="text-[10px] text-emerald-700">
+          {normalizeStatus(item.status) === "done" ? "+" : "up to +"}
+          {item.estimatedGainPoints} pts est.
         </Badge>
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -104,24 +114,52 @@ export function AdminAdaptationPipeline() {
         <DemoDataBadge />
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="rounded-lg border p-4">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            {COLUMNS.map((status) => {
-              const meta = COLUMN_META[status]
-              return (
-                <Badge key={status} variant={meta.variant}>
-                  {meta.icon}
-                  {meta.label}: {byStatus[status]}
-                </Badge>
-              )
-            })}
-          </div>
-          <div className="mt-4 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Resilience points delivered</span>
-              <span>
-                {pointsDone} / {pointsPlanned} pts ({pct}%)
-              </span>
+        {total === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+            No adaptation measures recorded yet. Measures appear here as facilities log climate adaptations.
+          </p>
+        ) : (
+          <>
+            <div className="rounded-lg border p-4">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                {COLUMNS.map((status) => {
+                  const meta = COLUMN_META[status]
+                  return (
+                    <Badge key={status} variant={meta.variant}>
+                      {meta.icon}
+                      {meta.label}: {grouped[status].length}
+                    </Badge>
+                  )
+                })}
+                <span className="text-xs text-muted-foreground">
+                  · {data?.totalFacilitiesWithAdaptations ?? 0} facilities
+                </span>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Estimated resilience gain:{" "}
+                <span className="font-semibold text-emerald-700">+{data?.totalRealizedGain ?? 0} pts realized</span>
+                {" · "}
+                <span className="font-semibold text-indigo-700">+{data?.totalPotentialGain ?? 0} pts available</span>{" "}
+                (documented per-hazard estimate)
+              </p>
+              <div className="mt-4 space-y-1">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Measures implemented</span>
+                  <span>
+                    {done} / {total} ({pct}%)
+                  </span>
+                </div>
+                <div
+                  className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                  role="progressbar"
+                  aria-valuenow={pct}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Measures implemented"
+                >
+                  <div className={cn("h-full rounded-full bg-success")} style={{ width: `${pct}%` }} />
+                </div>
+              </div>
             </div>
             <div
               className="h-2 w-full overflow-hidden rounded-full bg-muted"

@@ -9,6 +9,12 @@
  * function here performs any network, DB, payment, SMS, or email side-effect.
  */
 import { hashSeed } from "@/lib/efficiency-climate/simulation"
+import { hourlySolarKw, SOLAR_PR, BATTERY_DOD, type PowerInputs } from "@/lib/dashboard/power-model"
+import {
+  CRIPHC_CORE_WEIGHTS,
+  rcsTierLabel,
+  type ModuleCode,
+} from "@/lib/climate/criphc-scoring"
 
 export const DEMO_DATA_NOTE = "Demo data sample values, not yet wired to a live source."
 
@@ -504,13 +510,19 @@ export type CrphcResult = {
 /** Demo scores for the five existing CRiPHC dimensions (the two new ones are user-scored). */
 export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
   const seed = seedFor(facilityId, "crphc-v2")
-  const defs: [string, string, number][] = [
-    ["HES", "Hazard Exposure", 0.15],
-    ["CSF", "Critical Service Fragility", 0.2],
-    ["ECPQ", "Energy Continuity & Power Quality", 0.15],
-    ["EDC", "Efficiency & Demand Control", 0.1],
-    ["RRC", "Readiness & Response", 0.1],
-  ]
+  // Weights come from the canonical scoring module (single source of truth shared
+  // with the SAVED assessment) so the seeded preview and the real score can never
+  // silently diverge on weighting. See src/lib/climate/criphc-scoring.ts.
+  const labels: Record<ModuleCode, string> = {
+    HES: "Hazard Exposure",
+    CSF: "Critical Service Fragility",
+    ECPQ: "Energy Continuity & Power Quality",
+    EDC: "Efficiency & Demand Control",
+    RRC: "Readiness & Response",
+  }
+  const defs: [string, string, number][] = (
+    Object.keys(CRIPHC_CORE_WEIGHTS) as ModuleCode[]
+  ).map((code) => [code, labels[code], CRIPHC_CORE_WEIGHTS[code]])
   // Per-facility resilience bias: a well-run facility tends to score higher
   // across all dimensions (and vice-versa). This correlated shift spreads
   // facilities realistically across the resilience tiers instead of clustering
@@ -546,16 +558,22 @@ export type HazardScore = {
   score: number
   trend: "rising" | "stable" | "falling"
   note: string
+  /** Empirical return period (years) of the latest value vs the local record; null when the record is too short. Real path only. */
+  returnPeriodYears?: number | null
+  /** Number of annual samples in the local baseline the score was calibrated against. Real path only. */
+  baselineYears?: number
 }
 
-/** Quantitative hazard exposure scores (spec 10.3, NASA POWER / ERA5 derived). */
+/** Seeded demo hazard exposure scores (fallback only; real scores come from NASA POWER via toHazardScores). */
 export function getHazardScores(facilityId?: string): HazardScore[] {
   const seed = seedFor(facilityId, "hazard-scores")
+  // Notes mirror the real (NASA POWER) hazard notes so no unbacked scientific
+  // claim ("return period", "40-year trend") is ever shown over seeded data.
   const types: [string, string][] = [
-    ["Heat", "40-year maximum-temperature trend"],
-    ["Flood", "Extreme-precipitation return period"],
-    ["Wind / storm", "Wind-speed maxima"],
-    ["Drought", "Consecutive-dry-day frequency"],
+    ["Heat", "Mean daily maximum temperature"],
+    ["Flood", "Peak precipitation intensity"],
+    ["Wind / storm", "Peak 10 m wind speed"],
+    ["Drought", "Consecutive dry-day spell"],
   ]
   return types.map(([type, note], i) => {
     const score = Math.round(25 + rand(seed, i * 5) * 65)
@@ -593,9 +611,10 @@ export type HazardTrendPoint = {
 }
 
 /**
- * Multi-decade hazard trend (as if derived from NASA POWER / ERA5 reanalysis).
- * Each hazard rises from a historical baseline toward today's getHazardScores
- * value, with mild seeded noise. Simulated for the Climate Outlook chart.
+ * Simulated multi-decade hazard trend the offline/demo fallback for the Climate
+ * Outlook chart when real NASA POWER data is unavailable. Each hazard rises from a
+ * historical baseline toward today's getHazardScores value, with mild seeded
+ * noise. Not a real record; shown only behind a demo badge.
  */
 export function getHazardTrend(facilityId?: string): HazardTrendPoint[] {
   const seed = seedFor(facilityId, "hazard-trend")
@@ -1163,6 +1182,14 @@ export function getChildServicesSummary(facilityId?: string): ChildServicesSumma
 // application's "explainable, auditable" claim.
 // ---------------------------------------------------------------------------
 
+/**
+ * Where a dimension's score came from, so the UI can be honest about it:
+ * - "measured": derived from real sensor/satellite data (e.g. HES from NASA POWER).
+ * - "assessed": from the facility's saved CRiPHC questionnaire (persisted).
+ * - "estimated": seeded/illustrative demo value, not a real measurement.
+ */
+export type RcsDimensionSource = "measured" | "assessed" | "estimated"
+
 export type RcsDimensionInsight = {
   code: string
   label: string
@@ -1177,14 +1204,48 @@ export type RcsDimensionInsight = {
   gapPoints: number
   /** True for the two CRiPHC v2.0 dimensions (Workforce, WASH). */
   isNew?: boolean
+  /** Provenance of `score` see RcsDimensionSource. */
+  source: RcsDimensionSource
   whatItMeasures: Bilingual
   howToImprove: Bilingual
 }
 
+/**
+ * Is this RCS a real, defensible score or an illustrative seeded preview?
+ * "assessed" = built from the facility's persisted CRiPHC assessment (real);
+ * "estimated" = seeded demo, shown only where clearly labelled as illustrative.
+ */
+export type RcsProvenance = "assessed" | "estimated"
+
 export type RcsExplainer = {
   rcs: number
   tier: string
+  provenance: RcsProvenance
   dimensions: RcsDimensionInsight[]
+}
+
+/** Build the display insight (contribution math + bilingual copy) for one dimension. */
+function toRcsDimensionInsight(
+  d: CrphcDimension,
+  source: RcsDimensionSource,
+): RcsDimensionInsight {
+  const copy = RCS_DIMENSION_COPY[d.code] ?? {
+    whatItMeasures: { en: d.label, sw: d.label },
+    howToImprove: { en: "", sw: "" },
+  }
+  return {
+    code: d.code,
+    label: d.label,
+    weight: d.weight,
+    score: d.score,
+    contribution: Math.round(d.score * d.weight),
+    maxContribution: Math.round(100 * d.weight),
+    gapPoints: Math.round((100 - d.score) * d.weight),
+    isNew: d.isNew,
+    source,
+    whatItMeasures: copy.whatItMeasures,
+    howToImprove: copy.howToImprove,
+  }
 }
 
 /** Static, bilingual plain-language copy per CRiPHC dimension code. */
@@ -1270,32 +1331,81 @@ const RCS_DIMENSION_COPY: Record<
  * dimensions use the same default (60) as the interactive widget so the RCS
  * headline matches across the dashboard.
  */
-export function getRcsExplainer(facilityId?: string): RcsExplainer {
-  const base = getCrphcBaseDimensions(facilityId)
+/**
+ * SEEDED/ILLUSTRATIVE RCS explainer. Every dimension is demo data ("estimated"),
+ * except HES which becomes "measured" when a real Climate-Outlook-derived
+ * `overrides.hesScore` is supplied. This is the preview shown before a facility
+ * has completed its CRiPHC assessment surface it only with a clear illustrative
+ * label. For a real, defensible score use getRcsExplainerFromSummary().
+ */
+export function getRcsExplainer(facilityId?: string, overrides?: RcsOverrides): RcsExplainer {
+  const base = getCrphcBaseDimensions(facilityId, overrides)
   const dims: CrphcDimension[] = [
     ...base,
     ...CRPHC_NEW_DIMENSIONS.map((d) => ({ ...d, score: 60, isNew: true })),
   ]
   const { rcs, tier } = computeCrphcResult(dims)
-  const dimensions: RcsDimensionInsight[] = dims.map((d) => {
-    const copy = RCS_DIMENSION_COPY[d.code] ?? {
-      whatItMeasures: { en: d.label, sw: d.label },
-      howToImprove: { en: "", sw: "" },
-    }
-    return {
-      code: d.code,
-      label: d.label,
-      weight: d.weight,
-      score: d.score,
-      contribution: Math.round(d.score * d.weight),
-      maxContribution: Math.round(100 * d.weight),
-      gapPoints: Math.round((100 - d.score) * d.weight),
-      isNew: d.isNew,
-      whatItMeasures: copy.whatItMeasures,
-      howToImprove: copy.howToImprove,
-    }
+  const hesMeasured = overrides?.hesScore != null
+  const dimensions: RcsDimensionInsight[] = dims.map((d) =>
+    toRcsDimensionInsight(d, d.code === "HES" && hesMeasured ? "measured" : "estimated"),
+  )
+  return { rcs, tier, provenance: "estimated", dimensions }
+}
+
+/** Per-dimension capacity scores (0100) as persisted in climate_score_summaries. */
+export type RcsSummaryCapacities = {
+  hes: number
+  csf: number
+  ecpq: number
+  edc: number
+  rrc: number
+  /** Canonical RCS the server already computed + persisted (0100). */
+  rcs: number
+  /** True when HES was derived from real NASA climate (formulaVersion has a climate stamp). */
+  hesFromClimate?: boolean
+}
+
+/**
+ * REAL RCS explainer built from a facility's persisted CRiPHC assessment
+ * (climate_score_summaries). Uses only the five CORE dimensions the assessment
+ * scores, with the canonical weights renormalized to sum to 1 so the displayed
+ * contributions add up to the persisted RCS. HES is "measured" when it came from
+ * real climate, otherwise "assessed"; the other four are always "assessed".
+ * A live NASA `hesOverride` (fresher than the stored value) is used when present.
+ */
+export function getRcsExplainerFromSummary(
+  summary: RcsSummaryCapacities,
+  hesOverride?: number,
+): RcsExplainer {
+  const codes = Object.keys(CRIPHC_CORE_WEIGHTS) as ModuleCode[]
+  const weightTotal = codes.reduce((s, m) => s + CRIPHC_CORE_WEIGHTS[m], 0)
+  const labels: Record<ModuleCode, string> = {
+    HES: "Hazard Exposure",
+    CSF: "Critical Service Fragility",
+    ECPQ: "Energy Continuity & Power Quality",
+    EDC: "Efficiency & Demand Control",
+    RRC: "Readiness & Response",
+  }
+  const clamp01 = (n: number) => Math.max(0, Math.min(100, Math.round(n)))
+  const rawScore: Record<ModuleCode, number> = {
+    HES: hesOverride != null ? clamp01(hesOverride) : clamp01(summary.hes),
+    CSF: clamp01(summary.csf),
+    ECPQ: clamp01(summary.ecpq),
+    EDC: clamp01(summary.edc),
+    RRC: clamp01(summary.rrc),
+  }
+  const hesMeasured = hesOverride != null || summary.hesFromClimate === true
+  const dimensions: RcsDimensionInsight[] = codes.map((code) => {
+    // Renormalize the core weight to sum to 1 across the five assessed dimensions
+    // so contributions reconcile with the persisted RCS.
+    const weight = CRIPHC_CORE_WEIGHTS[code] / weightTotal
+    return toRcsDimensionInsight(
+      { code, label: labels[code], weight, score: rawScore[code] },
+      code === "HES" && hesMeasured ? "measured" : "assessed",
+    )
   })
-  return { rcs, tier, dimensions }
+  const rcs = clamp01(summary.rcs)
+  return { rcs, tier: rcsTierLabel(rcs), provenance: "assessed", dimensions }
 }
 
 export type RcsTrendPoint = { label: string; rcs: number }

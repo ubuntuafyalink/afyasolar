@@ -26,8 +26,9 @@ import {
   Tooltip,
   Legend,
 } from "recharts"
-import { CloudSun, RefreshCw, Shield } from "lucide-react"
+import { CloudSun, RefreshCw, Shield, TrendingUp, ShieldAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { buildSurgeRecommendations } from "@/lib/intelligence/surge-recommendations"
 
 type ClimatePayload = {
   profile: {
@@ -44,9 +45,17 @@ type ClimatePayload = {
     recommendation: string
     status: string
     implementedAt: string | null
+    estimatedGainPoints: number
   }[]
   monthlyTrend: { periodMonth: string; resilienceScore: number; adaptationCompletionPct: number }[]
   completionPct: number
+  effectiveness: {
+    realizedGain: number
+    potentialGain: number
+    completedCount: number
+    activeCount: number
+    observed: { points: number; fromMonth: string; toMonth: string } | null
+  }
 }
 
 const STATUS_OPTIONS = ["recommended", "planned", "in_progress", "completed", "dismissed"] as const
@@ -125,6 +134,16 @@ export function FacilityClimateResilienceDashboard({ facilityId }: FacilityClima
       done: m.adaptationCompletionPct,
     })) ?? []
 
+  // Real-hazard-driven pre-positioning actions (from the profile exposure scores).
+  const surge = data
+    ? buildSurgeRecommendations({
+        heat: data.profile.heatRiskScore,
+        flood: data.profile.floodRiskScore,
+        storm: data.profile.windRiskScore,
+        drought: data.profile.rainRiskScore,
+      })
+    : []
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap justify-between gap-2">
@@ -176,6 +195,88 @@ export function FacilityClimateResilienceDashboard({ facilityId }: FacilityClima
           </div>
 
           <Card className="border-emerald-100">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
+                Adaptation impact
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Estimated points use a documented per-hazard model; observed change reads the real resilience history.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-4">
+              <div>
+                <p className="text-2xl font-bold text-emerald-800">+{data.effectiveness.realizedGain}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  est. points realized · {data.effectiveness.completedCount} completed
+                </p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-indigo-700">+{data.effectiveness.potentialGain}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  est. points available · {data.effectiveness.activeCount} planned
+                </p>
+              </div>
+              {data.effectiveness.observed ? (
+                <div>
+                  <p className="text-2xl font-bold text-foreground">
+                    {data.effectiveness.observed.points >= 0 ? "+" : ""}
+                    {data.effectiveness.observed.points}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    observed RCS change (all factors) · {data.effectiveness.observed.fromMonth}→
+                    {data.effectiveness.observed.toMonth}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <p className="text-[11px] text-muted-foreground">
+                    Observed change appears once monthly resilience history accrues.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {surge.length > 0 && (
+            <Card className="border-amber-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-amber-600" />
+                  Preparedness actions
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Pre-position now for the hazards currently elevated at this facility (real NASA POWER exposure).
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {surge.map((s) => (
+                  <div key={s.hazard} className="rounded-lg border border-amber-100 bg-amber-50/40 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-foreground">{s.title.en}</span>
+                      <Badge
+                        variant="secondary"
+                        className={cn(
+                          s.severity === "critical"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-amber-100 text-amber-800",
+                        )}
+                      >
+                        {s.severity} · {s.score}/100
+                      </Badge>
+                    </div>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+                      {s.actions.map((a, i) => (
+                        <li key={i}>{a.en}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="border-emerald-100">
             <CardHeader>
               <CardTitle className="text-sm">Resilience trend</CardTitle>
               <CardDescription className="text-xs">
@@ -208,9 +309,15 @@ export function FacilityClimateResilienceDashboard({ facilityId }: FacilityClima
               {data.adaptations.map((a) => (
                 <div key={a.id} className="rounded-lg border border-emerald-50 bg-white p-3 space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge variant="secondary" className="capitalize">
-                      {a.riskCategory.replace("_", " ")}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="capitalize">
+                        {a.riskCategory.replace("_", " ")}
+                      </Badge>
+                      <Badge variant="outline" className="text-[11px] text-emerald-700">
+                        {a.status === "completed" ? "+" : "up to +"}
+                        {a.estimatedGainPoints} pts est.
+                      </Badge>
+                    </div>
                     <Select
                       value={
                         STATUS_OPTIONS.includes(a.status as (typeof STATUS_OPTIONS)[number])

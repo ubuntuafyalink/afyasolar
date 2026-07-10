@@ -12,7 +12,10 @@ import { env } from "@/lib/env"
 
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string }
 
-export type ChatCompleteResult = { text: string; provider: string }
+/** Token usage as reported by the provider (best-effort; absent for streams). */
+export type TokenUsage = { promptTokens?: number; completionTokens?: number; totalTokens?: number }
+
+export type ChatCompleteResult = { text: string; provider: string; model: string; usage?: TokenUsage }
 
 type ProviderConfig = {
   provider: string
@@ -22,23 +25,40 @@ type ProviderConfig = {
 }
 
 const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+const OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 const TIMEOUT_MS = 20000
 
 /**
- * Ordered list of usable providers: Gemini first (preferred) when its key is
- * set, then GROQ. chatComplete tries them in order so a runtime Gemini failure
- * transparently falls back to GROQ instead of failing the user.
+ * Ordered list of usable providers, each active only when its key is set:
+ * Gemini (preferred) → OpenAI → GROQ. All expose the OpenAI-compatible schema.
+ * chatComplete/openChatStream try them in order so a runtime failure transparently
+ * falls back to the next provider instead of failing the user.
  */
 export function resolveProviders(): ProviderConfig[] {
   const list: ProviderConfig[] = []
   if (env.GEMINI_API_KEY) {
     list.push({ provider: "gemini", url: GEMINI_URL, apiKey: env.GEMINI_API_KEY, model: env.GEMINI_MODEL ?? "gemini-2.0-flash" })
   }
+  if (env.OPENAI_API_KEY) {
+    list.push({ provider: "openai", url: OPENAI_URL, apiKey: env.OPENAI_API_KEY, model: env.OPENAI_MODEL ?? "gpt-4o-mini" })
+  }
   if (env.GROQ_API_KEY) {
     list.push({ provider: "groq", url: GROQ_URL, apiKey: env.GROQ_API_KEY, model: env.GROQ_MODEL ?? "llama-3.1-8b-instant" })
   }
   return list
+}
+
+/** Normalize an OpenAI-compatible `usage` object into our TokenUsage shape. */
+function parseUsage(data: unknown): TokenUsage | undefined {
+  const u = (data as { usage?: Record<string, unknown> } | null)?.usage
+  if (!u || typeof u !== "object") return undefined
+  const num = (v: unknown) => (typeof v === "number" ? v : undefined)
+  return {
+    promptTokens: num(u.prompt_tokens),
+    completionTokens: num(u.completion_tokens),
+    totalTokens: num(u.total_tokens),
+  }
 }
 
 export class AiNotConfiguredError extends Error {
@@ -52,7 +72,7 @@ async function callProvider(
   cfg: ProviderConfig,
   messages: ChatMessage[],
   opts: { temperature?: number; maxTokens?: number },
-): Promise<string> {
+): Promise<{ text: string; usage?: TokenUsage }> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
   let res: Response
@@ -83,7 +103,7 @@ async function callProvider(
   const data = JSON.parse(body)
   const content: unknown = data?.choices?.[0]?.message?.content
   const text = typeof content === "string" ? content.replace(/\*/g, "").trim() : ""
-  return text || "No response was generated. Please try again."
+  return { text: text || "No response was generated. Please try again.", usage: parseUsage(data) }
 }
 
 export async function chatComplete(
@@ -96,8 +116,8 @@ export async function chatComplete(
   let lastError: unknown
   for (const cfg of providers) {
     try {
-      const text = await callProvider(cfg, messages, opts)
-      return { text, provider: cfg.provider }
+      const { text, usage } = await callProvider(cfg, messages, opts)
+      return { text, provider: cfg.provider, model: cfg.model, usage }
     } catch (err) {
       lastError = err
       console.error(`AI provider ${cfg.provider} failed, trying next if available:`, err)
@@ -115,7 +135,7 @@ export async function chatComplete(
 export async function openChatStream(
   messages: ChatMessage[],
   opts: { temperature?: number; maxTokens?: number } = {},
-): Promise<{ provider: string; upstream: Response }> {
+): Promise<{ provider: string; model: string; upstream: Response }> {
   const providers = resolveProviders()
   if (providers.length === 0) throw new AiNotConfiguredError()
 
@@ -144,7 +164,7 @@ export async function openChatStream(
         console.error(lastError)
         continue
       }
-      return { provider: cfg.provider, upstream: res }
+      return { provider: cfg.provider, model: cfg.model, upstream: res }
     } catch (err) {
       clearTimeout(timeout)
       lastError = err
