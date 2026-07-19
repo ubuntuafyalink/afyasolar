@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -21,7 +21,7 @@ type MeuRow = {
   critical: boolean
 }
 
-export function EnergyEfficiencyAssessment({ facilityId }: { facilityId?: string } = {}) {
+export function EnergyEfficiencyAssessment() {
   const [activeTab, setActiveTab] = useState<EeatTab>("meu")
 
   // 4‑Point Assessment answers
@@ -51,96 +51,6 @@ export function EnergyEfficiencyAssessment({ facilityId }: { facilityId?: string
   ])
 
   const [assessmentError, setAssessmentError] = useState<string | null>(null)
-
-  // --- Persistence (per facility) ---
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
-
-  // Load a previously saved assessment on mount.
-  useEffect(() => {
-    if (!facilityId) return
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch(`/api/facility/${facilityId}/eeat`)
-        if (!res.ok) return
-        const json = await res.json()
-        const d = json?.assessment?.data
-        if (cancelled || !d) return
-        if (Array.isArray(d.meuRows)) setMeuRows(d.meuRows)
-        if (typeof d.baselineBeforeSolar === "string") setBaselineBeforeSolar(d.baselineBeforeSolar)
-        if (typeof d.baselineCurrentConsumption === "string") setBaselineCurrentConsumption(d.baselineCurrentConsumption)
-        const c = d.checklist ?? {}
-        if (typeof c.outageHours === "string") setOutageHours(c.outageHours)
-        if (typeof c.batteryBackup === "string") setBatteryBackup(c.batteryBackup)
-        if (typeof c.ledPercent === "string") setLedPercent(c.ledPercent)
-        if (typeof c.devicesOff === "string") setDevicesOff(c.devicesOff)
-        if (typeof c.acType === "string") setAcType(c.acType)
-        if (typeof c.insulation === "string") setInsulation(c.insulation)
-        if (typeof c.staffTraining === "string") setStaffTraining(c.staffTraining)
-        if (typeof c.monitoringAssigned === "string") setMonitoringAssigned(c.monitoringAssigned)
-        if (typeof json.assessment.rawScore === "number") setAssessmentScore(json.assessment.rawScore)
-      } catch {
-        /* non-fatal: start with a blank form */
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [facilityId])
-
-  const saveAssessment = useCallback(async () => {
-    if (!facilityId) {
-      setSaveMsg("No facility context — cannot save.")
-      return
-    }
-    setSaving(true)
-    setSaveMsg(null)
-    try {
-      const data = {
-        meuRows,
-        baselineBeforeSolar,
-        baselineCurrentConsumption,
-        checklist: {
-          outageHours,
-          batteryBackup,
-          ledPercent,
-          devicesOff,
-          acType,
-          insulation,
-          staffTraining,
-          monitoringAssigned,
-        },
-      }
-      const rawScore = assessmentScore
-      const bmiPercent = assessmentScore !== null ? Math.round((assessmentScore / 40) * 100) : undefined
-      const res = await fetch(`/api/facility/${facilityId}/eeat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data, rawScore: rawScore ?? undefined, bmiPercent }),
-      })
-      if (!res.ok) throw new Error("save failed")
-      setSaveMsg("Saved.")
-    } catch {
-      setSaveMsg("Could not save. Please retry.")
-    } finally {
-      setSaving(false)
-    }
-  }, [
-    facilityId,
-    meuRows,
-    baselineBeforeSolar,
-    baselineCurrentConsumption,
-    outageHours,
-    batteryBackup,
-    ledPercent,
-    devicesOff,
-    acType,
-    insulation,
-    staffTraining,
-    monitoringAssigned,
-    assessmentScore,
-  ])
 
   const sanitizeNumberInput = (value: string) => {
     // Allow digits and at most one decimal point
@@ -974,14 +884,7 @@ export function EnergyEfficiencyAssessment({ facilityId }: { facilityId?: string
               Use this score together with your baseline and EnPIs to track improvements over time.
               In future, this popup can also include AI‑generated recommendations.
             </p>
-            {saveMsg && <p className="text-xs text-muted-foreground">{saveMsg}</p>}
-            <div className="flex justify-end gap-2 pt-1">
-              {facilityId ? (
-                <Button size="sm" onClick={saveAssessment} disabled={saving}>
-                  {saving ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : null}
-                  Save assessment
-                </Button>
-              ) : null}
+            <div className="flex justify-end pt-1">
               <Button size="sm" variant="outline" onClick={() => setShowScoreDialog(false)}>
                 Close
               </Button>

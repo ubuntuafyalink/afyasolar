@@ -4,11 +4,10 @@ import * as React from "react"
 import { CheckCircle2, Circle, Clock, ClipboardList } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { StatCard } from "@/components/ui/stat-card"
-import { getAssessmentCycles } from "@/lib/dashboard/admin-portfolio-data"
+import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
+import { useAdminAssessmentCycles, type AssessmentCycle } from "@/hooks/use-admin-assessment-cycles"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +30,21 @@ const FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "not-started", label: "Not started" },
 ]
 
+/** Map a real cycle status (draft|completed|archived) to a lifecycle bucket. */
+function bucketOf(status: string): CycleStatus {
+  const s = status.toLowerCase()
+  if (s === "completed" || s === "archived") return "complete"
+  return "in-progress" // draft and anything else is work in progress
+}
+
+type Row = {
+  facilityId: string
+  facilityName: string
+  region: string | null
+  status: CycleStatus
+  lastUpdatedIso: string | null
+}
+
 function StatusBadge({ status }: { status: CycleStatus }) {
   const meta = STATUS_META[status]
   return (
@@ -41,15 +55,7 @@ function StatusBadge({ status }: { status: CycleStatus }) {
   )
 }
 
-function FilterButton({
-  active,
-  label,
-  onClick,
-}: {
-  active: boolean
-  label: string
-  onClick: () => void
-}) {
+function FilterButton({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -69,19 +75,53 @@ function FilterButton({
 }
 
 export function AdminAssessmentCycles() {
-  const cycles = React.useMemo(() => getAssessmentCycles(), [])
+  const { facilities, isLoading: facLoading, isError: facError } = useAdminPortfolio()
+  const cyclesQ = useAdminAssessmentCycles()
   const [filter, setFilter] = React.useState<StatusFilter>("all")
+
+  // Latest cycle per facility (cycles arrive newest-first by startedAt).
+  const latestByFacility = React.useMemo(() => {
+    const map = new Map<string, AssessmentCycle>()
+    for (const c of cyclesQ.data ?? []) {
+      if (!map.has(c.facilityId)) map.set(c.facilityId, c)
+    }
+    return map
+  }, [cyclesQ.data])
+
+  // One row per real facility: its latest cycle, or "not started".
+  const rows = React.useMemo<Row[]>(() => {
+    return facilities.map((f) => {
+      const c = latestByFacility.get(f.id)
+      if (!c) {
+        return { facilityId: f.id, facilityName: f.name, region: f.region, status: "not-started", lastUpdatedIso: null }
+      }
+      return {
+        facilityId: f.id,
+        facilityName: f.name,
+        region: f.region,
+        status: bucketOf(c.status),
+        lastUpdatedIso: c.updatedAt ?? c.startedAt ?? c.completedAt,
+      }
+    })
+  }, [facilities, latestByFacility])
 
   const counts = React.useMemo(() => {
     const base: Record<CycleStatus, number> = { complete: 0, "in-progress": 0, "not-started": 0 }
-    for (const c of cycles) base[c.status] += 1
+    for (const r of rows) base[r.status] += 1
     return base
-  }, [cycles])
+  }, [rows])
 
   const visible = React.useMemo(
-    () => (filter === "all" ? cycles : cycles.filter((c) => c.status === filter)),
-    [cycles, filter],
+    () => (filter === "all" ? rows : rows.filter((r) => r.status === filter)),
+    [rows, filter],
   )
+
+  if (facLoading || cyclesQ.isLoading) {
+    return <div className="h-72 animate-pulse rounded-lg bg-muted" />
+  }
+  if (facError || cyclesQ.isError) {
+    return <p className="text-sm text-destructive">Could not load assessment cycles. Please retry.</p>
+  }
 
   return (
     <Card>
@@ -90,38 +130,17 @@ export function AdminAssessmentCycles() {
           <ClipboardList aria-hidden className="size-5 text-primary" />
           Assessment cycles
         </CardTitle>
-        <DemoDataBadge />
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            title="Complete"
-            value={counts.complete}
-            icon={<CheckCircle2 aria-hidden />}
-            accent="success"
-          />
-          <StatCard
-            title="In progress"
-            value={counts["in-progress"]}
-            icon={<Clock aria-hidden />}
-            accent="warning"
-          />
-          <StatCard
-            title="Not started"
-            value={counts["not-started"]}
-            icon={<Circle aria-hidden />}
-            accent="muted"
-          />
+          <StatCard title="Complete" value={counts.complete} icon={<CheckCircle2 aria-hidden />} accent="success" />
+          <StatCard title="In progress" value={counts["in-progress"]} icon={<Clock aria-hidden />} accent="warning" />
+          <StatCard title="Not started" value={counts["not-started"]} icon={<Circle aria-hidden />} accent="muted" />
         </div>
 
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter by status">
           {FILTERS.map((f) => (
-            <FilterButton
-              key={f.value}
-              active={filter === f.value}
-              label={f.label}
-              onClick={() => setFilter(f.value)}
-            />
+            <FilterButton key={f.value} active={filter === f.value} label={f.label} onClick={() => setFilter(f.value)} />
           ))}
         </div>
 
@@ -130,30 +149,21 @@ export function AdminAssessmentCycles() {
             <li className="p-4 text-sm text-muted-foreground">No facilities match this filter.</li>
           ) : (
             visible.map((c) => (
-              <li
-                key={c.facility.id}
-                className="flex flex-wrap items-center justify-between gap-3 p-4"
-              >
+              <li key={c.facilityId} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{c.facility.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {c.facility.region} · {c.facility.district}
-                  </p>
+                  <p className="truncate font-medium text-foreground">{c.facilityName}</p>
+                  <p className="text-xs text-muted-foreground">{c.region ?? "—"}</p>
                 </div>
                 <div className="flex items-center gap-3 text-right">
                   <StatusBadge status={c.status} />
                   <span className="text-xs text-muted-foreground">
-                    Updated {new Date(c.lastUpdatedIso).toLocaleDateString()}
+                    {c.lastUpdatedIso ? `Updated ${new Date(c.lastUpdatedIso).toLocaleDateString()}` : "—"}
                   </span>
                 </div>
               </li>
             ))
           )}
         </ul>
-
-        <Button variant="outline" size="sm" className={cn(FOCUS_RING, "w-full sm:w-auto")}>
-          Export cycle report
-        </Button>
       </CardContent>
     </Card>
   )

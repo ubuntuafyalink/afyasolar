@@ -10,11 +10,6 @@
  */
 import { hashSeed } from "@/lib/efficiency-climate/simulation"
 import { hourlySolarKw, SOLAR_PR, BATTERY_DOD, type PowerInputs } from "@/lib/dashboard/power-model"
-import {
-  CRIPHC_CORE_WEIGHTS,
-  rcsTierLabel,
-  type ModuleCode,
-} from "@/lib/climate/criphc-scoring"
 
 export const DEMO_DATA_NOTE = "Demo data sample values, not yet wired to a live source."
 
@@ -63,12 +58,21 @@ export type PowerToday = {
 }
 
 /** Power-forecast figures for today (spec 8.2 "card two"). */
-export function getPowerToday(facilityId?: string): PowerToday {
+export function getPowerToday(facilityId?: string, inputs?: PowerInputs): PowerToday {
   const seed = seedFor(facilityId, "power-today")
+  // Battery SoC has no real source in this build, so it stays seeded; the sky
+  // and expected sun hours come from the real Climate Outlook resource when set.
+  const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
+  if (inputs) {
+    return {
+      expectedHours: Math.round(Math.max(12, Math.min(20, 12 + inputs.peakSunHours)) * 10) / 10,
+      batterySocPct,
+      expectedSolar: inputs.sky,
+    }
+  }
   const skyRoll = rand(seed, 2)
   const expectedSolar = skyRoll > 0.66 ? "sunny" : skyRoll > 0.33 ? "partly" : "cloudy"
   const expectedHours = Math.round((skyRoll * 6 + 14) * 10) / 10 // ~1420h
-  const batterySocPct = Math.round(45 + rand(seed, 9) * 50)
   return { expectedHours, batterySocPct, expectedSolar }
 }
 
@@ -111,9 +115,9 @@ export function getPendingTasks(facilityId?: string): FacilityTask[] {
       id: "task-assessment-due",
       kind: "assessment-due",
       title: "Quarterly resilience assessment due",
-      detail: "Complete your climate-resilience review for this quarter.",
+      detail: "Review your Climate Outlook hazard trends for this quarter.",
       dueLabel: "This week",
-      target: "climate-resilience",
+      target: "climate-outlook",
     },
   ]
   const count = Math.floor(rand(seed, 4) * (all.length + 1)) // 0..3
@@ -229,12 +233,30 @@ export type PowerSnapshot = {
 }
 
 /** Current instantaneous power picture for the source indicator + flow diagram. */
-export function getPowerSnapshot(facilityId?: string, batterySocOverride?: number): PowerSnapshot {
+export function getPowerSnapshot(
+  facilityId?: string,
+  batterySocOverride?: number,
+  inputs?: PowerInputs,
+): PowerSnapshot {
   const seed = seedFor(facilityId, "power-snapshot")
   const hour = new Date().getHours()
   const daytime = hour >= 7 && hour <= 18
-  const solarKw = daytime ? Math.round((1.5 + rand(seed, hour) * 4) * 10) / 10 : 0
-  const loadKw = Math.round((1.2 + rand(seed, 5) * 2.5) * 10) / 10
+
+  // Solar + load: real (assessed load + sized solar + climate sun) when inputs
+  // are set, otherwise the seeded demo profile.
+  const solarKw = inputs
+    ? hourlySolarKw(hour, inputs.solarCapacityKw, inputs.peakSunHours)
+    : daytime
+      ? Math.round((1.5 + rand(seed, hour) * 4) * 10) / 10
+      : 0
+  const loadKw = inputs
+    ? Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 10) / 10
+    : Math.round((1.2 + rand(seed, 5) * 2.5) * 10) / 10
+
+  const batterySocPct =
+    typeof batterySocOverride === "number"
+      ? Math.round(batterySocOverride)
+      : getPowerToday(facilityId, inputs).batterySocPct
 
   let gridKw = 0
   let batteryKw = 0
@@ -245,7 +267,8 @@ export function getPowerSnapshot(facilityId?: string, batterySocOverride?: numbe
   } else if (daytime) {
     activeSource = "solar"
     batteryKw = -Math.round((loadKw - solarKw) * 10) / 10 // battery tops up
-  } else if (rand(seed, 3) < 0.4) {
+  } else if (inputs ? batterySocPct < 25 : rand(seed, 3) < 0.4) {
+    // Night with a low battery falls back to grid; otherwise run off battery.
     activeSource = "grid"
     gridKw = loadKw
   } else {
@@ -253,10 +276,6 @@ export function getPowerSnapshot(facilityId?: string, batterySocOverride?: numbe
     batteryKw = -loadKw
   }
 
-  const batterySocPct =
-    typeof batterySocOverride === "number"
-      ? Math.round(batterySocOverride)
-      : getPowerToday(facilityId).batterySocPct
   return { activeSource, solarKw, gridKw, batteryKw, loadKw, batterySocPct }
 }
 
@@ -270,8 +289,9 @@ export function getLivePowerSnapshot(
   facilityId: string | undefined,
   tick: number,
   batterySocOverride?: number,
+  inputs?: PowerInputs,
 ): PowerSnapshot {
-  const base = getPowerSnapshot(facilityId, batterySocOverride)
+  const base = getPowerSnapshot(facilityId, batterySocOverride, inputs)
   const seed = seedFor(facilityId, "live-power")
   const j = (salt: number, amp: number) => (rand(seed, tick * 7 + salt) - 0.5) * 2 * amp
   const kw = (v: number) => Math.max(0, Math.round(v * 100) / 100)
@@ -296,13 +316,26 @@ export function getLiveFridgeTempC(facilityId: string | undefined, tick: number)
 export type PowerBySourcePoint = { time: string; solar: number; grid: number; battery: number }
 
 /** 24 hourly points of delivered power split by source, for the stacked-area chart. */
-export function get24hPowerBySource(facilityId?: string): PowerBySourcePoint[] {
+export function get24hPowerBySource(facilityId?: string, inputs?: PowerInputs): PowerBySourcePoint[] {
   const seed = seedFor(facilityId, "power-24h")
   const out: PowerBySourcePoint[] = []
   for (let h = 24; h >= 0; h--) {
     const t = new Date(Date.now() - h * 3_600_000)
     const hr = t.getHours()
     const daytime = hr >= 7 && hr <= 18
+
+    if (inputs) {
+      // Real: climate-shaped solar covers the assessed load; battery fills the
+      // gap (solar + storage). Grid only appears if the system is grid-tied and
+      // short, which we cannot know here, so it stays solar + battery.
+      const solar = hourlySolarKw(hr, inputs.solarCapacityKw, inputs.peakSunHours)
+      const load = Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 10) / 10
+      const deliveredSolar = Math.min(solar, load)
+      const battery = Math.max(0, Math.round((load - deliveredSolar) * 10) / 10)
+      out.push({ time: `${String(hr).padStart(2, "0")}:00`, solar: deliveredSolar, grid: 0, battery })
+      continue
+    }
+
     const solar = daytime
       ? Math.max(0, Math.round(Math.sin(((hr - 6) / 12) * Math.PI) * (3 + rand(seed, hr) * 2) * 10) / 10)
       : 0
@@ -322,14 +355,36 @@ export type PowerForecastPoint = {
 }
 
 /** Next-12-hours forecast of expected source and battery State of Charge. */
-export function getPower12hForecast(facilityId?: string): PowerForecastPoint[] {
+export function getPower12hForecast(facilityId?: string, inputs?: PowerInputs): PowerForecastPoint[] {
   const seed = seedFor(facilityId, "power-12h")
-  let soc = getPowerToday(facilityId).batterySocPct
+  let soc = getPowerToday(facilityId, inputs).batterySocPct
   const out: PowerForecastPoint[] = []
   for (let i = 1; i <= 12; i++) {
     const t = new Date(Date.now() + i * 3_600_000)
     const hr = t.getHours()
     const daytime = hr >= 7 && hr <= 18
+
+    if (inputs) {
+      // Real physics: SoC moves by the net energy over the hour relative to the
+      // assessed battery capacity. Solar from the climate-shaped curve.
+      const solar = hourlySolarKw(hr, inputs.solarCapacityKw, inputs.peakSunHours)
+      const load = Math.round(inputs.avgLoadKw * (daytime ? 1.1 : 0.9) * 100) / 100
+      const netKwh = solar - load // over one hour
+      const socDelta = inputs.batteryCapacityKwh > 0 ? (netKwh / inputs.batteryCapacityKwh) * 100 : 0
+      soc = Math.max(5, Math.min(100, soc + socDelta))
+      let source: PowerSource
+      if (solar >= load) source = "solar"
+      else if (daytime) source = "solar"
+      else source = soc <= 20 ? "grid" : "battery"
+      out.push({
+        time: `${String(hr).padStart(2, "0")}:00`,
+        source,
+        batterySocPct: Math.round(soc),
+        expectedKw: Math.round((daytime ? solar : load) * 10) / 10,
+      })
+      continue
+    }
+
     const solar = daytime ? 2 + rand(seed, hr) * 3 : 0
     const load = 1.4 + rand(seed, i * 7) * 1.6
     let source: PowerSource
@@ -361,12 +416,16 @@ export type ServiceHoursEstimate = { hours: number; untilLabel: string; critical
 export function getServiceHoursRemaining(
   facilityId?: string,
   batterySocPct?: number,
+  inputs?: PowerInputs,
 ): ServiceHoursEstimate {
   const seed = seedFor(facilityId, "service-hours")
-  const soc = typeof batterySocPct === "number" ? batterySocPct : getPowerToday(facilityId).batterySocPct
-  const batteryKwh = 5 + (seed % 5) // demo usable capacity
-  const criticalLoadKw = Math.round((0.6 + rand(seed, 2) * 0.8) * 100) / 100
-  const usableKwh = batteryKwh * (soc / 100)
+  const soc = typeof batterySocPct === "number" ? batterySocPct : getPowerToday(facilityId, inputs).batterySocPct
+  // Real battery capacity + critical load from the assessment when available.
+  const batteryKwh = inputs ? inputs.batteryCapacityKwh : 5 + (seed % 5)
+  const criticalLoadKw = inputs
+    ? Math.max(0.05, Math.round(inputs.criticalLoadKw * 100) / 100)
+    : Math.round((0.6 + rand(seed, 2) * 0.8) * 100) / 100
+  const usableKwh = batteryKwh * (soc / 100) * (inputs ? BATTERY_DOD : 1)
   const hours = Math.max(0, usableKwh / criticalLoadKw)
   const until = new Date(Date.now() + hours * 3_600_000)
   const hh = String(until.getHours()).padStart(2, "0")
@@ -378,12 +437,23 @@ export function getServiceHoursRemaining(
 export type SolarDayForecast = { day: string; expectedKwh: number; sky: "sunny" | "partly" | "cloudy" }
 
 /** 7-day solar generation forecast (spec C16 / 11.3 "Forecast"). */
-export function get7daySolarForecast(facilityId?: string): SolarDayForecast[] {
+export function get7daySolarForecast(facilityId?: string, inputs?: PowerInputs): SolarDayForecast[] {
   const seed = seedFor(facilityId, "solar-7d")
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
   const out: SolarDayForecast[] = []
   for (let i = 0; i < 7; i++) {
     const t = new Date(Date.now() + i * 86_400_000)
+
+    if (inputs) {
+      // Real: capacity x PSH x PR, with the day's PSH varied +/-15% around the
+      // measured Climate Outlook mean.
+      const dayPsh = Math.max(0, inputs.peakSunHours * (0.85 + rand(seed, i * 11) * 0.3))
+      const sky: SolarDayForecast["sky"] = dayPsh >= 5.5 ? "sunny" : dayPsh >= 4 ? "partly" : "cloudy"
+      const expectedKwh = Math.round(inputs.solarCapacityKw * dayPsh * SOLAR_PR)
+      out.push({ day: days[t.getDay()], expectedKwh, sky })
+      continue
+    }
+
     const r = rand(seed, i * 11)
     const sky = r > 0.66 ? "sunny" : r > 0.33 ? "partly" : "cloudy"
     const factor = sky === "sunny" ? 1 : sky === "partly" ? 0.75 : 0.5
@@ -507,22 +577,24 @@ export type CrphcResult = {
   tier: string
 }
 
+/**
+ * Optional real-data overrides for the otherwise-seeded RCS dimensions. Today
+ * only `hesScore` is supported: the Hazard Exposure capacity derived from the
+ * facility's real Climate Outlook data (see getRcsExplainer callers). When
+ * omitted, every value is seeded demo data exactly as before.
+ */
+export type RcsOverrides = { hesScore?: number }
+
 /** Demo scores for the five existing CRiPHC dimensions (the two new ones are user-scored). */
-export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
+export function getCrphcBaseDimensions(facilityId?: string, overrides?: RcsOverrides): CrphcDimension[] {
   const seed = seedFor(facilityId, "crphc-v2")
-  // Weights come from the canonical scoring module (single source of truth shared
-  // with the SAVED assessment) so the seeded preview and the real score can never
-  // silently diverge on weighting. See src/lib/climate/criphc-scoring.ts.
-  const labels: Record<ModuleCode, string> = {
-    HES: "Hazard Exposure",
-    CSF: "Critical Service Fragility",
-    ECPQ: "Energy Continuity & Power Quality",
-    EDC: "Efficiency & Demand Control",
-    RRC: "Readiness & Response",
-  }
-  const defs: [string, string, number][] = (
-    Object.keys(CRIPHC_CORE_WEIGHTS) as ModuleCode[]
-  ).map((code) => [code, labels[code], CRIPHC_CORE_WEIGHTS[code]])
+  const defs: [string, string, number][] = [
+    ["HES", "Hazard Exposure", 0.15],
+    ["CSF", "Critical Service Fragility", 0.2],
+    ["ECPQ", "Energy Continuity & Power Quality", 0.15],
+    ["EDC", "Efficiency & Demand Control", 0.1],
+    ["RRC", "Readiness & Response", 0.1],
+  ]
   // Per-facility resilience bias: a well-run facility tends to score higher
   // across all dimensions (and vice-versa). This correlated shift spreads
   // facilities realistically across the resilience tiers instead of clustering
@@ -530,12 +602,13 @@ export function getCrphcBaseDimensions(facilityId?: string): CrphcDimension[] {
   const bias = (rand(seed, 101) - 0.5) * 70
   return defs.map(([code, label, weight], i) => {
     const raw = 30 + rand(seed, i * 7) * 55 + bias
-    return {
-      code,
-      label,
-      weight,
-      score: Math.max(5, Math.min(98, Math.round(raw))),
-    }
+    // HES (Hazard Exposure capacity) can be driven by real climate data when
+    // provided: higher measured exposure -> lower capacity score.
+    const score =
+      code === "HES" && overrides?.hesScore != null
+        ? Math.max(0, Math.min(100, Math.round(overrides.hesScore)))
+        : Math.max(5, Math.min(98, Math.round(raw)))
+    return { code, label, weight, score }
   })
 }
 
@@ -558,22 +631,16 @@ export type HazardScore = {
   score: number
   trend: "rising" | "stable" | "falling"
   note: string
-  /** Empirical return period (years) of the latest value vs the local record; null when the record is too short. Real path only. */
-  returnPeriodYears?: number | null
-  /** Number of annual samples in the local baseline the score was calibrated against. Real path only. */
-  baselineYears?: number
 }
 
-/** Seeded demo hazard exposure scores (fallback only; real scores come from NASA POWER via toHazardScores). */
+/** Quantitative hazard exposure scores (spec 10.3, NASA POWER / ERA5 derived). */
 export function getHazardScores(facilityId?: string): HazardScore[] {
   const seed = seedFor(facilityId, "hazard-scores")
-  // Notes mirror the real (NASA POWER) hazard notes so no unbacked scientific
-  // claim ("return period", "40-year trend") is ever shown over seeded data.
   const types: [string, string][] = [
-    ["Heat", "Mean daily maximum temperature"],
-    ["Flood", "Peak precipitation intensity"],
-    ["Wind / storm", "Peak 10 m wind speed"],
-    ["Drought", "Consecutive dry-day spell"],
+    ["Heat", "40-year maximum-temperature trend"],
+    ["Flood", "Extreme-precipitation return period"],
+    ["Wind / storm", "Wind-speed maxima"],
+    ["Drought", "Consecutive-dry-day frequency"],
   ]
   return types.map(([type, note], i) => {
     const score = Math.round(25 + rand(seed, i * 5) * 65)
@@ -611,10 +678,9 @@ export type HazardTrendPoint = {
 }
 
 /**
- * Simulated multi-decade hazard trend the offline/demo fallback for the Climate
- * Outlook chart when real NASA POWER data is unavailable. Each hazard rises from a
- * historical baseline toward today's getHazardScores value, with mild seeded
- * noise. Not a real record; shown only behind a demo badge.
+ * Multi-decade hazard trend (as if derived from NASA POWER / ERA5 reanalysis).
+ * Each hazard rises from a historical baseline toward today's getHazardScores
+ * value, with mild seeded noise. Simulated for the Climate Outlook chart.
  */
 export function getHazardTrend(facilityId?: string): HazardTrendPoint[] {
   const seed = seedFor(facilityId, "hazard-trend")
@@ -1123,14 +1189,48 @@ function statusFromHeadroom(headroom: number): ChildServiceStatus {
 }
 
 /**
+ * Optional real-data overrides for the child-services board. `byHazard` is the
+ * facility's measured 0-100 Climate Outlook hazard index per type; when present
+ * it drives the headroom of the two climate-sensitive services (cold-chain from
+ * heat, water-pumping from drought/flood). Omitted -> fully seeded demo.
+ */
+export type ChildServicesOverrides = { byHazard?: CviByHazard }
+
+/** Plain-language climate driver shown when a climate-driven service is at risk. */
+const CLIMATE_DRIVER: Partial<Record<ChildServiceKey, Bilingual>> = {
+  "cold-chain": {
+    en: "Measured heat exposure is high in your Climate Outlook data, raising fridge cooling load and spoilage risk.",
+    sw: "Kukabiliwa na joto kulikopimwa ni kwa juu katika data yako ya Mtazamo wa Hali ya Hewa, kunaongeza mzigo wa kupoza friji na hatari ya kuharibika.",
+  },
+  "water-pumping": {
+    en: "Measured drought and flood exposure is high in your Climate Outlook data, stressing water supply.",
+    sw: "Kukabiliwa na ukame na mafuriko kulikopimwa ni kwa juu katika data yako ya Mtazamo wa Hali ya Hewa, kunaathiri upatikanaji wa maji.",
+  },
+}
+
+/** Real headroom for a climate-sensitive service = inverse of its measured hazard. */
+function climateHeadroom(key: ChildServiceKey, byHazard: CviByHazard): number | undefined {
+  if (key === "cold-chain") return Math.max(0, Math.min(100, Math.round(100 - byHazard.heat)))
+  if (key === "water-pumping")
+    return Math.max(0, Math.min(100, Math.round(100 - Math.max(byHazard.drought, byHazard.flood))))
+  return undefined
+}
+
+/**
  * Per-facility status board for the five child-critical services. Deterministic
  * from the facilityId so demos are stable. Each at-risk/failing service gets an
- * about-to-fail prediction window; protected services get none.
+ * about-to-fail prediction window; protected services get none. When `overrides.
+ * byHazard` is supplied, cold-chain and water-pumping headroom come from real
+ * Climate Outlook data instead of seeded values.
  */
-export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] {
+export function getChildServicesAtRisk(
+  facilityId?: string,
+  overrides?: ChildServicesOverrides,
+): ChildServiceRisk[] {
   const seed = seedFor(facilityId, "child-services")
   return CHILD_SERVICE_DEFS.map((def, i) => {
-    const headroomPct = Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
+    const climate = overrides?.byHazard ? climateHeadroom(def.key, overrides.byHazard) : undefined
+    const headroomPct = climate != null ? climate : Math.round(20 + rand(seed, i * 6 + 1) * 70) // ~2090
     const status = statusFromHeadroom(headroomPct)
     const prediction: ChildServicePrediction | null =
       status === "ok"
@@ -1146,12 +1246,17 @@ export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] 
             )
             return { etaDaysMin, etaDaysMax, confidencePct, signal: def.signal }
           })()
+    // Drivers: seeded reasons, with a real-climate driver prepended for the
+    // climate-driven services when they are not protected.
+    const baseDrivers = status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1)
+    const climateDriver = climate != null && status !== "ok" ? CLIMATE_DRIVER[def.key] : undefined
+    const drivers = climateDriver ? [climateDriver, ...baseDrivers].slice(0, 2) : baseDrivers
     return {
       key: def.key,
       status,
       headroomPct,
       dependsOn: def.dependsOn,
-      drivers: status === "ok" ? [] : def.drivers.slice(0, status === "failing" ? 2 : 1),
+      drivers,
       prediction,
       linkedDimension: def.linkedDimension,
     }
@@ -1161,9 +1266,12 @@ export function getChildServicesAtRisk(facilityId?: string): ChildServiceRisk[] 
 export type ChildServicesSummary = { failing: number; atRisk: number; ok: number }
 
 /** Roll-up counts for the board header. */
-export function getChildServicesSummary(facilityId?: string): ChildServicesSummary {
+export function getChildServicesSummary(
+  facilityId?: string,
+  overrides?: ChildServicesOverrides,
+): ChildServicesSummary {
   const out: ChildServicesSummary = { failing: 0, atRisk: 0, ok: 0 }
-  for (const s of getChildServicesAtRisk(facilityId)) {
+  for (const s of getChildServicesAtRisk(facilityId, overrides)) {
     if (s.status === "failing") out.failing += 1
     else if (s.status === "at-risk") out.atRisk += 1
     else out.ok += 1
@@ -1182,14 +1290,6 @@ export function getChildServicesSummary(facilityId?: string): ChildServicesSumma
 // application's "explainable, auditable" claim.
 // ---------------------------------------------------------------------------
 
-/**
- * Where a dimension's score came from, so the UI can be honest about it:
- * - "measured": derived from real sensor/satellite data (e.g. HES from NASA POWER).
- * - "assessed": from the facility's saved CRiPHC questionnaire (persisted).
- * - "estimated": seeded/illustrative demo value, not a real measurement.
- */
-export type RcsDimensionSource = "measured" | "assessed" | "estimated"
-
 export type RcsDimensionInsight = {
   code: string
   label: string
@@ -1204,48 +1304,14 @@ export type RcsDimensionInsight = {
   gapPoints: number
   /** True for the two CRiPHC v2.0 dimensions (Workforce, WASH). */
   isNew?: boolean
-  /** Provenance of `score` see RcsDimensionSource. */
-  source: RcsDimensionSource
   whatItMeasures: Bilingual
   howToImprove: Bilingual
 }
 
-/**
- * Is this RCS a real, defensible score or an illustrative seeded preview?
- * "assessed" = built from the facility's persisted CRiPHC assessment (real);
- * "estimated" = seeded demo, shown only where clearly labelled as illustrative.
- */
-export type RcsProvenance = "assessed" | "estimated"
-
 export type RcsExplainer = {
   rcs: number
   tier: string
-  provenance: RcsProvenance
   dimensions: RcsDimensionInsight[]
-}
-
-/** Build the display insight (contribution math + bilingual copy) for one dimension. */
-function toRcsDimensionInsight(
-  d: CrphcDimension,
-  source: RcsDimensionSource,
-): RcsDimensionInsight {
-  const copy = RCS_DIMENSION_COPY[d.code] ?? {
-    whatItMeasures: { en: d.label, sw: d.label },
-    howToImprove: { en: "", sw: "" },
-  }
-  return {
-    code: d.code,
-    label: d.label,
-    weight: d.weight,
-    score: d.score,
-    contribution: Math.round(d.score * d.weight),
-    maxContribution: Math.round(100 * d.weight),
-    gapPoints: Math.round((100 - d.score) * d.weight),
-    isNew: d.isNew,
-    source,
-    whatItMeasures: copy.whatItMeasures,
-    howToImprove: copy.howToImprove,
-  }
 }
 
 /** Static, bilingual plain-language copy per CRiPHC dimension code. */
@@ -1331,13 +1397,6 @@ const RCS_DIMENSION_COPY: Record<
  * dimensions use the same default (60) as the interactive widget so the RCS
  * headline matches across the dashboard.
  */
-/**
- * SEEDED/ILLUSTRATIVE RCS explainer. Every dimension is demo data ("estimated"),
- * except HES which becomes "measured" when a real Climate-Outlook-derived
- * `overrides.hesScore` is supplied. This is the preview shown before a facility
- * has completed its CRiPHC assessment surface it only with a clear illustrative
- * label. For a real, defensible score use getRcsExplainerFromSummary().
- */
 export function getRcsExplainer(facilityId?: string, overrides?: RcsOverrides): RcsExplainer {
   const base = getCrphcBaseDimensions(facilityId, overrides)
   const dims: CrphcDimension[] = [
@@ -1345,67 +1404,25 @@ export function getRcsExplainer(facilityId?: string, overrides?: RcsOverrides): 
     ...CRPHC_NEW_DIMENSIONS.map((d) => ({ ...d, score: 60, isNew: true })),
   ]
   const { rcs, tier } = computeCrphcResult(dims)
-  const hesMeasured = overrides?.hesScore != null
-  const dimensions: RcsDimensionInsight[] = dims.map((d) =>
-    toRcsDimensionInsight(d, d.code === "HES" && hesMeasured ? "measured" : "estimated"),
-  )
-  return { rcs, tier, provenance: "estimated", dimensions }
-}
-
-/** Per-dimension capacity scores (0100) as persisted in climate_score_summaries. */
-export type RcsSummaryCapacities = {
-  hes: number
-  csf: number
-  ecpq: number
-  edc: number
-  rrc: number
-  /** Canonical RCS the server already computed + persisted (0100). */
-  rcs: number
-  /** True when HES was derived from real NASA climate (formulaVersion has a climate stamp). */
-  hesFromClimate?: boolean
-}
-
-/**
- * REAL RCS explainer built from a facility's persisted CRiPHC assessment
- * (climate_score_summaries). Uses only the five CORE dimensions the assessment
- * scores, with the canonical weights renormalized to sum to 1 so the displayed
- * contributions add up to the persisted RCS. HES is "measured" when it came from
- * real climate, otherwise "assessed"; the other four are always "assessed".
- * A live NASA `hesOverride` (fresher than the stored value) is used when present.
- */
-export function getRcsExplainerFromSummary(
-  summary: RcsSummaryCapacities,
-  hesOverride?: number,
-): RcsExplainer {
-  const codes = Object.keys(CRIPHC_CORE_WEIGHTS) as ModuleCode[]
-  const weightTotal = codes.reduce((s, m) => s + CRIPHC_CORE_WEIGHTS[m], 0)
-  const labels: Record<ModuleCode, string> = {
-    HES: "Hazard Exposure",
-    CSF: "Critical Service Fragility",
-    ECPQ: "Energy Continuity & Power Quality",
-    EDC: "Efficiency & Demand Control",
-    RRC: "Readiness & Response",
-  }
-  const clamp01 = (n: number) => Math.max(0, Math.min(100, Math.round(n)))
-  const rawScore: Record<ModuleCode, number> = {
-    HES: hesOverride != null ? clamp01(hesOverride) : clamp01(summary.hes),
-    CSF: clamp01(summary.csf),
-    ECPQ: clamp01(summary.ecpq),
-    EDC: clamp01(summary.edc),
-    RRC: clamp01(summary.rrc),
-  }
-  const hesMeasured = hesOverride != null || summary.hesFromClimate === true
-  const dimensions: RcsDimensionInsight[] = codes.map((code) => {
-    // Renormalize the core weight to sum to 1 across the five assessed dimensions
-    // so contributions reconcile with the persisted RCS.
-    const weight = CRIPHC_CORE_WEIGHTS[code] / weightTotal
-    return toRcsDimensionInsight(
-      { code, label: labels[code], weight, score: rawScore[code] },
-      code === "HES" && hesMeasured ? "measured" : "assessed",
-    )
+  const dimensions: RcsDimensionInsight[] = dims.map((d) => {
+    const copy = RCS_DIMENSION_COPY[d.code] ?? {
+      whatItMeasures: { en: d.label, sw: d.label },
+      howToImprove: { en: "", sw: "" },
+    }
+    return {
+      code: d.code,
+      label: d.label,
+      weight: d.weight,
+      score: d.score,
+      contribution: Math.round(d.score * d.weight),
+      maxContribution: Math.round(100 * d.weight),
+      gapPoints: Math.round((100 - d.score) * d.weight),
+      isNew: d.isNew,
+      whatItMeasures: copy.whatItMeasures,
+      howToImprove: copy.howToImprove,
+    }
   })
-  const rcs = clamp01(summary.rcs)
-  return { rcs, tier: rcsTierLabel(rcs), provenance: "assessed", dimensions }
+  return { rcs, tier, dimensions }
 }
 
 export type RcsTrendPoint = { label: string; rcs: number }
@@ -1414,9 +1431,9 @@ export type RcsTrendPoint = { label: string; rcs: number }
  * Quarterly RCS history ending at the facility's current score, trending up from
  * a lower baseline with mild seeded noise. Simulated for the RCS trend chart.
  */
-export function getRcsTrend(facilityId?: string): RcsTrendPoint[] {
+export function getRcsTrend(facilityId?: string, overrides?: RcsOverrides): RcsTrendPoint[] {
   const seed = seedFor(facilityId, "rcs-trend")
-  const current = getRcsExplainer(facilityId).rcs
+  const current = getRcsExplainer(facilityId, overrides).rcs
   const now = new Date()
   const n = 6
   const baseline = Math.max(0, current - 12)

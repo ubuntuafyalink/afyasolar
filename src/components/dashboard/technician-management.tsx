@@ -13,6 +13,11 @@ import { toast } from "sonner"
 import { m } from "framer-motion"
 import { DeleteTechnicianDialog } from "./delete-technician-dialog"
 import { EmptyState } from "@/components/ui/empty-state"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatCard } from "@/components/ui/stat-card"
+import { AnimatedNumber } from "@/components/ui/animated-number"
+import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
+import { fadeInUp, scaleIn, staggerContainer } from "@/components/motion/variants"
 import { cn } from "@/lib/utils"
 
 interface Technician {
@@ -195,11 +200,18 @@ export function TechnicianManagement() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <CardListSkeleton rows={5} />
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}><CardContent className="space-y-2 p-5"><Skeleton className="h-4 w-20" /><Skeleton className="h-7 w-16" /></CardContent></Card>
+          ))}
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <CardListSkeleton rows={5} />
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 

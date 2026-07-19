@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPowerSnapshot } from "@/lib/dashboard/facility-demo-data"
+import type { PowerInputs } from "@/lib/dashboard/power-model"
 
 /** Map a kW value to a readable link thickness. */
 function linkWidth(kw: number): number {
@@ -16,11 +17,13 @@ function linkWidth(kw: number): number {
 export function PowerFlowSankey({
   facilityId,
   batteryLevel,
+  inputs,
 }: {
   facilityId?: string
   batteryLevel?: number
+  inputs?: PowerInputs | null
 }) {
-  const snap = getPowerSnapshot(facilityId, batteryLevel)
+  const snap = getPowerSnapshot(facilityId, batteryLevel, inputs ?? undefined)
   const solarToLoad = Math.min(snap.solarKw, snap.loadKw)
   const batteryDischarge = Math.max(0, -snap.batteryKw)
   const batteryCharge = Math.max(0, snap.batteryKw)

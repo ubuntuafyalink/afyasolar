@@ -10,7 +10,7 @@ import type { RowDataPacket } from "mysql2"
 import {
   REGION_COORDS,
   DEFAULT_COORDS,
-  climatologyRange,
+  rangeForPreset,
   NASA_POWER_PARAMETERS,
   SOLAR_PARAMETERS,
   toCvi,
@@ -103,7 +103,7 @@ export async function computePortfolioClimate(): Promise<PortfolioClimateResult>
   )
   const facilities = rows || []
 
-  const range = climatologyRange() // ~30y monthly baseline for v2 anomaly calibration
+  const range = rangeForPreset("10y") // monthly, small payloads
   const resolved = facilities.map((f) => {
     const { coords, source } = resolveFacilityCoords(f)
     const key = `${coords.lat.toFixed(2)},${coords.lon.toFixed(2)}`

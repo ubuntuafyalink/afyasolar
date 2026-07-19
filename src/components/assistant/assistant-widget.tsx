@@ -64,20 +64,7 @@ export function AssistantWidget() {
         return copy
       })
 
-    // Lightweight page grounding: path + document title + the main heading, so
-    // the global assistant knows what the user is looking at.
-    const context =
-      typeof window !== "undefined"
-        ? [
-            `Current page: ${window.location.pathname}`,
-            document.title ? `Page title: ${document.title}` : "",
-            document.querySelector("h1")?.textContent?.trim()
-              ? `Main heading: ${document.querySelector("h1")!.textContent!.trim().slice(0, 120)}`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(". ")
-        : undefined
+    const context = typeof window !== "undefined" ? `Current page: ${window.location.pathname}` : undefined
     try {
       await streamAssistant({ messages: history, context, mode: "chat" }, setLastAssistant)
     } catch {

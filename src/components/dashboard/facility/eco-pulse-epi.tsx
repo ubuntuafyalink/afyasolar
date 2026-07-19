@@ -1,14 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { Activity, Lightbulb, Gauge } from "lucide-react"
+import { Activity, Lightbulb } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DemoDataBadge } from "@/components/ui/demo-data-badge"
 import { cn } from "@/lib/utils"
 import { getEcoPulseEpi } from "@/lib/dashboard/facility-demo-data"
-import { computeEcoPulseEpi, type EcoPulseResult } from "@/lib/dashboard/eco-pulse"
 
 const BAND_STYLE: Record<string, string> = {
   efficient: "text-success",
@@ -17,39 +14,17 @@ const BAND_STYLE: Record<string, string> = {
   "check-data": "text-muted-foreground",
 }
 
-type EffPayload = {
-  source: "db" | "simulated" | "hybrid"
-  daily: { consumedKwh: number }[]
-}
-
 /**
- * Eco-Pulse Energy Performance Index. Prefers a REAL index from metered
- * consumption (recent use vs the facility's own trailing baseline, see
- * lib/dashboard/eco-pulse.ts); falls back to a clearly-badged demo value when the
- * facility has no real consumption history.
+ * Spec 9.6: the Eco-Pulse virtual Energy Performance Index. EPI is the ratio of
+ * observed to expected consumption (climate-adjusted). >1.3 flags significant
+ * inefficiency; <0.8 may indicate under-reporting.
+ *
+ * [data] fed by the local demo module. TODO: wire the real Eco-Pulse model
+ * (MLR + GAM stack) per spec Part 9.6.
  */
 export function EcoPulseEpi({ facilityId }: { facilityId?: string }) {
-  const query = useQuery<EffPayload>({
-    queryKey: ["eco-pulse-efficiency", facilityId],
-    queryFn: async () => {
-      const res = await fetch(`/api/facility/${facilityId}/efficiency-performance?days=30`)
-      if (!res.ok) throw new Error(`efficiency-performance ${res.status}`)
-      return res.json()
-    },
-    enabled: Boolean(facilityId),
-    staleTime: 10 * 60 * 1000,
-  })
-
-  const { epi, live } = useMemo<{ epi: EcoPulseResult; live: boolean }>(() => {
-    const payload = query.data
-    if (payload && payload.source !== "simulated") {
-      const real = computeEcoPulseEpi(payload.daily.map((d) => d.consumedKwh))
-      if (real) return { epi: real, live: true }
-    }
-    return { epi: getEcoPulseEpi(facilityId), live: false }
-  }, [query.data, facilityId])
-
-  // Position on a 0.5–1.6 scale for the marker.
+  const epi = getEcoPulseEpi(facilityId)
+  // Position on a 0.51.6 scale for the marker.
   const pct = Math.max(0, Math.min(100, ((epi.epi - 0.5) / (1.6 - 0.5)) * 100))
 
   return (
@@ -59,16 +34,10 @@ export function EcoPulseEpi({ facilityId }: { facilityId?: string }) {
           <CardTitle className="flex items-center gap-2 text-base">
             <Activity className="size-5 text-primary" aria-hidden /> Eco-Pulse performance
           </CardTitle>
-          {live ? (
-            <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-              <Gauge className="size-3" aria-hidden /> Live · from meter
-            </span>
-          ) : (
-            <DemoDataBadge />
-          )}
+          <DemoDataBadge />
         </div>
         <p className="text-xs text-muted-foreground">
-          Observed use vs your recent baseline (1.0 = tracking your norm).
+          Observed vs expected energy use for your tier and climate (1.0 = expected).
         </p>
       </CardHeader>
       <CardContent className="space-y-4">

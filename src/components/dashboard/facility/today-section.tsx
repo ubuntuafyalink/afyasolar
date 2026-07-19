@@ -52,10 +52,7 @@ export function TodaySection({
 
         {danger ? (
           <div className="space-y-4">
-            <FridgeStatusCard
-              facilityId={facilityId}
-              onTroubleshoot={() => onNavigate?.("fridge")}
-            />
+            <FridgeStatusCard facilityId={facilityId} />
             <div className="grid gap-4 sm:grid-cols-2">
               <PowerTodayCard facilityId={facilityId} batteryLevel={batteryLevel} />
               <PendingTasksCard facilityId={facilityId} onOpenTask={onNavigate} />
@@ -63,10 +60,7 @@ export function TodaySection({
           </div>
         ) : (
           <div className={cn("grid gap-4 lg:grid-cols-3")}>
-            <FridgeStatusCard
-              facilityId={facilityId}
-              onTroubleshoot={() => onNavigate?.("fridge")}
-            />
+            <FridgeStatusCard facilityId={facilityId} />
             <PowerTodayCard facilityId={facilityId} batteryLevel={batteryLevel} />
             <PendingTasksCard facilityId={facilityId} onOpenTask={onNavigate} />
           </div>

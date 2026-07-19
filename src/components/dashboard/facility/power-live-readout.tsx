@@ -1,33 +1,28 @@
 "use client"
 
-import { useMemo } from "react"
 import { Sun, Zap, BatteryCharging, Plug } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
-import { getLivePowerSnapshot } from "@/lib/dashboard/facility-demo-data"
-import { useSimulatedTelemetry } from "@/hooks/use-simulated-telemetry"
+import { getPowerSnapshot } from "@/lib/dashboard/facility-demo-data"
+import type { PowerInputs } from "@/lib/dashboard/power-model"
 import { useT } from "./facility-preferences-provider"
-import { LiveIndicator } from "./live-indicator"
 
 /**
- * Simulated live power readout: solar / grid / battery / load (kW) and battery
- * SoC, ticking every few seconds via useSimulatedTelemetry. Demonstrates the IoT
- * telemetry experience; pauses when offline/hidden/reduced-motion.
+ * Current power readout: solar / grid / battery / load (kW) and battery SoC.
+ * A stable snapshot computed from the facility's assessed load + sized solar +
+ * Climate Outlook solar resource (no per-second ticking).
  */
 export function PowerLiveReadout({
   facilityId,
   batteryLevel,
+  inputs,
 }: {
   facilityId?: string
   batteryLevel?: number
+  inputs?: PowerInputs | null
 }) {
   const t = useT()
-  const { tick, lastUpdated, live } = useSimulatedTelemetry()
-  const snap = useMemo(
-    () => getLivePowerSnapshot(facilityId, tick, batteryLevel),
-    [facilityId, tick, batteryLevel],
-  )
+  const snap = getPowerSnapshot(facilityId, batteryLevel, inputs ?? undefined)
 
   const items = [
     { key: "solar", icon: Sun, label: t("telemetry.solar"), value: `${snap.solarKw.toFixed(2)} kW` },
@@ -45,11 +40,7 @@ export function PowerLiveReadout({
     <Card>
       <CardContent className="p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">{t("telemetry.liveReadout")}</h3>
-            <DemoDataBadge />
-          </div>
-          <LiveIndicator live={live} lastUpdated={lastUpdated} />
+          <h3 className="text-sm font-semibold text-foreground">{t("power.readoutTitle")}</h3>
         </div>
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {items.map((it) => {

@@ -1,10 +1,8 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { ArrowDown, ArrowUp, Minus } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 /**
  * Presentational KPI / stat block. Callers pass already-computed values this
@@ -58,41 +56,6 @@ const progressFill = cva('h-full rounded-full transition-all', {
 
 type StatCardAccent = NonNullable<VariantProps<typeof accentBar>['accent']>
 
-/** Trend indicator shown as a small chip beside the value. */
-export type StatDelta = {
-  /** Numeric (rendered as ±N%) or a ready-made string. */
-  value: number | string
-  /** Explicit direction; inferred from a numeric value's sign when omitted. */
-  direction?: 'up' | 'down' | 'neutral'
-  /** Optional trailing context, e.g. "vs last 30d". */
-  label?: string
-  /** For metrics where a rise is bad (alerts, outages), flip the colour. */
-  invertColor?: boolean
-}
-
-function DeltaChip({ delta }: { delta: StatDelta }) {
-  const dir =
-    delta.direction ??
-    (typeof delta.value === 'number'
-      ? delta.value > 0
-        ? 'up'
-        : delta.value < 0
-          ? 'down'
-          : 'neutral'
-      : 'neutral')
-  const good = delta.invertColor ? dir === 'down' : dir === 'up'
-  const variant = dir === 'neutral' ? 'muted' : good ? 'successSoft' : 'destructiveSoft'
-  const Icon = dir === 'up' ? ArrowUp : dir === 'down' ? ArrowDown : Minus
-  const text = typeof delta.value === 'number' ? `${Math.abs(delta.value)}%` : delta.value
-  return (
-    <Badge variant={variant} className="gap-0.5 px-1.5 py-0 text-[11px] font-semibold">
-      <Icon className="size-3" aria-hidden />
-      {text}
-      {delta.label ? <span className="ml-0.5 font-normal opacity-80">{delta.label}</span> : null}
-    </Badge>
-  )
-}
-
 export interface StatCardProps
   extends Omit<React.ComponentProps<typeof Card>, 'title'> {
   title: React.ReactNode
@@ -101,13 +64,9 @@ export interface StatCardProps
   icon?: React.ReactNode
   /** Sub-label under the value (trend, period, helper text). */
   meta?: React.ReactNode
-  /** Optional trend chip shown beside the value. */
-  delta?: StatDelta
   accent?: StatCardAccent
   /** Render the left accent bar. Defaults to true. */
   showAccent?: boolean
-  /** Add a subtle hover-lift + pointer (for cards that navigate/drill in). */
-  interactive?: boolean
   /** Optional 0100 progress bar rendered full-width under the content. */
   progress?: number
   /** Accessible label for the progress bar (falls back to the title when a string). */
@@ -119,10 +78,8 @@ function StatCard({
   value,
   icon,
   meta,
-  delta,
   accent = 'primary',
   showAccent = true,
-  interactive = false,
   progress,
   progressLabel,
   className,
@@ -134,10 +91,7 @@ function StatCard({
     <Card
       data-slot="stat-card"
       className={cn(
-        'relative gap-0 overflow-hidden py-0 transition-[transform,box-shadow] duration-200',
-        interactive
-          ? 'cursor-pointer motion-safe:hover:-translate-y-0.5 hover:shadow-md'
-          : 'hover:shadow-md',
+        'relative gap-0 overflow-hidden py-0 transition-shadow hover:shadow-md',
         className,
       )}
       {...props}
@@ -147,10 +101,7 @@ function StatCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-              <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
-              {delta ? <DeltaChip delta={delta} /> : null}
-            </div>
+            <p className="text-2xl font-bold tracking-tight text-foreground">{value}</p>
             {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
           </div>
           {icon ? (
