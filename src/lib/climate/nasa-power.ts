@@ -16,17 +16,9 @@ import type {
   HazardScore,
   ResiHealthCvi,
 } from "@/lib/dashboard/facility-demo-data"
-import { anomalyPercentile, empiricalReturnYears, olsFit } from "@/lib/climate/climate-stats"
 
-/**
- * Bumped whenever the normalization formulas below change, for auditability.
- * v2 (2026-07): hazard indices are calibrated to each site's own multi-decade
- * NASA POWER climatology (standardized-anomaly percentile blended with an
- * absolute-severity anchor) instead of a fixed linear map; the 2030/2050
- * projection extrapolates the observed trend instead of a flat +12. See
- * docs/CLIMATE_RESILIENCE_METHODOLOGY.md.
- */
-export const NORMALIZATION_VERSION = "v2"
+/** Bumped whenever the normalization formulas below change, for auditability. */
+export const NORMALIZATION_VERSION = "v1"
 
 /** The only NASA POWER parameters this feature requests / accepts. */
 export const NASA_POWER_PARAMETERS = ["T2M_MAX", "PRECTOTCORR", "WS10M"] as const
@@ -216,8 +208,6 @@ export async function fetchNasaPower(q: NasaPowerQuery): Promise<NasaPowerRespon
 //             mean < 1 mm/day, mapped from [0, 12] (coarse).
 // ---------------------------------------------------------------------------
 
-// Absolute-severity reference bounds (the physical-magnitude anchor). v2 blends
-// a local-climatology anomaly percentile with this fixed map; see below.
 const HEAT_BOUNDS = [20, 42] as const
 const FLOOD_BOUNDS_DAILY = [0, 80] as const
 const FLOOD_BOUNDS_MONTHLY = [0, 15] as const
@@ -226,22 +216,11 @@ const DROUGHT_DAYS_BOUNDS = [0, 90] as const
 const DRY_MONTHS_BOUNDS = [0, 12] as const
 const DRY_THRESHOLD_MM = 1
 
-// v2 calibration parameters.
-// REL_WEIGHT = how much the local anomaly percentile counts vs the absolute
-// anchor. Skewed extremes (flood/storm maxima) lean on the absolute anchor;
-// near-normal quantities (heat mean, drought counts) lean on the local anomaly.
-type HazardKey = "heat" | "flood" | "storm" | "drought"
-const REL_WEIGHT: Record<HazardKey, number> = { heat: 0.6, drought: 0.6, flood: 0.45, storm: 0.45 }
-/** Below this many baseline years, use the absolute index only (no anomaly). */
-const MIN_BASELINE_YEARS = 8
-/** Below this many baseline years, do not report a return period. */
-const MIN_RETURN_YEARS = 10
-
 function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, n))
 }
 
-/** Linear map of value in [min, max] onto an integer 0..100, clamped. The absolute-severity anchor. */
+/** Linear map of value in [min, max] onto an integer 0..100, clamped. */
 function indexFrom(value: number, min: number, max: number): number {
   if (max === min) return 0
   return Math.round(clamp(((value - min) / (max - min)) * 100, 0, 100))
@@ -275,21 +254,29 @@ function maxOf(xs: number[]): number | null {
   return xs.length ? Math.max(...xs) : null
 }
 
-// --- Per-hazard PHYSICAL annual statistic (the raw reduction, pre-mapping) ---
-function heatStat(resp: NasaPowerResponse, year: number): number | null {
-  return meanOf(pointsForYear(resp, "T2M_MAX", year).map((p) => p.value))
+function heatIndex(resp: NasaPowerResponse, year: number): number {
+  const m = meanOf(pointsForYear(resp, "T2M_MAX", year).map((p) => p.value))
+  return m == null ? 0 : indexFrom(m, HEAT_BOUNDS[0], HEAT_BOUNDS[1])
 }
-function floodStat(resp: NasaPowerResponse, year: number): number | null {
-  return maxOf(pointsForYear(resp, "PRECTOTCORR", year).map((p) => p.value))
+
+function floodIndex(resp: NasaPowerResponse, year: number): number {
+  const peak = maxOf(pointsForYear(resp, "PRECTOTCORR", year).map((p) => p.value))
+  if (peak == null) return 0
+  const b = resp.temporal === "daily" ? FLOOD_BOUNDS_DAILY : FLOOD_BOUNDS_MONTHLY
+  return indexFrom(peak, b[0], b[1])
 }
-function stormStat(resp: NasaPowerResponse, year: number): number | null {
-  return maxOf(pointsForYear(resp, "WS10M", year).map((p) => p.value))
+
+function stormIndex(resp: NasaPowerResponse, year: number): number {
+  const peak = maxOf(pointsForYear(resp, "WS10M", year).map((p) => p.value))
+  return peak == null ? 0 : indexFrom(peak, STORM_BOUNDS[0], STORM_BOUNDS[1])
 }
-function droughtStat(resp: NasaPowerResponse, year: number): number | null {
+
+function droughtIndex(resp: NasaPowerResponse, year: number): number {
   const pts = pointsForYear(resp, "PRECTOTCORR", year)
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
-  if (!pts.length) return null
+  if (!pts.length) return 0
+
   if (resp.temporal === "daily") {
     let run = 0
     let best = 0
@@ -301,85 +288,33 @@ function droughtStat(resp: NasaPowerResponse, year: number): number | null {
         run = 0
       }
     }
-    return best
+    return indexFrom(best, DROUGHT_DAYS_BOUNDS[0], DROUGHT_DAYS_BOUNDS[1])
   }
-  return pts.filter((p) => p.value < DRY_THRESHOLD_MM).length
+
+  const dryMonths = pts.filter((p) => p.value < DRY_THRESHOLD_MM).length
+  return indexFrom(dryMonths, DRY_MONTHS_BOUNDS[0], DRY_MONTHS_BOUNDS[1])
 }
 
-function statOf(resp: NasaPowerResponse, key: HazardKey, year: number): number | null {
-  switch (key) {
-    case "heat":
-      return heatStat(resp, year)
-    case "flood":
-      return floodStat(resp, year)
-    case "storm":
-      return stormStat(resp, year)
-    case "drought":
-      return droughtStat(resp, year)
-  }
-}
-
-function boundsFor(key: HazardKey, temporal: Temporal): readonly [number, number] {
-  switch (key) {
-    case "heat":
-      return HEAT_BOUNDS
-    case "flood":
-      return temporal === "daily" ? FLOOD_BOUNDS_DAILY : FLOOD_BOUNDS_MONTHLY
-    case "storm":
-      return STORM_BOUNDS
-    case "drought":
-      return temporal === "daily" ? DROUGHT_DAYS_BOUNDS : DRY_MONTHS_BOUNDS
-  }
-}
-
-/** Absolute-severity 0..100 index for a hazard-year (the physical-magnitude anchor). */
-function absoluteIndex(resp: NasaPowerResponse, key: HazardKey, year: number): number {
-  const s = statOf(resp, key, year)
-  if (s == null) return 0
-  const [lo, hi] = boundsFor(key, resp.temporal)
-  return indexFrom(s, lo, hi)
-}
-
-/** Chronological array of a hazard's physical annual statistic (nulls dropped) = the local baseline. */
-function annualStatSeries(resp: NasaPowerResponse, key: HazardKey): number[] {
-  return collectYears(resp)
-    .map((y) => statOf(resp, key, y))
-    .filter((v): v is number => v != null)
-}
-
-/** Real multi-year hazard trend: one point/year of the ABSOLUTE severity index (drives charts + projection). */
+/** Real multi-year hazard trend, one point per calendar year. */
 export function toHazardTrend(resp: NasaPowerResponse): HazardTrendPoint[] {
   return collectYears(resp).map((year) => ({
     year,
-    heat: absoluteIndex(resp, "heat", year),
-    flood: absoluteIndex(resp, "flood", year),
-    storm: absoluteIndex(resp, "storm", year),
-    drought: absoluteIndex(resp, "drought", year),
+    heat: heatIndex(resp, year),
+    flood: floodIndex(resp, year),
+    storm: stormIndex(resp, year),
+    drought: droughtIndex(resp, year),
   }))
 }
 
-const HAZARD_META: { key: HazardKey; type: string; note: string; returnPeriod: boolean }[] = [
-  { key: "heat", type: "Heat", note: "Mean daily maximum temperature", returnPeriod: true },
-  { key: "flood", type: "Flood", note: "Peak precipitation intensity", returnPeriod: true },
-  { key: "storm", type: "Wind / storm", note: "Peak 10 m wind speed", returnPeriod: false },
-  { key: "drought", type: "Drought", note: "Consecutive dry-day spell", returnPeriod: false },
-]
-
 /**
- * Current hazard scores (v2). Each hazard's latest-year value is expressed as a
- * blend of (a) a standardized-anomaly percentile against the site's own
- * multi-decade NASA POWER record ("relative to local normal") and (b) the
- * absolute-severity anchor, so scores stay comparable across facilities. Short
- * baselines (< MIN_BASELINE_YEARS) fall back to the absolute anchor. Return
- * periods (flood/heat) come from the Weibull position of the latest value in the
- * local record. Trend uses the absolute-index series with a +/- 5 deadband.
+ * Current hazard scores: the latest year's index per hazard, with a trend
+ * derived by comparing it against the mean of the earliest (up to 3) years,
+ * using a +/- 5 index-point deadband.
  */
 export function toHazardScores(resp: NasaPowerResponse): HazardScore[] {
   const trend = toHazardTrend(resp)
   if (!trend.length) return []
 
-  const years = collectYears(resp)
-  const latestYear = years[years.length - 1]
   const latest = trend[trend.length - 1]
   const head = trend.slice(0, Math.min(3, trend.length))
   const baseAvg = (k: keyof HazardTrendPoint) =>
@@ -393,34 +328,12 @@ export function toHazardScores(resp: NasaPowerResponse): HazardScore[] {
     return "stable"
   }
 
-  return HAZARD_META.map((m) => {
-    const series = annualStatSeries(resp, m.key)
-    const latestStat = statOf(resp, m.key, latestYear)
-    const absolute = latest[m.key] // absolute-severity index for the latest year
-
-    let score = absolute
-    if (latestStat != null) {
-      const rel = anomalyPercentile(latestStat, series, MIN_BASELINE_YEARS)
-      if (rel != null) {
-        const w = REL_WEIGHT[m.key]
-        score = Math.round(clamp(w * rel + (1 - w) * absolute, 0, 100))
-      }
-    }
-
-    const returnPeriodYears =
-      m.returnPeriod && latestStat != null
-        ? empiricalReturnYears(latestStat, series, MIN_RETURN_YEARS)
-        : null
-
-    return {
-      type: m.type,
-      score,
-      trend: dir(absolute, baseAvg(m.key)),
-      note: m.note,
-      returnPeriodYears,
-      baselineYears: series.length,
-    }
-  })
+  return [
+    { type: "Heat", score: latest.heat, trend: dir(latest.heat, baseAvg("heat")), note: "Mean daily maximum temperature" },
+    { type: "Flood", score: latest.flood, trend: dir(latest.flood, baseAvg("flood")), note: "Peak precipitation intensity" },
+    { type: "Wind / storm", score: latest.storm, trend: dir(latest.storm, baseAvg("storm")), note: "Peak 10 m wind speed" },
+    { type: "Drought", score: latest.drought, trend: dir(latest.drought, baseAvg("drought")), note: "Consecutive dry-day spell" },
+  ]
 }
 
 /** Composite + by-hazard CVI from the latest-year real indices. */
@@ -466,14 +379,13 @@ export function toSolarResource(resp: NasaPowerResponse): SolarResource | null {
   return { peakSunHours, sky: skyFromPsh(peakSunHours) }
 }
 
-/** Index points added per hazard for the flat-fallback 2050 projection. */
+/** Index points added per hazard for the 2050 projection (documented model). */
 export const CVI_2050_BUMP = 12
 
 /**
- * FLAT FALLBACK projection, for callers that only have a composite CVI baseline
- * (no per-year trend to extrapolate). 2030 returns the baseline; 2050 applies a
- * flat +12 per hazard (clamped). Prefer projectCviFromTrend() when a trend is
- * available. Either way, this is a transparent assumption, NOT a forecast.
+ * Project a real historical CVI baseline forward. 2030 returns the baseline as
+ * is; 2050 applies a flat +12 per hazard (clamped to 100). This is a simple,
+ * transparent linear assumption, NOT a climate-model forecast.
  */
 export function projectCvi(base: ResiHealthCvi, year: 2030 | 2050): ResiHealthCvi {
   if (year === 2030) return base
@@ -488,66 +400,4 @@ export function projectCvi(base: ResiHealthCvi, year: 2030 | 2050): ResiHealthCv
     (byHazard.flood + byHazard.drought + byHazard.heat + byHazard.storm) / 4,
   )
   return { composite, byHazard }
-}
-
-export type ClimateProjection = ResiHealthCvi & {
-  /** ± index-point uncertainty on each hazard (hazard-averaged 1.96·SE·Δyears). */
-  band: number
-  method: "trend-extrapolation"
-  /** Target year minus latest observed year. */
-  horizonYears: number
-}
-
-/**
- * Trend-extrapolation projection to 2030/2050. For each hazard we OLS-regress its
- * per-year ABSOLUTE index over time and extrapolate `latest + slope·Δyears`
- * (clamped 0..100), with a ±band from the regression slope's standard error.
- * Data-driven and per-facility, but explicitly NOT a climate-model forecast just
- * the observed local trend carried forward, with its uncertainty. Falls back to a
- * flat baseline when the series is empty.
- */
-export function projectCviFromTrend(trend: HazardTrendPoint[], year: 2030 | 2050): ClimateProjection {
-  const hazards = ["flood", "drought", "heat", "storm"] as const
-  if (!trend.length) {
-    return {
-      composite: 0,
-      byHazard: { flood: 0, drought: 0, heat: 0, storm: 0 },
-      band: 0,
-      method: "trend-extrapolation",
-      horizonYears: 0,
-    }
-  }
-  const latestPoint = trend[trend.length - 1]
-  const horizon = year - latestPoint.year
-  const byHazard = { flood: 0, drought: 0, heat: 0, storm: 0 } as ResiHealthCvi["byHazard"]
-  let bandAcc = 0
-  for (const h of hazards) {
-    const fit = olsFit(trend.map((p) => ({ x: p.year, y: p[h] })))
-    byHazard[h] = clamp(Math.round(latestPoint[h] + fit.slope * horizon), 0, 100)
-    bandAcc += 1.96 * fit.stdErr * Math.abs(horizon)
-  }
-  const composite = Math.round(
-    (byHazard.flood + byHazard.drought + byHazard.heat + byHazard.storm) / 4,
-  )
-  return {
-    composite,
-    byHazard,
-    band: Math.round(bandAcc / hazards.length),
-    method: "trend-extrapolation",
-    horizonYears: horizon,
-  }
-}
-
-/**
- * Climatology baseline range for v2 calibration: ~30 complete calendar years of
- * MONTHLY NASA POWER data (the WMO-normal length; NASA POWER monthly begins
- * 1981). This is the local distribution each hazard's anomaly percentile is
- * measured against. Kept separate from rangeForPreset (the user-selectable
- * Climate Outlook presets) so display ranges and the calibration baseline evolve
- * independently.
- */
-export function climatologyRange(now: Date = new Date()): ResolvedRange {
-  const endYear = now.getFullYear() - 1
-  const startYear = endYear - 29
-  return { temporal: "monthly", start: String(startYear), end: String(endYear), startYear, endYear }
 }

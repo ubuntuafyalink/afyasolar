@@ -1,14 +1,6 @@
-# AfyaSolar Intelligence
+# AfyaSolar
 
-**AfyaSolar Intelligence** is an open-source decision-intelligence platform that turns facility, energy, and climate data into actionable insights for protecting children's health services in Tanzania. It computes a composite **Resilience Capacity Score (RCS)** across five dimensions, identifies critical service risks, and ranks adaptation actions for healthcare facilities.
-
-**Key Features:**
-- Real-time energy monitoring and solar performance tracking
-- Climate resilience scoring and risk prediction
-- Facility onboarding and subscription management
-- Microgrid billing and payment processing
-- AI-assisted insights and recommendations
-- Role-based dashboards (admin, facility, technician, management)
+AfyaSolar is a [Next.js](https://nextjs.org) web platform for healthcare-facility solar energy services in Tanzania. It supports facility onboarding, solar package subscriptions (cash, installment, and energy-as-a-service), energy monitoring, microgrid billing, maintenance workflows, payments, and admin operations.
 
 **Repository:** [github.com/ubuntuafyalink/afyasolar](https://github.com/ubuntuafyalink/afyasolar)
 
@@ -185,68 +177,28 @@ scripts/        # One-off maintenance scripts
 
 ## Documentation
 
-| Document | Purpose |
+| Document | Contents |
 | --- | --- |
-| [`TECH_STACK.md`](TECH_STACK.md) | **Start here.** Technology choices, engineering standards, and architectural decisions (canonical for all contributors). |
-| [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) | What we're building: problem statement, solution design, and feature roadmap. |
-| [`FRONTEND_DESIGN_GUIDE.md`](FRONTEND_DESIGN_GUIDE.md) | UI/UX tooling and design practices (ui-ux-pro-max, Magic, Framer Motion). |
-| [`IMPLEMENTATION_ROADMAP.md`](IMPLEMENTATION_ROADMAP.md) | v2 implementation phases and priorities. |
-| [`docs/AFYASOLAR_PLATFORM_DOCUMENTATION.md`](docs/AFYASOLAR_PLATFORM_DOCUMENTATION.md) | Platform overview, roles, and database schema reference. |
-| [`docs/SIMPLIFIED_SYSTEM_ARCHITECTURE.md`](docs/SIMPLIFIED_SYSTEM_ARCHITECTURE.md) | High-level system architecture. |
-| [`docs/DEMO_ACCESS_GUIDE.md`](docs/DEMO_ACCESS_GUIDE.md) | Demo dashboards and token-based access. |
-| [`docs/CLIMATE_RESILIENCE_METHODOLOGY.md`](docs/CLIMATE_RESILIENCE_METHODOLOGY.md) | RCS scoring methodology and climate data integration. |
-| [`docs/CARBON_CALCULATOR_METHODOLOGY.md`](docs/CARBON_CALCULATOR_METHODOLOGY.md) | Carbon credit calculations and verification. |
-
-## Contributing
-
-**Before writing code,** read:
-1. [`TECH_STACK.md`](TECH_STACK.md) — technology choices and standards you must follow
-2. [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) — what you're building and why
-3. [`FRONTEND_DESIGN_GUIDE.md`](FRONTEND_DESIGN_GUIDE.md) — if doing UI/UX work
-
-**Making changes?**
-- Follow the canonical stack (Next.js 16, TypeScript strict, Tailwind CSS 4, Drizzle ORM)
-- All decision path code (scoring, risk ranking, recommendations) must be deterministic and auditable
-- Type safety is mandatory (`ignoreBuildErrors` must be removed on merge)
-- Document changes with ADRs for architecture decisions
-- Test with `/code-review` or `/verify` before committing
+| [`docs/AFYASOLAR_PLATFORM_DOCUMENTATION.md`](docs/AFYASOLAR_PLATFORM_DOCUMENTATION.md) | Platform overview, roles, and schema reference |
+| [`docs/SIMPLIFIED_SYSTEM_ARCHITECTURE.md`](docs/SIMPLIFIED_SYSTEM_ARCHITECTURE.md) | High-level architecture |
+| [`docs/DEMO_ACCESS_GUIDE.md`](docs/DEMO_ACCESS_GUIDE.md) | Demo dashboards and tokens |
+| [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md) | Feature coverage |
+| [`docs/CARBON_CALCULATOR_METHODOLOGY.md`](docs/CARBON_CALCULATOR_METHODOLOGY.md) | Carbon credit calculations |
 
 ## Troubleshooting
 
-| Problem | Solution |
-| --- | --- |
-| **App crashes on start** | Check terminal for `Missing required environment variable`. Fill in all required keys in `.env`. |
-| **Cannot connect to MySQL** | Verify `DB_HOST`, `DB_PORT`, credentials, and database existence. Set `DB_SSL=false` for local MySQL. |
-| **NextAuth redirect errors** | `NEXTAUTH_URL` must exactly match your browser URL (including `http` vs `https`). |
-| **Upload/image features fail** | Add valid `CLOUDINARY_*` variables to `.env`. |
-| **Build fails while dev is running** | Never run `npm run build` while `next dev` is up (they share `.next/`). Use `tsc` or `eslint` instead. |
+**Build succeeds but the app crashes on start**  
+Check the terminal for `Missing required environment variable`. Fill in every required key in `.env`.
 
-## Development Workflow
+**Cannot connect to MySQL**  
+Verify `DB_HOST`, `DB_PORT`, credentials, and that the database exists. For local MySQL, set `DB_SSL=false`.
 
-```bash
-# Start dev server
-npm run dev
+**NextAuth redirect or session errors**  
+`NEXTAUTH_URL` must exactly match the URL you use in the browser (including `http` vs `https`).
 
-# Type-check without emitting
-npm run type-check
-
-# Lint code
-npm run lint
-
-# Run unit tests
-npm run test
-
-# Run end-to-end tests
-npm run test:e2e
-
-# Database: run migrations
-npm run db:migrate
-
-# Database: optional setup
-npm run db:ensure-efficiency-climate
-npm run db:ensure-admin
-```
+**Upload or image features fail**  
+Add valid `CLOUDINARY_*` variables to `.env`.
 
 ## License
 
-Open-source (MIT) — see repository for full license terms. Built for and with healthcare facilities in Tanzania.
+Private project — see repository owner for usage terms.

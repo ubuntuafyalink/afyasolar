@@ -27,7 +27,7 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 import { TypingCursor } from "@/components/assistant/typing-cursor"
 import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
 import { useAdminPortfolioClimate } from "@/hooks/use-admin-portfolio-climate"
-import { buildAdminAssistantContextForQuery, buildAdminSuggestions } from "@/lib/assistant/admin-assistant-context"
+import { buildAdminAssistantContext, buildAdminSuggestions } from "@/lib/assistant/admin-assistant-context"
 
 type Message = { role: "user" | "assistant"; text: string }
 
@@ -48,6 +48,7 @@ export function AdminAssistant() {
   const climateQ = useAdminPortfolioClimate()
   const aggregate = climateQ.data?.aggregate ?? null
 
+  const context = useMemo(() => buildAdminAssistantContext(facilities, aggregate), [facilities, aggregate])
   const suggestions = useMemo(() => buildAdminSuggestions(facilities), [facilities])
 
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -115,9 +116,6 @@ export function AdminAssistant() {
       })
       scrollToEnd()
     }
-
-    // Question-aware retrieval: pack the records most relevant to THIS question.
-    const context = buildAdminAssistantContextForQuery(userText, facilities, aggregate)
 
     let replyText = ""
     try {

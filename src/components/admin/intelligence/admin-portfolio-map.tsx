@@ -1,9 +1,10 @@
 "use client"
 
+import { useMemo } from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DemoDataBadge } from "@/components/ui/demo-data-badge"
-import { getPortfolioRows, type PortfolioRow, type ResilienceTier } from "@/lib/dashboard/admin-portfolio-data"
+import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
+import type { PortfolioFacility, ResilienceTier } from "@/lib/dashboard/admin-portfolio-types"
 
 const TIER_FILL: Record<ResilienceTier, string> = {
   Resilient: "var(--color-success)",
@@ -18,103 +19,107 @@ const TIER_DOT: Record<ResilienceTier, string> = {
   Critical: "bg-destructive",
 }
 const TIER_ORDER: ResilienceTier[] = ["Resilient", "Developing", "At risk", "Critical"]
+const UNASSESSED_FILL = "var(--color-muted-foreground)"
 
-// Bounding boxes (within a 360x260 viewBox) where each region's markers cluster.
-const REGION_BOX: Record<string, { x: number; y: number; w: number; h: number }> = {
-  Morogoro: { x: 34, y: 74, w: 104, h: 120 },
-  Pwani: { x: 158, y: 60, w: 86, h: 140 },
-  "Dar es Salaam": { x: 250, y: 96, w: 44, h: 60 },
-}
+const VIEW_W = 360
+const VIEW_H = 260
+const PAD = 24
 
-type Marker = { cx: number; cy: number; tier: ResilienceTier; name: string }
+type Marker = { cx: number; cy: number; fill: string; name: string; label: string }
 
-/** Lay a region's facilities out in a tidy grid inside its bounding box. */
-function placeMarkers(rows: PortfolioRow[]): Marker[] {
-  const byRegion = new Map<string, PortfolioRow[]>()
-  for (const r of rows) {
-    const list = byRegion.get(r.region) ?? []
-    list.push(r)
-    byRegion.set(r.region, list)
-  }
-  const markers: Marker[] = []
-  for (const [region, list] of byRegion) {
-    const box = REGION_BOX[region]
-    if (!box) continue
-    const cols = Math.ceil(Math.sqrt(list.length))
-    const rowsN = Math.ceil(list.length / cols)
-    list.forEach((f, i) => {
-      const col = i % cols
-      const row = Math.floor(i / cols)
-      const cx = box.x + ((col + 0.5) / cols) * box.w
-      const cy = box.y + ((row + 0.5) / rowsN) * box.h
-      markers.push({ cx, cy, tier: f.tier as ResilienceTier, name: f.name })
-    })
-  }
-  return markers
+/**
+ * Project facilities with real coordinates into the SVG viewBox by auto-fitting
+ * their lat/lon bounding box. Colour assessed facilities by tier; grey for
+ * unassessed. Degenerate spans (single point) center the marker.
+ */
+function project(rows: PortfolioFacility[]): Marker[] {
+  const mapped = rows.filter((r) => r.lat != null && r.lon != null)
+  if (mapped.length === 0) return []
+  const lats = mapped.map((r) => r.lat as number)
+  const lons = mapped.map((r) => r.lon as number)
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const minLon = Math.min(...lons)
+  const maxLon = Math.max(...lons)
+  const spanLat = maxLat - minLat || 1
+  const spanLon = maxLon - minLon || 1
+
+  return mapped.map((r) => {
+    const lon = r.lon as number
+    const lat = r.lat as number
+    const x = PAD + ((lon - minLon) / spanLon) * (VIEW_W - 2 * PAD)
+    // invert latitude: higher lat -> closer to the top
+    const y = PAD + ((maxLat - lat) / spanLat) * (VIEW_H - 2 * PAD)
+    const fill = r.tier ? TIER_FILL[r.tier] : UNASSESSED_FILL
+    return {
+      cx: x,
+      cy: y,
+      fill,
+      name: r.name,
+      label: r.tier ? r.tier : "Not assessed",
+    }
+  })
 }
 
 /**
- * Portfolio map: every facility plotted in its region, coloured by resilience
- * tier. Lightweight inline SVG (no map library, offline-friendly). Simulated.
+ * Portfolio map: every facility with coordinates plotted by real lat/lon,
+ * coloured by resilience tier. Lightweight inline SVG (no map library,
+ * offline-friendly). Facilities without coordinates are listed separately.
  */
 export function AdminPortfolioMap() {
-  const rows = getPortfolioRows()
-  const markers = placeMarkers(rows)
-  const counts = TIER_ORDER.map((tier) => ({ tier, n: rows.filter((r) => r.tier === tier).length }))
+  const { facilities, isLoading, isError } = useAdminPortfolio()
+  const markers = useMemo(() => project(facilities), [facilities])
+  const unmapped = useMemo(() => facilities.filter((r) => r.lat == null || r.lon == null), [facilities])
+  const counts = useMemo(
+    () => TIER_ORDER.map((tier) => ({ tier, n: facilities.filter((r) => r.tier === tier).length })),
+    [facilities],
+  )
+  const unassessedCount = useMemo(() => facilities.filter((r) => r.climateRcs == null).length, [facilities])
+
+  if (isLoading) {
+    return <div className="h-64 animate-pulse rounded-lg bg-muted" />
+  }
+  if (isError) {
+    return <p className="text-sm text-destructive">Could not load facilities. Please retry.</p>
+  }
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-base">Facility map</CardTitle>
-          <DemoDataBadge />
         </div>
       </CardHeader>
       <CardContent>
-        <svg
-          viewBox="0 0 360 260"
-          className="h-auto w-full"
-          role="img"
-          aria-label={`Map of ${rows.length} facilities by region, coloured by resilience tier: ${counts
-            .map((c) => `${c.n} ${c.tier}`)
-            .join(", ")}`}
-        >
-          {/* Indian Ocean */}
-          <rect x="300" y="0" width="60" height="260" fill="var(--color-chart-3)" opacity="0.18" />
-          <text x="330" y="16" textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: 8 }}>
-            Indian Ocean
-          </text>
-
-          {/* Region zones */}
-          <path d="M28 70 L150 56 L150 200 L40 206 Z" fill="var(--color-muted)" stroke="var(--color-border)" />
-          <path d="M154 50 L250 46 L250 210 L154 200 Z" fill="var(--color-muted)" stroke="var(--color-border)" />
-          <rect x="248" y="92" width="50" height="68" rx="3" fill="var(--color-muted)" stroke="var(--color-border)" />
-
-          <text x="84" y="206" textAnchor="middle" className="fill-foreground" style={{ fontSize: 9 }}>
-            Morogoro
-          </text>
-          <text x="200" y="64" textAnchor="middle" className="fill-foreground" style={{ fontSize: 9 }}>
-            Pwani
-          </text>
-          <text x="273" y="172" textAnchor="middle" className="fill-foreground" style={{ fontSize: 8 }}>
-            Dar es Salaam
-          </text>
-
-          {/* Facility markers */}
-          {markers.map((m, i) => (
-            <circle
-              key={i}
-              cx={m.cx}
-              cy={m.cy}
-              r={5}
-              fill={TIER_FILL[m.tier]}
-              stroke="white"
-              strokeWidth="1.5"
-            >
-              <title>{`${m.name}: ${m.tier}`}</title>
-            </circle>
-          ))}
-        </svg>
+        {markers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No facilities have coordinates yet. Add latitude/longitude to map them.
+          </p>
+        ) : (
+          <svg
+            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+            className="h-auto w-full"
+            role="img"
+            aria-label={`Map of ${markers.length} located facilities, coloured by resilience tier: ${counts
+              .map((c) => `${c.n} ${c.tier}`)
+              .join(", ")}`}
+          >
+            <rect
+              x="1"
+              y="1"
+              width={VIEW_W - 2}
+              height={VIEW_H - 2}
+              rx="6"
+              fill="var(--color-muted)"
+              stroke="var(--color-border)"
+            />
+            {markers.map((m, i) => (
+              <circle key={i} cx={m.cx} cy={m.cy} r={5} fill={m.fill} stroke="white" strokeWidth="1.5">
+                <title>{`${m.name}: ${m.label}`}</title>
+              </circle>
+            ))}
+          </svg>
+        )}
 
         {/* Legend */}
         <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
@@ -125,7 +130,27 @@ export function AdminPortfolioMap() {
               <span className="font-semibold tabular-nums text-muted-foreground">{c.n}</span>
             </li>
           ))}
+          {unassessedCount > 0 && (
+            <li className="flex items-center gap-1.5 text-xs">
+              <span className="size-3 rounded-full bg-muted-foreground" aria-hidden />
+              <span className="text-foreground">Not assessed</span>
+              <span className="font-semibold tabular-nums text-muted-foreground">{unassessedCount}</span>
+            </li>
+          )}
         </ul>
+
+        {unmapped.length > 0 && (
+          <div className="mt-4 border-t border-border pt-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              Unmapped facilities ({unmapped.length}) - no coordinates
+            </p>
+            <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              {unmapped.map((f) => (
+                <li key={f.id}>{f.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

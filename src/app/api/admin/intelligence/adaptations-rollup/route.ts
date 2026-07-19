@@ -12,9 +12,6 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/config"
 import { getRawConnection } from "@/lib/db"
 import type { RowDataPacket } from "mysql2"
-import { estimatedGainPoints } from "@/lib/climate/adaptation-effectiveness"
-
-const ACTIVE_STATUSES = new Set(["recommended", "planned", "in_progress"])
 
 export const dynamic = "force-dynamic"
 
@@ -64,21 +61,15 @@ export async function GET() {
       status: r.status,
       implementedAt: r.implementedAt ? new Date(r.implementedAt as Date).toISOString() : null,
       createdAt: r.createdAt ? new Date(r.createdAt as Date).toISOString() : null,
-      // Estimated RCS points a completed measure in this category adds (documented model).
-      estimatedGainPoints: estimatedGainPoints(r.riskCategory),
     }))
 
     const byStatus: Record<string, number> = {}
     const byRiskCategoryMap = new Map<string, number>()
     const facilitySet = new Set<string>()
-    let totalRealizedGain = 0
-    let totalPotentialGain = 0
     for (const it of items) {
       byStatus[it.status] = (byStatus[it.status] ?? 0) + 1
       byRiskCategoryMap.set(it.riskCategory, (byRiskCategoryMap.get(it.riskCategory) ?? 0) + 1)
       facilitySet.add(it.facilityId)
-      if (it.status === "completed") totalRealizedGain += it.estimatedGainPoints
-      else if (ACTIVE_STATUSES.has(it.status)) totalPotentialGain += it.estimatedGainPoints
     }
     const byRiskCategory = [...byRiskCategoryMap.entries()]
       .map(([riskCategory, count]) => ({ riskCategory, count }))
@@ -91,8 +82,6 @@ export async function GET() {
         byStatus,
         byRiskCategory,
         totalFacilitiesWithAdaptations: facilitySet.size,
-        totalRealizedGain,
-        totalPotentialGain,
       },
     })
   } catch (error) {

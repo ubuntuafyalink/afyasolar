@@ -53,17 +53,6 @@ export async function POST(request: NextRequest) {
 
         const alertData = alert[0]
 
-        // Facility-level alerts (e.g. climate hazard alerts) have no device to
-        // resolve device-specific notification details from.
-        if (!alertData.deviceId) {
-          results.push({
-            alertId,
-            success: false,
-            error: 'Facility-level alert has no associated device'
-          })
-          continue
-        }
-
         // Check if notification was already sent recently
         if (!forceSend && await wasNotificationRecentlySent(alertId, channels)) {
           results.push({

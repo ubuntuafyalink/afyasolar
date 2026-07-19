@@ -130,10 +130,7 @@ export const deviceHealth = mysqlTable('device_health', {
  */
 export const deviceAlerts = mysqlTable('device_alerts', {
   id: varchar('id', { length: 36 }).primaryKey(),
-  // Nullable: facility-level alerts (e.g. climate hazard alerts) are not tied to a
-  // specific device. Requires the `db:ensure-climate-alerts` migration to relax
-  // the DB NOT NULL constraint; the alert scan degrades gracefully until then.
-  deviceId: varchar('device_id', { length: 36 }),
+  deviceId: varchar('device_id', { length: 36 }).notNull(),
   facilityId: varchar('facility_id', { length: 36 }).notNull(),
   
   // Alert details

@@ -53,8 +53,6 @@ export const facilityClimateProfile = mysqlTable(
     latitude: decimal("latitude", { precision: 10, scale: 6 }),
     longitude: decimal("longitude", { precision: 10, scale: 6 }),
     dataSource: varchar("data_source", { length: 20 }).notNull().default("simulated"),
-    /** Which climate normalization formula version produced these scores (see NORMALIZATION_VERSION). */
-    normalizationVersion: varchar("normalization_version", { length: 8 }).notNull().default("v1"),
     updatedAt: datetime("updated_at", { mode: "date" })
       .notNull()
       .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
@@ -104,48 +102,6 @@ export const facilityResilienceSnapshot = mysqlTable(
   })
 )
 
-/** Persisted ISO-50001 Energy Efficiency Assessment (EEAT): MEUs, baseline, 4-point score. */
-export const facilityEeatAssessment = mysqlTable(
-  "facility_eeat_assessment",
-  {
-    facilityId: varchar("facility_id", { length: 36 }).primaryKey(),
-    /** JSON of the full form state (MEU rows, baseline fields, 4-point checklist answers). */
-    data: text("data").notNull(),
-    /** Raw checklist score out of 40 (null until calculated). */
-    rawScore: decimal("raw_score", { precision: 5, scale: 1 }),
-    /** Behaviour & Management Index % = round(rawScore/40*100). */
-    bmiPercent: decimal("bmi_percent", { precision: 5, scale: 2 }),
-    updatedAt: datetime("updated_at", { mode: "date" })
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
-  },
-)
-
-export type FacilityEeatAssessment = typeof facilityEeatAssessment.$inferSelect
-
-/** Logged disruption-risk-model predictions (for future calibration/fitting). */
-export const facilityRiskPrediction = mysqlTable(
-  "facility_risk_prediction",
-  {
-    id: varchar("id", { length: 36 }).primaryKey(),
-    facilityId: varchar("facility_id", { length: 36 }).notNull(),
-    scoredAt: datetime("scored_at", { mode: "date" }).notNull(),
-    /** Coefficient-set version (see RISK_MODEL_VERSION). */
-    version: varchar("version", { length: 32 }).notNull(),
-    probability: decimal("probability", { precision: 6, scale: 4 }).notNull(),
-    tier: varchar("tier", { length: 20 }).notNull(),
-    /** JSON of the normalized feature vector, for later joins to realized outcomes. */
-    features: text("features"),
-    completeness: decimal("completeness", { precision: 5, scale: 4 }),
-    createdAt: datetime("created_at", { mode: "date" }).notNull().default(sql`CURRENT_TIMESTAMP`),
-  },
-  (table) => ({
-    facilityIdx: index("frp_facility_idx").on(table.facilityId),
-    scoredIdx: index("frp_scored_idx").on(table.scoredAt),
-  })
-)
-
-export type FacilityRiskPrediction = typeof facilityRiskPrediction.$inferSelect
 export type FacilityEfficiencyDaily = typeof facilityEfficiencyDaily.$inferSelect
 export type NewFacilityEfficiencyDaily = typeof facilityEfficiencyDaily.$inferInsert
 export type FacilityClimateProfile = typeof facilityClimateProfile.$inferSelect
