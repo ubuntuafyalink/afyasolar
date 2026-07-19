@@ -23,8 +23,7 @@ import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
 import { useAdminPortfolioClimate } from "@/hooks/use-admin-portfolio-climate"
-import { projectCvi, projectCviFromTrend } from "@/lib/climate/nasa-power"
-import type { HazardTrendPoint } from "@/lib/dashboard/facility-demo-data"
+import { projectCvi } from "@/lib/climate/nasa-power"
 import type { PortfolioFacility } from "@/lib/dashboard/admin-portfolio-types"
 
 // Lazy-load the heavy facility Climate Outlook only when a drill-down opens.
@@ -78,12 +77,6 @@ function exposureBand(score: number): "High" | "Moderate" | "Low" {
   if (score >= 40) return "Moderate"
   return "Low"
 }
-// Soft tonal Badge variant matching the exposure colour scale (higher = worse).
-function exposureBadge(score: number): "destructiveSoft" | "warningSoft" | "successSoft" {
-  if (score >= 66) return "destructiveSoft"
-  if (score >= 40) return "warningSoft"
-  return "successSoft"
-}
 
 // --- portfolio hazard summary ------------------------------------------------
 
@@ -121,16 +114,9 @@ function HazardSummaryCard({ hazard, scores }: { hazard: (typeof HAZARDS)[number
 
 // --- portfolio CVI (2030/2050) ----------------------------------------------
 
-function PortfolioCvi({
-  base,
-  trend,
-}: {
-  base: { composite: number; byHazard: { flood: number; drought: number; heat: number; storm: number } }
-  trend?: HazardTrendPoint[]
-}) {
+function PortfolioCvi({ base }: { base: { composite: number; byHazard: { flood: number; drought: number; heat: number; storm: number } } }) {
   const [year, setYear] = React.useState<2030 | 2050>(2030)
-  const projected = trend && trend.length ? projectCviFromTrend(trend, year) : null
-  const cvi = projected ?? projectCvi(base, year)
+  const cvi = projectCvi(base, year)
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -173,11 +159,7 @@ function PortfolioCvi({
           })}
         </ul>
         <p className="text-xs text-muted-foreground">
-          {projected
-            ? `Trend extrapolation of the real NASA POWER baseline (±${projected.band} pts, ${projected.horizonYears}-yr horizon) — not a forecast.`
-            : year === 2050
-              ? "Projected (transparent flat-scenario fallback, not a climate-model forecast)."
-              : "Current baseline from NASA POWER."}
+          {year === 2050 ? "Projected (transparent +12/hazard scenario, not a climate-model forecast)." : "Current baseline from NASA POWER."}
         </p>
       </CardContent>
     </Card>
@@ -358,7 +340,7 @@ export function AdminClimateOutlook({
             </CardContent>
           </Card>
         ) : aggregate ? (
-          <PortfolioCvi base={{ composite: aggregate.composite, byHazard: aggregate.byHazard }} trend={aggregate.trend} />
+          <PortfolioCvi base={{ composite: aggregate.composite, byHazard: aggregate.byHazard }} />
         ) : (
           <Card>
             <CardContent className="p-6 text-sm text-muted-foreground">No climate data yet.</CardContent>
@@ -453,7 +435,7 @@ export function AdminClimateOutlook({
                       ) : f.climate ? (
                         <span>
                           {f.climate.topHazard.type}{" "}
-                          <Badge variant={exposureBadge(f.climate.topHazard.score)} className="ml-1">{exposureBand(f.climate.topHazard.score)}</Badge>
+                          <Badge variant="outline" className="ml-1">{exposureBand(f.climate.topHazard.score)}</Badge>
                         </span>
                       ) : (
                         "—"

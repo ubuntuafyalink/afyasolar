@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
-import { carbonCredits, facilityEnergyAssessments, facilityEfficiencyDaily } from '@/lib/db/schema'
-import { eq, and, desc, gte, lte, ne } from 'drizzle-orm'
+import { carbonCredits, facilityEnergyAssessments } from '@/lib/db/schema'
+import { eq, and, desc } from 'drizzle-orm'
 import { generateId } from '@/lib/utils'
 
 interface CarbonCreditCalculation {
@@ -162,31 +162,7 @@ export async function POST(request: NextRequest) {
       idx !== null && Array.isArray(meuTop) && meuTop[idx] ? Number(meuTop[idx].dailyKwh ?? 0) : null
     const deviceRatio = totalDailyLoad > 0 && devDailyKwh !== null ? devDailyKwh / totalDailyLoad : 1
 
-    // Prefer REAL measured generation (facility_efficiency_daily, non-simulated rows)
-    // over the assessment-snapshot estimate whenever the meter has data in the window.
-    let generationMethod: 'meter' | 'assessment-snapshot' = 'assessment-snapshot'
-    let energyGenerated = dailySolarKwh * Math.max(1, daysInclusive) * Math.max(0, deviceRatio)
-    try {
-      const ymd = (d: Date) => d.toISOString().slice(0, 10)
-      const rows = await db
-        .select({ produced: facilityEfficiencyDaily.producedKwh })
-        .from(facilityEfficiencyDaily)
-        .where(
-          and(
-            eq(facilityEfficiencyDaily.facilityId, effectiveFacilityId),
-            ne(facilityEfficiencyDaily.dataSource, 'simulated'),
-            gte(facilityEfficiencyDaily.snapshotDate, ymd(derivedStart)),
-            lte(facilityEfficiencyDaily.snapshotDate, ymd(derivedEnd)),
-          ),
-        )
-      const measured = rows.reduce((s, r) => s + (Number(r.produced) || 0), 0)
-      if (measured > 0) {
-        energyGenerated = measured * Math.max(0, deviceRatio)
-        generationMethod = 'meter'
-      }
-    } catch {
-      /* no meter data → keep the snapshot estimate */
-    }
+    const energyGenerated = dailySolarKwh * Math.max(1, daysInclusive) * Math.max(0, deviceRatio)
 
     const totalDailyLoadKwh: number = Number(payload?.quoteData?.load_analysis?.total_daily_energy_kwh ?? 0)
     const efficiency = totalDailyLoadKwh > 0 ? (dailySolarKwh / totalDailyLoadKwh) * 100 : 0
@@ -214,7 +190,7 @@ export async function POST(request: NextRequest) {
         operatingHours: 12,
         baselineEmissions: Math.round(co2Saved * 100) / 100,
         gridEmissionFactor,
-        calculationMethod: generationMethod,
+        calculationMethod: 'assessment-snapshot',
       },
       createdAt: new Date().toISOString(),
     }

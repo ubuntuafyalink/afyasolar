@@ -13,19 +13,13 @@ import { authOptions } from "@/lib/auth/config"
 import { db } from "@/lib/db"
 import { aiConversations, aiMessages } from "@/lib/db/schema"
 import { ensureAiChatTables } from "@/lib/db/ensure-ai-chat-tables"
-import { rateLimit } from "@/lib/rate-limit"
 
 type IncomingMessage = { role: "user" | "assistant"; content: string; provider?: string }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
-    // Defense-in-depth against DB write spam (the LLM route is rate-limited too).
-    const rl = rateLimit(`ai-msg:${session.user.id}`, { windowMs: 60_000, maxRequests: 60 })
-    if (!rl.allowed) return NextResponse.json({ error: "Too many requests" }, { status: 429 })
-
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     await ensureAiChatTables()
     const { id } = await params
 

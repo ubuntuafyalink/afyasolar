@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "lib": [
       "dom",
       "dom.iterable",
@@ -24,10 +25,10 @@
     ],
     "paths": {
       "@/*": [
-        "./src/*"
+        "src/*"
       ],
       "@/lib/*": [
-        "./src/lib/*"
+        "src/lib/*"
       ]
     }
   },
@@ -43,12 +44,6 @@
   "exclude": [
     "node_modules",
     ".next",
-    "scripts",
-    "e2e",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "vitest.config.ts",
-    "vitest.setup.ts",
-    "playwright.config.ts"
+    "scripts"
   ]
 }

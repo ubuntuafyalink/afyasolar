@@ -108,11 +108,6 @@ const RcsExplainerSection = dynamic(
     ),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
-const DisruptionRiskCard = dynamic(
-  () =>
-    import("@/components/dashboard/facility/disruption-risk-card").then((m) => m.DisruptionRiskCard),
-  { loading: () => <ChartSkeleton />, ssr: false },
-)
 const ClimateOutlookSection = dynamic(
   () =>
     import("@/components/dashboard/facility/climate-outlook-section").then(
@@ -138,10 +133,6 @@ const FacilityTour = dynamic(
   () => import("@/components/dashboard/facility/facility-tour").then((m) => m.FacilityTour),
   { ssr: false },
 )
-const FridgeSection = dynamic(
-  () => import("@/components/dashboard/facility/fridge-section").then((m) => m.FridgeSection),
-  { loading: () => <ChartSkeleton />, ssr: false },
-)
 const PowerSection = dynamic(
   () => import("@/components/dashboard/facility/power-section").then((m) => m.PowerSection),
   { loading: () => <ChartSkeleton />, ssr: false },
@@ -152,13 +143,6 @@ const ReportsSection = dynamic(
 )
 const AuditEnhancements = dynamic(
   () => import("@/components/dashboard/facility/audit-enhancements").then((m) => m.AuditEnhancements),
-  { loading: () => <ChartSkeleton />, ssr: false },
-)
-const ClimateResilienceEnhancements = dynamic(
-  () =>
-    import("@/components/dashboard/facility/climate-resilience-enhancements").then(
-      (m) => m.ClimateResilienceEnhancements,
-    ),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
 const FinancingEnhancements = dynamic(
@@ -1136,24 +1120,16 @@ export function FacilityDashboardContent({
             </>)}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'child-services' && (
-              <ChildServicesSection facilityId={facilityId} onNavigate={setCurrentSection} />
+              <ChildServicesSection facilityId={facilityId} region={facility?.region ?? null} onNavigate={setCurrentSection} />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'rcs' && (
-              <div className="space-y-4">
-                <DisruptionRiskCard
-                  facilityId={facilityId}
-                  region={facility?.region ?? null}
-                  meuSummary={meuSummary}
-                  sizingSummary={sizingSummary}
-                />
-                <RcsExplainerSection
-                  facilityId={facilityId}
-                  facilityName={facility?.name ?? null}
-                  region={facility?.region ?? null}
-                  onNavigate={setCurrentSection}
-                />
-              </div>
+              <RcsExplainerSection
+                facilityId={facilityId}
+                facilityName={facility?.name ?? null}
+                region={facility?.region ?? null}
+                onNavigate={setCurrentSection}
+              />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'climate-outlook' && (
@@ -1164,12 +1140,14 @@ export function FacilityDashboardContent({
               />
             )}
 
-            {FACILITY_V2_ENABLED && currentActiveSection === 'fridge' && (
-              <FridgeSection facilityId={facilityId} />
-            )}
-
             {FACILITY_V2_ENABLED && currentActiveSection === 'power' && (
-              <PowerSection facilityId={facilityId} batteryLevel={liveData?.batteryLevel} />
+              <PowerSection
+                facilityId={facilityId}
+                batteryLevel={liveData?.batteryLevel}
+                meuSummary={meuSummary}
+                sizingSummary={sizingSummary}
+                region={facility?.region ?? null}
+              />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'reports' && (
@@ -1177,7 +1155,12 @@ export function FacilityDashboardContent({
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'assistant' && (
-              <AssistantSection facilityId={facilityId} />
+              <AssistantSection
+                facilityId={facilityId}
+                meuSummary={meuSummary}
+                sizingSummary={sizingSummary}
+                region={facility?.region ?? null}
+              />
             )}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'channels' && (
@@ -1419,110 +1402,26 @@ export function FacilityDashboardContent({
                     {facilityId && (
                       <FacilityMeterEfficiencyDashboard facilityId={facilityId} preferMock={false} />
                     )}
-                    <Card className={panelCardClass}>
-                      <CardHeader>
-                        <CardTitle className={sectionTitleClass}>
-                          AfyaSolar Intelligence Platform
-                        </CardTitle>
-                        <CardDescription className={metaTextClass}>
-                          Overview, guided assessment, analysis charts, action plan, and reports in one workflow (v2.0).
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="p-2 sm:p-4">
-                        <FacilityIntelligencePlatform
-                          facilityId={facility?.id}
-                          facilityName={facility?.name ?? undefined}
-                          platformScope="energy"
-                          sizingSummary={sizingSummary}
-                          meuSummary={meuSummary}
-                          bmiSummary={bmiSummary}
-                          sectionScores={sectionScores}
-                          onSizingSummaryChange={setSizingSummary}
-                          onMeuSummaryChange={setMeuSummary}
-                          onBmiSummaryChange={setBmiSummary}
-                          onSectionScoresChange={setSectionScores}
-                        />
-                      </CardContent>
-                    </Card>
+                    <FacilityIntelligencePlatform
+                      facilityId={facility?.id}
+                      facilityName={facility?.name ?? undefined}
+                      platformScope="energy"
+                      sizingSummary={sizingSummary}
+                      meuSummary={meuSummary}
+                      bmiSummary={bmiSummary}
+                      sectionScores={sectionScores}
+                      onSizingSummaryChange={setSizingSummary}
+                      onMeuSummaryChange={setMeuSummary}
+                      onBmiSummaryChange={setBmiSummary}
+                      onSectionScoresChange={setSectionScores}
+                    />
 
                     {/* Additive (CEO spec Part 7 & 9.6): MVA audit, three-output
                         report, bill OCR, Eco-Pulse. Mounted below existing content. */}
                     {FACILITY_V2_ENABLED && facilityId && (
-                      <AuditEnhancements
-                        facilityId={facilityId}
-                        meuSummary={meuSummary}
-                        sizingSummary={sizingSummary}
-                        region={facility?.region ?? null}
-                      />
+                      <AuditEnhancements facilityId={facilityId} />
                     )}
                   </>
-                )}
-              </div>
-            )}
-
-            {currentActiveSection === 'climate-resilience' && (
-              <div className="space-y-6">
-                {adminMode ? (
-                  <Card className={panelCardClass}>
-                    <CardHeader>
-                      <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                        <CloudSun className="w-5 h-5 text-primary" aria-hidden />
-                        Climate resilience assessments
-                      </CardTitle>
-                      <CardDescription className={metaTextClass}>
-                        Guided climate assessments are managed in AfyaLink. Use the Afya Solar admin hub for read-only
-                        portfolio snapshots across facilities.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {afyaLinkUrl ? (
-                        <Button asChild>
-                          <a href={afyaLinkUrl} target="_blank" rel="noopener noreferrer">
-                            Open AfyaLink assessments
-                          </a>
-                        </Button>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">
-                          Configure <code className="text-xs bg-muted px-1 rounded">NEXT_PUBLIC_AFYALINK_ASSESSMENT_URL</code>{" "}
-                          for a direct link to your AfyaLink workspace.
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className={panelCardClass}>
-                    <CardHeader>
-                      <CardTitle className={cn("flex items-center gap-2", sectionTitleClass)}>
-                        <CloudSun className="w-5 h-5 text-primary" aria-hidden />
-                        Climate resilience
-                      </CardTitle>
-                      <CardDescription className={metaTextClass}>
-                        Guided climate readiness, hazard context, adaptation tracking, and saved risk drivers (same assessment
-                        cycle as Energy Efficiency).
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-2 sm:p-4">
-                      <FacilityIntelligencePlatform
-                        facilityId={facility?.id}
-                        facilityName={facility?.name ?? undefined}
-                        platformScope="climate"
-                        sizingSummary={sizingSummary}
-                        meuSummary={meuSummary}
-                        bmiSummary={bmiSummary}
-                        sectionScores={sectionScores}
-                        onSizingSummaryChange={setSizingSummary}
-                        onMeuSummaryChange={setMeuSummary}
-                        onBmiSummaryChange={setBmiSummary}
-                        onSectionScoresChange={setSectionScores}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Additive (CEO spec Part 10): CRiPHC v2.0 7-dimension results,
-                    quantitative hazard score, and Resi-Health Grid CVI. */}
-                {FACILITY_V2_ENABLED && !adminMode && facilityId && (
-                  <ClimateResilienceEnhancements facilityId={facilityId} />
                 )}
               </div>
             )}

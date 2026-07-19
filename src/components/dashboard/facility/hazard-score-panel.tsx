@@ -21,14 +21,23 @@ function scoreColor(score: number): string {
 }
 
 /**
- * Quantitative hazard exposure scores. On the live path these are calibrated to
- * the facility's own ~30-year NASA POWER climate record (standardized-anomaly
- * percentile blended with an absolute-severity anchor); see
- * docs/CLIMATE_RESILIENCE_METHODOLOGY.md. The demo path renders seeded sample
- * values behind a demo badge.
+ * Spec 10.3: quantitative hazard exposure scores derived from the long-term
+ * climate record, triangulated against the Champion's qualitative assessment.
+ *
+ * [data] fed by the local demo module. TODO: wire NASA POWER + ERA5 + IPCC AR6
+ * projections per spec Parts 5 & 10.3.
  */
-export function HazardScorePanel({ facilityId }: { facilityId?: string }) {
-  const hazards = getHazardScores(facilityId)
+export function HazardScorePanel({
+  facilityId,
+  scores,
+  live = false,
+}: {
+  facilityId?: string
+  /** When provided (real NASA POWER data), render these instead of demo data. */
+  scores?: HazardScore[]
+  live?: boolean
+}) {
+  const hazards = scores ?? getHazardScores(facilityId)
 
   return (
     <Card>
@@ -42,13 +51,11 @@ export function HazardScorePanel({ facilityId }: { facilityId?: string }) {
               <Satellite className="size-3" aria-hidden /> NASA POWER · real data
             </span>
           ) : (
-            <DemoDataBadge />
+            <DemoDataBadge label="Demo data · NASA POWER/ERA5" />
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          {live
-            ? "Calibrated to this location's ~30-year NASA POWER climate record (0 = low, 100 = high)."
-            : "Illustrative sample values (0 = low, 100 = high)."}
+          Literature-backed scores from the long-term climate record (0 = low, 100 = high).
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -67,18 +74,7 @@ export function HazardScorePanel({ facilityId }: { facilityId?: string }) {
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div className={cn("h-full rounded-full", scoreColor(h.score))} style={{ width: `${h.score}%` }} />
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                {h.note}
-                {live && h.returnPeriodYears != null ? (
-                  <>
-                    {" · "}
-                    <span title="Empirical Weibull return period from the local record; wide uncertainty on a short baseline.">
-                      latest ≈ 1-in-{h.returnPeriodYears}-yr level
-                      {h.baselineYears ? ` (from ${h.baselineYears}-yr record)` : ""}
-                    </span>
-                  </>
-                ) : null}
-              </p>
+              <p className="text-[11px] text-muted-foreground">{h.note}</p>
             </div>
           )
         })}
