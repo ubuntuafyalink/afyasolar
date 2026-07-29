@@ -11,6 +11,7 @@
  * Data source: https://power.larc.nasa.gov/  (community = RE)
  */
 import { getFacilityById } from "@/lib/facility-data"
+import { mannKendall } from "@/lib/climate/stats/mann-kendall"
 import type {
   HazardTrendPoint,
   HazardScore,
@@ -307,32 +308,27 @@ export function toHazardTrend(resp: NasaPowerResponse): HazardTrendPoint[] {
 }
 
 /**
- * Current hazard scores: the latest year's index per hazard, with a trend
- * derived by comparing it against the mean of the earliest (up to 3) years,
- * using a +/- 5 index-point deadband.
+ * Current hazard scores: the latest year's index per hazard, with the trend
+ * classified by a Mann-Kendall test over the full per-year series (a proper
+ * non-parametric trend test; see src/lib/climate/stats/mann-kendall.ts). This
+ * replaces the earlier +/- 5-point latest-vs-head deadband heuristic.
  */
 export function toHazardScores(resp: NasaPowerResponse): HazardScore[] {
   const trend = toHazardTrend(resp)
   if (!trend.length) return []
 
   const latest = trend[trend.length - 1]
-  const head = trend.slice(0, Math.min(3, trend.length))
-  const baseAvg = (k: keyof HazardTrendPoint) =>
-    head.reduce((a, p) => a + (p[k] as number), 0) / head.length
-
-  const DEADBAND = 5
-  const dir = (current: number, base: number): HazardScore["trend"] => {
-    const d = current - base
-    if (d > DEADBAND) return "rising"
-    if (d < -DEADBAND) return "falling"
-    return "stable"
+  const dir = (k: keyof HazardTrendPoint): HazardScore["trend"] => {
+    const series = trend.map((p) => p[k] as number)
+    const mk = mannKendall(series)
+    return mk.trend === "increasing" ? "rising" : mk.trend === "decreasing" ? "falling" : "stable"
   }
 
   return [
-    { type: "Heat", score: latest.heat, trend: dir(latest.heat, baseAvg("heat")), note: "Mean daily maximum temperature" },
-    { type: "Flood", score: latest.flood, trend: dir(latest.flood, baseAvg("flood")), note: "Peak precipitation intensity" },
-    { type: "Wind / storm", score: latest.storm, trend: dir(latest.storm, baseAvg("storm")), note: "Peak 10 m wind speed" },
-    { type: "Drought", score: latest.drought, trend: dir(latest.drought, baseAvg("drought")), note: "Consecutive dry-day spell" },
+    { type: "Heat", score: latest.heat, trend: dir("heat"), note: "Mean daily maximum temperature" },
+    { type: "Flood", score: latest.flood, trend: dir("flood"), note: "Peak precipitation intensity" },
+    { type: "Wind / storm", score: latest.storm, trend: dir("storm"), note: "Peak 10 m wind speed" },
+    { type: "Drought", score: latest.drought, trend: dir("drought"), note: "Consecutive dry-day spell" },
   ]
 }
 
