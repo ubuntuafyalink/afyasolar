@@ -6,7 +6,13 @@ import { deviceTelemetry, deviceHealth } from '@/lib/db/schema-telemetry'
 import { deviceAlerts } from '@/lib/db/schema-telemetry'
 import { devices } from '@/lib/db/schema'
 import { eq, and, desc, gte, lte, inArray } from 'drizzle-orm'
-import { telemetrySchema } from '@/lib/validations/telemetry'
+import {
+  telemetrySchema,
+  deviceGatewayContractSchema,
+  mapGatewayContractToTelemetry,
+} from '@/lib/validations/telemetry'
+import { extractBearerToken, isValidDeviceToken } from '@/lib/auth/device-token'
+import { env } from '@/lib/env'
 import { generateId } from '@/lib/utils'
 
 /**
@@ -98,14 +104,56 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const body = await request.json()
+
+    // --- Device path (spec §8.1): inverter adapters / gateways authenticate
+    // with a shared bearer token, not a browser session, and post the minimal
+    // {facility_id, ts, load_w, ...} contract. If ANY bearer token is present we
+    // treat this as a device request (fail closed if it is wrong).
+    const bearer = extractBearerToken(request.headers.get('authorization'))
+    if (bearer) {
+      if (!isValidDeviceToken(request.headers.get('authorization'), env.DEVICE_INGEST_TOKEN)) {
+        return NextResponse.json({ error: 'Invalid device token' }, { status: 401 })
+      }
+
+      const parsed = deviceGatewayContractSchema.safeParse(body)
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid telemetry contract', details: parsed.error.flatten() },
+          { status: 400 },
+        )
+      }
+
+      const entry = mapGatewayContractToTelemetry(parsed.data, generateId())
+      if (Number.isNaN(entry.timestamp.getTime())) {
+        return NextResponse.json({ error: 'Invalid ts (must be ISO datetime or epoch ms)' }, { status: 400 })
+      }
+
+      await db.insert(deviceTelemetry).values(entry)
+
+      // Numeric view for health/alert helpers.
+      const numeric = {
+        deviceId: entry.deviceId,
+        batteryLevel: parsed.data.batt_soc,
+        temperature: parsed.data.temp_c,
+        firmwareVersion: 'gateway',
+      }
+      await updateDeviceHealth(entry.deviceId, entry.facilityId, numeric)
+      await checkAndCreateAlerts(entry.deviceId, entry.facilityId, numeric)
+
+      return NextResponse.json(
+        { success: true, message: 'Telemetry accepted', id: entry.id, deviceId: entry.deviceId },
+        { status: 200 },
+      )
+    }
+
+    // --- Session path (web user / existing behavior) ---
     const session = await getServerSession(authOptions)
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    
     // Validate telemetry data
     const validatedData = telemetrySchema.parse(body)
 
