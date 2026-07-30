@@ -12,6 +12,10 @@ export const revalidate = 0
 // Validation schemas
 const createSubscriberSchema = z.object({
   facilityId: z.string().uuid(),
+  // facility_name is NOT NULL in the schema, so it must be supplied on create.
+  facilityName: z.string().min(1),
+  facilityEmail: z.string().email().optional(),
+  facilityPhone: z.string().optional(),
   packageId: z.string(),
   packageName: z.string(),
   packageCode: z.string(),
@@ -116,7 +120,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching Afya Solar subscribers:', error)
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error', message: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
@@ -154,6 +158,9 @@ export async function POST(request: NextRequest) {
     // Create new subscriber record
     const [newSubscriber] = await db.insert(afyaSolarSubscribers).values({
       ...validatedData,
+      // decimal columns are typed as string by Drizzle; coerce numeric values.
+      packageRatedKw: String(validatedData.packageRatedKw),
+      totalPackagePrice: String(validatedData.totalPackagePrice),
       subscriptionStatus: 'active',
       isActive: 1,
       subscriptionStartDate: new Date(),
@@ -225,7 +232,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error', message: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

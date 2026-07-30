@@ -27,10 +27,10 @@ async function requireCycleAccess(session: { user: { role?: string; facilityId?:
     .where(eq(assessmentCycles.id, cycleId))
     .limit(1)
   if (!cycle) {
-    return { error: NextResponse.json({ error: "Assessment cycle not found" }, { status: 404 }) as const }
+    return { error: NextResponse.json({ error: "Assessment cycle not found" }, { status: 404 }) }
   }
   if (session.user.role !== "admin" && session.user.facilityId !== cycle.facilityId) {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) as const }
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) }
   }
   return { cycle }
 }

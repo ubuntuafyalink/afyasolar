@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, isNull } from 'drizzle-orm'
 
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
@@ -45,8 +45,8 @@ export async function GET(_request: NextRequest, { params }: { params: { deviceI
       .from(afyaSolarSmartmeters)
       .where(
         Number.isFinite(deviceIdNum)
-          ? and(eq(afyaSolarSmartmeters.id, deviceIdNum), eq(afyaSolarSmartmeters.deletedAt, null))
-          : and(eq(afyaSolarSmartmeters.meterSerial, deviceIdRaw), eq(afyaSolarSmartmeters.deletedAt, null)),
+          ? and(eq(afyaSolarSmartmeters.id, deviceIdNum), isNull(afyaSolarSmartmeters.deletedAt))
+          : and(eq(afyaSolarSmartmeters.meterSerial, deviceIdRaw), isNull(afyaSolarSmartmeters.deletedAt)),
       )
       .limit(1)
 

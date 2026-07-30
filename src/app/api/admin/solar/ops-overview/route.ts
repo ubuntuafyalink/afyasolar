@@ -115,7 +115,7 @@ export async function GET() {
     const climateByFacility = new Map<string, { composite: number; topHazard: { type: string; score: number }; psh: number | null }>()
     try {
       const portfolio = await computePortfolioClimate()
-      for (const c of portfolio) {
+      for (const c of portfolio.data) {
         if (c.degraded) continue
         climateByFacility.set(c.facilityId, {
           composite: c.composite,
