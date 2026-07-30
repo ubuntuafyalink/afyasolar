@@ -184,6 +184,7 @@ scripts/        # One-off maintenance scripts
 | [`docs/DEMO_ACCESS_GUIDE.md`](docs/DEMO_ACCESS_GUIDE.md) | Demo dashboards and tokens |
 | [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md) | Feature coverage |
 | [`docs/CARBON_CALCULATOR_METHODOLOGY.md`](docs/CARBON_CALCULATOR_METHODOLOGY.md) | Carbon credit calculations |
+| [`docs/INTEGRATION_SEAMS.md`](docs/INTEGRATION_SEAMS.md) | Extension points (device ingestion, messaging, forecast, open data) and how deferred hardware/ML work plugs in |
 
 ## Troubleshooting
 
@@ -201,4 +202,25 @@ Add valid `CLOUDINARY_*` variables to `.env`.
 
 ## License
 
-Private project — see repository owner for usage terms.
+**Apache License 2.0** — see [`LICENSE`](./LICENSE).
+
+AfyaSolar Intelligence is developed by **Ubuntu Afyalink Company Limited** and is being
+open-sourced as part of the UNICEF Venture Fund (Climate) engagement,
+RFPS-NYH-2026-503931. Consistent with the Venture Fund requirements, the **entire funded
+solution is open source** — all application code, the CRiPHC/RCS resilience-scoring engine,
+the climate and carbon modules, the messaging templates, the open-data API, the database
+schema, and (as they are built) the machine-learning training/inference code **and their
+trained scoring weights**. Nothing in the funded solution is withheld.
+
+The sustainable business is the running managed service, the live operational data, the
+deployed install base, and the institutional relationships — none of which are funded code,
+and none of which conflict with a fully open codebase.
+
+- **Reviewers / UNICEF Innovation:** the repository owner will grant direct repository access
+  (invite `@unicefinnovation`) rather than sharing a video walkthrough.
+- **Digital Public Good:** this project intends to register with, and meet the standard of,
+  the [DPG Registry](https://digitalpublicgoods.net/).
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`GOVERNANCE.md`](./GOVERNANCE.md),
+[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md), and [`SECURITY.md`](./SECURITY.md) for how to
+participate and report issues.

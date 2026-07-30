@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import mysql from 'mysql2/promise'
+import mysql, { RowDataPacket } from 'mysql2/promise'
 
 export async function GET(request: NextRequest) {
   let connection: mysql.Connection | null = null
@@ -11,12 +11,12 @@ export async function GET(request: NextRequest) {
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
       database: process.env.DB_NAME || 'afya_link',
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
     })
 
     // Fetch all simulated facilities
-    const [facilities] = await connection.execute(`
-      SELECT 
+    const [facilities] = await connection.execute<RowDataPacket[]>(`
+      SELECT
         id,
         name,
         location,
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
     `)
 
     // Calculate overall statistics
-    const [statsResult] = await connection.execute(`
-      SELECT 
+    const [statsResult] = await connection.execute<RowDataPacket[]>(`
+      SELECT
         COUNT(*) as total_facilities,
         SUM(monthly_energy_savings) as total_energy_savings,
         SUM(monthly_cost_savings) as total_cost_savings,

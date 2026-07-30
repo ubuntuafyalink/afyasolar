@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { db } from '@/lib/db'
 import { paymentTransactions, serviceAccessPayments, serviceSubscriptions, maintenanceRequests, maintenancePlanPayments, maintenancePlanProposals, maintenancePlanRequests, resaleInventory } from '@/lib/db/schema'
-import { eq, or, sql, and } from 'drizzle-orm'
+import { eq, or, sql, and, type SQL } from 'drizzle-orm'
 import { 
   updateTransactionStatus,
   findTransactionByReference,
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
     if (!transaction) {
       console.log(`[${requestId}] 🔍 Attempt 4: Searching in serviceAccessPayments table`)
       try {
-        const searchConditions = []
+        const searchConditions: SQL[] = []
         const triedIds = new Set<string>()
         const addCondition = (id: string | null | undefined) => {
           if (!id || triedIds.has(id)) return

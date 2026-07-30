@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
-import { energyData, facilities, clientServices } from '@/lib/db/schema'
+import { energyData, facilities, devices } from '@/lib/db/schema'
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
@@ -40,14 +40,14 @@ export async function GET(request: NextRequest) {
     ]
 
     if (facilityId !== 'all') {
-      conditions.push(eq(energyData.facilityId, facilityId))
+      conditions.push(eq(devices.facilityId, facilityId))
     }
 
     // Fetch energy data with facility information
     const energyQuery = db
       .select({
         id: energyData.id,
-        facilityId: energyData.facilityId,
+        facilityId: devices.facilityId,
         facilityName: facilities.name,
         timestamp: energyData.timestamp,
         power: energyData.power,
@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
         creditBalance: energyData.creditBalance
       })
       .from(energyData)
-      .leftJoin(facilities, eq(energyData.facilityId, facilities.id))
+      .leftJoin(devices, eq(energyData.deviceId, devices.id))
+      .leftJoin(facilities, eq(devices.facilityId, facilities.id))
       .where(and(...conditions))
       .orderBy(desc(energyData.timestamp))
       .limit(1000)
