@@ -1,4 +1,63 @@
 import { z } from 'zod'
+import type { DeviceTelemetry } from '@/lib/db/schema-telemetry'
+
+/**
+ * Device → ingestion JSON contract (spec §8.1). This is the minimal, versioned
+ * payload an inverter cloud adapter or local Modbus/ESP32 gateway posts to
+ * /api/devices/telemetry authenticated with a device token (not a web session).
+ * Additive changes only.
+ *
+ *   { facility_id, ts, load_w, pv_w, batt_v, batt_soc, grid_present, temp_c }
+ *
+ * device_id is optional (the §8.1 contract is per-facility); when omitted a
+ * stable gateway device id is derived as `gw-<facility_id>`.
+ */
+export const deviceGatewayContractSchema = z.object({
+  facility_id: z.string().min(1, 'facility_id is required'),
+  /** ISO-8601 datetime string or epoch milliseconds. */
+  ts: z.union([z.string().min(1), z.number().int().nonnegative()]),
+  device_id: z.string().min(1).optional(),
+  load_w: z.number().min(0).max(1_000_000).optional(),
+  pv_w: z.number().min(0).max(1_000_000).optional(),
+  batt_v: z.number().min(0).max(1000).optional(),
+  batt_soc: z.number().min(0).max(100).optional(),
+  grid_present: z.boolean().optional(),
+  temp_c: z.number().min(-40).max(120).optional(),
+})
+
+export type DeviceGatewayContract = z.infer<typeof deviceGatewayContractSchema>
+
+/** Parse the contract `ts` (ISO string or epoch ms) into a Date. */
+export function parseContractTs(ts: string | number): Date {
+  return typeof ts === 'number' ? new Date(ts) : new Date(ts)
+}
+
+/**
+ * Map a validated gateway contract to a device_telemetry insert row. Pure and
+ * unit-tested. pv_w (instantaneous PV watts) is stored as kW in solarGeneration;
+ * grid_present toggles gridStatus. Rows are labeled firmwareVersion "gateway".
+ */
+export function mapGatewayContractToTelemetry(
+  c: DeviceGatewayContract,
+  id: string,
+): DeviceTelemetry {
+  const deviceId = c.device_id ?? `gw-${c.facility_id}`
+  return {
+    id,
+    deviceId,
+    facilityId: c.facility_id,
+    timestamp: parseContractTs(c.ts),
+    power: c.load_w != null ? c.load_w.toFixed(2) : undefined,
+    solarGeneration: c.pv_w != null ? (c.pv_w / 1000).toFixed(3) : undefined,
+    batteryVoltage: c.batt_v != null ? c.batt_v.toFixed(2) : undefined,
+    batteryLevel: c.batt_soc != null ? c.batt_soc.toFixed(2) : undefined,
+    temperature: c.temp_c != null ? c.temp_c.toFixed(2) : undefined,
+    gridStatus: c.grid_present === false ? 'disconnected' : 'connected',
+    deviceStatus: 'normal',
+    firmwareVersion: 'gateway',
+    location: 'gateway',
+  }
+}
 
 /**
  * Schema for validating incoming telemetry data from devices

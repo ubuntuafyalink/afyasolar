@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { carbonCredits, facilityEnergyAssessments } from '@/lib/db/schema'
 import { eq, and, desc } from 'drizzle-orm'
 import { generateId } from '@/lib/utils'
+import { computeCarbonResult } from '@/lib/carbon/co2e'
 
 interface CarbonCreditCalculation {
   id: string
@@ -162,15 +163,16 @@ export async function POST(request: NextRequest) {
       idx !== null && Array.isArray(meuTop) && meuTop[idx] ? Number(meuTop[idx].dailyKwh ?? 0) : null
     const deviceRatio = totalDailyLoad > 0 && devDailyKwh !== null ? devDailyKwh / totalDailyLoad : 1
 
-    const energyGenerated = dailySolarKwh * Math.max(1, daysInclusive) * Math.max(0, deviceRatio)
-
     const totalDailyLoadKwh: number = Number(payload?.quoteData?.load_analysis?.total_daily_energy_kwh ?? 0)
     const efficiency = totalDailyLoadKwh > 0 ? (dailySolarKwh / totalDailyLoadKwh) * 100 : 0
 
-    const co2Saved = energyGenerated * gridEmissionFactor // kg CO2
-    const creditsEarned = co2Saved / 1000
-    const creditValue = 25 // USD per ton
-    const totalValue = creditsEarned * creditValue
+    // Avoided-CO2e + credit value (pure helper; see src/lib/carbon/co2e.ts).
+    const { energyGenerated, co2Saved, creditsEarned, creditValue, totalValue } = computeCarbonResult({
+      dailySolarKwh,
+      daysInclusive,
+      deviceRatio,
+      gridEmissionFactor,
+    })
 
     const calculation: CarbonCreditCalculation = {
       id: generateId(),
@@ -374,10 +376,13 @@ export async function GET(request: NextRequest) {
     const makeRecord = (p: string, start: Date, end: Date): CarbonCreditCalculation => {
       const msPerDay = 24 * 60 * 60 * 1000
       const daysInclusive = Math.floor((end.getTime() - start.getTime()) / msPerDay) + 1
-      const energyGenerated = dailySolarKwh * Math.max(1, daysInclusive) * Math.max(0, deviceRatio)
-      const co2Saved = energyGenerated * gridFactor
-      const creditsEarned = co2Saved / 1000
-      const totalValue = creditsEarned * creditValue
+      const { energyGenerated, co2Saved, creditsEarned, totalValue } = computeCarbonResult({
+        dailySolarKwh,
+        daysInclusive,
+        deviceRatio,
+        gridEmissionFactor: gridFactor,
+        creditValueUsd: creditValue,
+      })
 
       return {
         id: generateId(),

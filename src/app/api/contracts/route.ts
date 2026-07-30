@@ -116,8 +116,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create contract
-    const contract = await db.insert(contracts).values({
-      id: generateId(),
+    const contractId = generateId()
+    await db.insert(contracts).values({
+      id: contractId,
       facilityId,
       contractType,
       startDate: new Date(startDate),
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       contract: {
-        id: contract.id,
+        id: contractId,
         contractType,
         status: 'active',
         message: 'Contract created successfully'
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(
   request: NextRequest,
-  { params }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -186,8 +187,8 @@ export async function PATCH(
       )
     }
 
-    // Update contract
-    const [updatedContract] = await db
+    // Update contract (MySQL Drizzle does not support .returning())
+    await db
       .update(contracts)
       .set({
         ...(status && { status }),
@@ -196,7 +197,13 @@ export async function PATCH(
         updatedAt: new Date()
       })
       .where(eq(contracts.id, id))
-      .returning()
+
+    // Re-select the updated row to return it
+    const [updatedContract] = await db
+      .select()
+      .from(contracts)
+      .where(eq(contracts.id, id))
+      .limit(1)
 
     if (!updatedContract) {
       return NextResponse.json({ error: 'Contract not found' }, { status: 404 })

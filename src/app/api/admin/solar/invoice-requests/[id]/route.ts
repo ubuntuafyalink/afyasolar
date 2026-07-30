@@ -104,20 +104,21 @@ export async function PATCH(
             packageId: invoice.packageId,
             packageName: invoice.packageName,
             packageCode: invoice.packageId,
-            packageRatedKw: 0,
+            // decimal columns are typed as string by Drizzle; coerce numeric values.
+            packageRatedKw: '0',
             planType:
               invoice.paymentPlan === 'cash'
                 ? 'CASH'
                 : invoice.paymentPlan === 'installment'
                 ? 'INSTALLMENT'
                 : 'PAAS',
-            totalPackagePrice: invoice.amount,
+            totalPackagePrice: String(invoice.amount),
             paymentStatus: 'completed',
             isPaymentCompleted: 1,
             paymentCompletedAt,
             paymentMethod: 'INVOICE',
             transactionId: paymentId,
-            remainingBalance: 0,
+            remainingBalance: '0',
             subscriptionStatus: 'active',
             isActive: 1,
             subscriptionStartDate: paymentCompletedAt,

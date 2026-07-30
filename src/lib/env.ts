@@ -86,5 +86,40 @@ export const env = {
   get OPENAI_MODEL() { return getEnvVarOptional('OPENAI_MODEL', 'gpt-4o-mini') },
   get GROQ_API_KEY() { return getEnvVarOptional('GROQ_API_KEY') },
   get GROQ_MODEL() { return getEnvVarOptional('GROQ_MODEL', 'llama-3.1-8b-instant') },
+
+  // Application base URL
+  get APP_BASE_URL() { return getEnvVarOptional('APP_BASE_URL', 'http://localhost:3000') },
+
+  // Payments (Azam Pay)
+  get AZAM_PAY_ENVIRONMENT() { return getEnvVarOptional('AZAM_PAY_ENVIRONMENT', 'sandbox') },
+  get AZAM_PAY_APP_NAME() { return getEnvVarOptional('AZAM_PAY_APP_NAME') },
+  get AZAM_PAY_CLIENT_ID() { return getEnvVarOptional('AZAM_PAY_CLIENT_ID') },
+  get AZAM_PAY_CLIENT_SECRET() { return getEnvVarOptional('AZAM_PAY_CLIENT_SECRET') },
+  get AZAM_PAY_API_KEY() { return getEnvVarOptional('AZAM_PAY_API_KEY') },
+
+  // Storage (optional)
+  get BLOB_READ_WRITE_TOKEN() { return getEnvVarOptional('BLOB_READ_WRITE_TOKEN') },
+
+  // Cron / scheduled-job shared secret
+  get CRON_SECRET() { return getEnvVarOptional('CRON_SECRET') },
+
+  // Messaging: provider selection + SmartSMS config
+  get SMS_PROVIDER() { return getEnvVarOptional('SMS_PROVIDER', 'smartsms') },
+  get SMARTSMS_API_KEY() { return getEnvVarOptional('SMARTSMS_API_KEY') },
+  get SMARTSMS_API_URL() { return getEnvVarOptional('SMARTSMS_API_URL', 'https://smartsms.ipab.co.tz/api/v3/sms/send') },
+  get SMARTSMS_SENDER_ID() { return getEnvVarOptional('SMARTSMS_SENDER_ID') },
+
+  // Messaging: Africa's Talking (optional, primary SMS/USSD/Voice once configured)
+  get AFRICASTALKING_USERNAME() { return getEnvVarOptional('AFRICASTALKING_USERNAME') },
+  get AFRICASTALKING_API_KEY() { return getEnvVarOptional('AFRICASTALKING_API_KEY') },
+  get AFRICASTALKING_SENDER_ID() { return getEnvVarOptional('AFRICASTALKING_SENDER_ID') },
+
+  // Web Push (VAPID)
+  get NEXT_PUBLIC_VAPID_PUBLIC_KEY() { return getEnvVarOptional('NEXT_PUBLIC_VAPID_PUBLIC_KEY') },
+  get VAPID_PRIVATE_KEY() { return getEnvVarOptional('VAPID_PRIVATE_KEY') },
+  get VAPID_SUBJECT() { return getEnvVarOptional('VAPID_SUBJECT', 'mailto:admin@example.com') },
+
+  // Device telemetry ingestion token (inverter adapters / gateways)
+  get DEVICE_INGEST_TOKEN() { return getEnvVarOptional('DEVICE_INGEST_TOKEN') },
 } as const
 

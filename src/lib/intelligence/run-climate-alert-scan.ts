@@ -63,7 +63,7 @@ export async function runClimateAlertScan(
   let duplicate = 0
   let noDevice = 0
 
-  for (const c of climate) {
+  for (const c of climate.data) {
     if (c.degraded) continue
     scanned += 1
     const facilityName = nameById.get(c.facilityId) ?? "this facility"
