@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { db } from '@/lib/db'
 import { devices, energyData } from '@/lib/db/schema'
-import { eq, and, desc, gte } from 'drizzle-orm'
+import { eq, and, desc, gte, inArray } from 'drizzle-orm'
 
 /**
  * GET /api/facility/[facilityId]/metrics
@@ -69,7 +69,7 @@ export async function GET(
       .where(
         and(
           // deviceId is the foreign key; scope by this facility's devices
-          energyData.deviceId.in(deviceIds),
+          inArray(energyData.deviceId, deviceIds),
           gte(energyData.timestamp, startDate)
         )
       )

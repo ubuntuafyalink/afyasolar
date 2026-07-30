@@ -202,19 +202,21 @@ export async function POST(request: NextRequest) {
         }
 
         const selectedPricing = result.financing.selected_pricing
+        // decimal columns are typed as string by Drizzle; coerce numeric values (null stays null).
+        const dec = (v: number | null | undefined) => (v == null ? null : String(v))
         const insertResult = await db.insert(afyaSolarDesignReports).values({
           facilityId: parsed.facilityId ?? null,
           facilityName: effectiveFacilityName,
-          pvSizeKw: result.pv.P_pv_actual_kw,
-          batteryKwh: result.battery.E_battery_nameplate,
+          pvSizeKw: dec(result.pv.P_pv_actual_kw),
+          batteryKwh: dec(result.battery.E_battery_nameplate),
           grossMonthlySavings: result.savings.gross_monthly_savings,
-          totalDailyEnergyKwh: result.load.E_day_total,
-          criticalEnergyKwh: result.load.E_day_critical,
-          adjustedDailyEnergyKwh: result.load.E_day_total_adj,
+          totalDailyEnergyKwh: dec(result.load.E_day_total),
+          criticalEnergyKwh: dec(result.load.E_day_critical),
+          adjustedDailyEnergyKwh: dec(result.load.E_day_total_adj),
           numPanels: result.pv.panels_required,
-          batteryAh: result.battery.battery_Ah,
-          inverterKw: result.inverter.inverter_continuous_kw,
-          mpptCurrentA: result.mppt.I_mppt,
+          batteryAh: dec(result.battery.battery_Ah),
+          inverterKw: dec(result.inverter.inverter_continuous_kw),
+          mpptCurrentA: dec(result.mppt.I_mppt),
           baselineGridMonthly: facility.tanesco_monthly_bill_tzs,
           baselineDieselMonthly: result.baseline.diesel_cost_monthly,
           baselineTotalMonthly: result.baseline.baseline_cost_monthly,
@@ -222,16 +224,16 @@ export async function POST(request: NextRequest) {
           afterDieselMonthly: result.afterSolar.diesel_after_monthly,
           afterTotalMonthly: result.afterSolar.total_after_solar_monthly,
           cashPriceTzs: selectedPricing?.cash_price_tzs ?? null,
-          cashPaybackMonths: result.financing.cash_payback_months ?? null,
+          cashPaybackMonths: dec(result.financing.cash_payback_months),
           installmentUpfrontTzs: selectedPricing?.install_upfront_tzs ?? null,
           installmentMonthlyTzs: selectedPricing?.install_monthly_tzs ?? null,
           installmentTermMonths: selectedPricing?.install_term_months ?? null,
           installmentNetSavingsTzs: result.financing.installment_net_savings_monthly ?? null,
-          installmentBreakevenMonths: result.financing.installment_breakeven_months ?? null,
+          installmentBreakevenMonths: dec(result.financing.installment_breakeven_months),
           eaasMonthlyTzs: selectedPricing?.eaas_monthly_tzs ?? null,
           eaasTermMonths: selectedPricing?.eaas_term_months ?? null,
           eaasNetSavingsTzs: result.financing.eaas_net_savings_monthly ?? null,
-          meuTotalDailyLoadKwh: parsed.CLIENT_CONTEXT?.meuSummary?.totalDailyLoad ?? null,
+          meuTotalDailyLoadKwh: dec(parsed.CLIENT_CONTEXT?.meuSummary?.totalDailyLoad),
           payloadJson: JSON.stringify({
             input: {
               devices,

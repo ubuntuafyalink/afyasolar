@@ -105,7 +105,8 @@ export async function POST(request: NextRequest) {
       packageCode: packageInfo.packageCode,
       packageRatedKw: packageInfo.packageRatedKw,
       planType: packageInfo.planType,
-      totalPackagePrice: packageInfo.totalPackagePrice,
+      // decimal columns are typed as string by Drizzle; coerce the numeric price.
+      totalPackagePrice: String(packageInfo.totalPackagePrice),
       paymentMethod: packageInfo.paymentMethod,
       subscriptionStatus: 'active',
       isActive: 1,
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error syncing Afya Solar subscription:', error)
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error', message: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

@@ -57,9 +57,9 @@ export async function GET(request: NextRequest) {
         status: serviceAccessPayments.status,
         paymentMethod: serviceAccessPayments.paymentMethod,
         type: serviceAccessPayments.serviceName,
-        description: serviceAccessPayments.description,
+        description: serviceAccessPayments.packageName,
         createdAt: serviceAccessPayments.createdAt,
-        processedAt: serviceAccessPayments.processedAt,
+        processedAt: serviceAccessPayments.paidAt,
         // Add a dummy dueDate for demonstration (would come from actual schema)
         dueDate: sql<string>`DATE_ADD(${serviceAccessPayments.createdAt}, INTERVAL 30 DAY)`.as('dueDate')
       })
