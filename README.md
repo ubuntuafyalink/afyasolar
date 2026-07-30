@@ -184,6 +184,7 @@ scripts/        # One-off maintenance scripts
 | [`docs/DEMO_ACCESS_GUIDE.md`](docs/DEMO_ACCESS_GUIDE.md) | Demo dashboards and tokens |
 | [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md) | Feature coverage |
 | [`docs/CARBON_CALCULATOR_METHODOLOGY.md`](docs/CARBON_CALCULATOR_METHODOLOGY.md) | Carbon credit calculations |
+| [`docs/INTEGRATION_SEAMS.md`](docs/INTEGRATION_SEAMS.md) | Extension points (device ingestion, messaging, forecast, open data) and how deferred hardware/ML work plugs in |
 
 ## Troubleshooting
 
