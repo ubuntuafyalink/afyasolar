@@ -201,7 +201,9 @@ export async function POST(request: NextRequest) {
       ...validatedData,
       packageCode: pkg.code || validatedData.packageCode,
       packageName: validatedData.packageName || pkg.name,
-      packageRatedKw: validatedData.packageRatedKw || pkg.ratedKw,
+      // decimal columns are typed as string by Drizzle; coerce numeric values.
+      packageRatedKw: String(validatedData.packageRatedKw || pkg.ratedKw),
+      totalPackagePrice: String(validatedData.totalPackagePrice),
       facilityEmail: validatedData.facilityEmail || facilityInfo?.data?.email || '',
       facilityPhone: validatedData.facilityPhone || facilityInfo?.data?.phone || '',
       facilityRegion: facilityInfo?.data?.region || '',
@@ -213,9 +215,9 @@ export async function POST(request: NextRequest) {
       paymentStatus: 'completed',
       isPaymentCompleted: 1,
       paymentCompletedAt: new Date(),
-      upfrontPaymentAmount,
-      monthlyPaymentAmount,
-      remainingBalance,
+      upfrontPaymentAmount: upfrontPaymentAmount == null ? null : String(upfrontPaymentAmount),
+      monthlyPaymentAmount: monthlyPaymentAmount == null ? null : String(monthlyPaymentAmount),
+      remainingBalance: String(remainingBalance),
       subscriptionStatus: 'active',
       isActive: 1,
       subscriptionStartDate: new Date(),
@@ -278,7 +280,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error', message: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

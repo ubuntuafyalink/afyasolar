@@ -11,6 +11,7 @@ import { useFacility } from "@/hooks/use-facilities"
 import { useEnergyData } from "@/hooks/use-energy-data"
 import { useDevices } from "@/hooks/use-devices"
 import { formatCurrency } from "@/lib/utils"
+import type { EnergyData } from "@/types"
 import { 
   ArrowLeft, 
   Zap, 
@@ -63,22 +64,22 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
 
     let filteredData = energyData
     if (timeRange === 'today') {
-      filteredData = energyData.filter(d => new Date(d.timestamp) >= today)
+      filteredData = energyData.filter((d: EnergyData) => new Date(d.timestamp) >= today)
     } else if (timeRange === 'week') {
-      filteredData = energyData.filter(d => new Date(d.timestamp) >= weekAgo)
+      filteredData = energyData.filter((d: EnergyData) => new Date(d.timestamp) >= weekAgo)
     } else if (timeRange === 'month') {
-      filteredData = energyData.filter(d => new Date(d.timestamp) >= monthAgo)
+      filteredData = energyData.filter((d: EnergyData) => new Date(d.timestamp) >= monthAgo)
     }
 
-    const totalConsumption = filteredData.reduce((sum, d) => sum + Number(d.energy), 0)
-    const avgPower = filteredData.length > 0 
-      ? filteredData.reduce((sum, d) => sum + Number(d.power), 0) / filteredData.length 
+    const totalConsumption = filteredData.reduce((sum: number, d: EnergyData) => sum + Number(d.energy), 0)
+    const avgPower = filteredData.length > 0
+      ? filteredData.reduce((sum: number, d: EnergyData) => sum + Number(d.power), 0) / filteredData.length
       : 0
-    const maxPower = Math.max(...filteredData.map(d => Number(d.power)), 0)
-    const totalSolarGeneration = filteredData.reduce((sum, d) => sum + (Number(d.solarGeneration) || 0), 0)
-    const batteryLevels = filteredData.filter(d => d.batteryLevel).map(d => Number(d.batteryLevel))
+    const maxPower = Math.max(...filteredData.map((d: EnergyData) => Number(d.power)), 0)
+    const totalSolarGeneration = filteredData.reduce((sum: number, d: EnergyData) => sum + (Number(d.solarGeneration) || 0), 0)
+    const batteryLevels = filteredData.filter((d: EnergyData) => d.batteryLevel).map((d: EnergyData) => Number(d.batteryLevel))
     const avgBatteryLevel = batteryLevels.length > 0
-      ? batteryLevels.reduce((sum, b) => sum + b, 0) / batteryLevels.length
+      ? batteryLevels.reduce((sum: number, b: number) => sum + b, 0) / batteryLevels.length
       : 0
 
     const gridConsumption = totalConsumption - totalSolarGeneration
@@ -394,7 +395,7 @@ export function FacilityMetricsPage({ facilityId }: FacilityMetricsPageProps) {
               <div className="overflow-x-auto">
                 <div className="min-w-full">
                   <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                    {energyData.slice(0, 50).map((data) => (
+                    {energyData.slice(0, 50).map((data: EnergyData) => (
                       <div
                         key={data.id}
                         className="flex items-center justify-between p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"

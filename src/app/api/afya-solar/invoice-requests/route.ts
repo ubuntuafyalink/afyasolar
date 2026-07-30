@@ -189,13 +189,14 @@ export async function POST(request: NextRequest) {
             typeof parsed.packageMetadata.code === 'string' &&
             parsed.packageMetadata.code) ||
           parsed.packageId,
-        packageRatedKw,
+        // decimal columns are typed as string by Drizzle; coerce numeric values.
+        packageRatedKw: String(packageRatedKw),
         planType,
-        totalPackagePrice: computedAmount,
+        totalPackagePrice: String(computedAmount),
         paymentMethod: 'INVOICE',
         paymentStatus: 'pending',
         isPaymentCompleted: 0,
-        remainingBalance: computedAmount,
+        remainingBalance: String(computedAmount),
       } as const
 
       if (existingSubscriber) {

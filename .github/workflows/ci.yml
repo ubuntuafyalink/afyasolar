@@ -27,13 +27,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Non-blocking for now: the pre-existing codebase carries type errors in
-      # ~18 legacy route files that predate this CI setup. The step still runs and
-      # reports them so the debt is visible; drive it to zero, then remove
-      # continue-on-error to make type-check a hard gate (target: mid-project).
+      # Hard gate: the codebase is type-clean. The legacy type debt that predated
+      # this CI (Drizzle insert shapes, unknown errors, MySQL query typings) was
+      # cleared, so a new type error now fails the build.
       - name: Type-check
         run: npm run type-check
-        continue-on-error: true
 
       - name: Unit tests + coverage
         run: npm run coverage
