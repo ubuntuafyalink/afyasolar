@@ -1,0 +1,35 @@
+# Chronos fine-tuning configuration (AutoGluon-TimeSeries harness).
+#
+# The pipeline forecasts the RAW NASA variables; the app's existing logic
+# (nasa-power.ts, sizing engine) derives hazard indices and solar yield from the
+# forecasts. We train one predictor per horizon and, in each, compare three
+# models so the fine-tune's value is provable:
+#   - SeasonalNaive        (baseline)
+#   - Chronos-Bolt ZeroShot (pretrained, no fine-tuning)
+#   - Chronos-Bolt FineTuned (LoRA fine-tuned on our NASA series)
+
+model:
+  # AutoGluon shorthand for amazon/chronos-bolt-base (Apache-2.0 on HuggingFace).
+  # Use bolt_small for a faster/cheaper run, bolt_base for accuracy.
+  chronos_model: bolt_base
+  fine_tune: true
+  fine_tune_steps: 2000
+  fine_tune_lr: 1.0e-4
+
+# One predictor per resolution (we forecast both, per the agreed plan).
+horizons:
+  daily:
+    dataset: daily            # -> datasets/processed/daily.{parquet,csv}
+    freq: D
+    prediction_length: 30     # up to ~30 days ahead
+    eval_metric: WQL
+  monthly:
+    dataset: monthly          # -> datasets/processed/monthly.{parquet,csv}
+    freq: MS                  # month-start timestamps
+    prediction_length: 12     # up to 12 months ahead (seasonal)
+    eval_metric: WQL
+
+train:
+  output_dir: outputs         # ml/train/outputs/<horizon>/
+  num_val_windows: 3          # rolling-origin backtest windows
+  time_limit: 1800            # seconds per horizon (Colab-friendly)
