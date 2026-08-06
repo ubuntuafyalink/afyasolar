@@ -35,11 +35,17 @@ def test_yield_rejects_bad_system():
 
 
 def test_forecast_requires_model():
-    r = client.post("/forecast", json={"location_id": "tz-2", "horizon": "monthly"})
-    assert r.status_code == 503  # no fine-tuned Chronos present
+    # Use a horizon with no trained model (daily is not built in this setup) so the
+    # guard is exercised deterministically whether or not other horizons exist.
+    r = client.post("/forecast", json={"location_id": "tz-2", "horizon": "daily"})
+    assert r.status_code == 503  # no trained Chronos predictor for this horizon
 
 
-def test_advisory_fallback_without_llm_key():
+def test_advisory_fallback_without_llm_key(monkeypatch):
+    # Force the keyless path so this exercises the deterministic fallback
+    # regardless of whether an LLM_API_KEY is configured in the environment.
+    from app import config
+    monkeypatch.setattr(config, "LLM_API_KEY", "")
     r = client.post("/advisory", json={
         "facility_id": "tz-2",
         "hazards": {"heat": 60, "flood": 10, "storm": 80, "drought": 20, "composite": 42},
