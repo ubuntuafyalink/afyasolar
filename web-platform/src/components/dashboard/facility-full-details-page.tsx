@@ -137,6 +137,22 @@ export function FacilityFullDetailsPage({ facilityId }: FacilityFullDetailsPageP
     },
   })
 
+  // Hooks must run unconditionally, before any early return.
+  const paymentSummary = useMemo(() => {
+    const completed = servicePayments.filter((p: any) => p.status === "completed")
+    const pendingOrFailed = servicePayments.filter((p: any) => p.status !== "completed")
+    const totalPaid = completed.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0)
+    const latest = servicePayments[0] ?? null
+
+    return {
+      totalTransactions: servicePayments.length,
+      completedCount: completed.length,
+      pendingOrFailedCount: pendingOrFailed.length,
+      totalPaid,
+      latest,
+    }
+  }, [servicePayments])
+
   if (isLoading || !facilities) {
     return (
       <div className="min-h-screen bg-muted/30 p-6">
@@ -178,21 +194,6 @@ export function FacilityFullDetailsPage({ facilityId }: FacilityFullDetailsPageP
     if (value === null || value === undefined) return "N/A"
     return value ? "Yes" : "No"
   }
-
-  const paymentSummary = useMemo(() => {
-    const completed = servicePayments.filter((p: any) => p.status === "completed")
-    const pendingOrFailed = servicePayments.filter((p: any) => p.status !== "completed")
-    const totalPaid = completed.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0)
-    const latest = servicePayments[0] ?? null
-
-    return {
-      totalTransactions: servicePayments.length,
-      completedCount: completed.length,
-      pendingOrFailedCount: pendingOrFailed.length,
-      totalPaid,
-      latest,
-    }
-  }, [servicePayments])
 
   return (
     <div className="min-h-screen bg-muted/30">
