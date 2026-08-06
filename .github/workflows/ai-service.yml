@@ -1,0 +1,38 @@
+name: ai-service CI
+
+# Runs only when the AI service changes (monorepo path scoping).
+on:
+  push:
+    branches: [main]
+    paths: ["ai-service/**", ".github/workflows/ai-service.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["ai-service/**", ".github/workflows/ai-service.yml"]
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ai-service
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+          cache-dependency-path: ai-service/requirements-dev.txt
+
+      # Base + test deps only (fastapi, pandas, pytest). The heavy ML stack
+      # (autogluon/torch) is not needed for the unit/API tests - forecasting and
+      # maintenance deps are imported lazily and those endpoints are not exercised.
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run tests
+        run: pytest -q

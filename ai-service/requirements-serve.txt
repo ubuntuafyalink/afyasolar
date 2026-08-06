@@ -1,0 +1,11 @@
+# Serving stack: the API deps plus AutoGluon (needed to LOAD and run a
+# fine-tuned Chronos predictor). Heavy; used by the Dockerfile / production.
+# (A future optimization is to export the fine-tuned model and serve it via the
+# lighter chronos-forecasting package instead of full AutoGluon.)
+-r requirements.txt
+autogluon.timeseries>=1.2
+# Predictive-maintenance serving (RUL + anomaly). AutoGluon already pulls these,
+# but list them so serving works even without the full AutoGluon install.
+xgboost>=2.0
+scikit-learn>=1.3
+joblib>=1.3
