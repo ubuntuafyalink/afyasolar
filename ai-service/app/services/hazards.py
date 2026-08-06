@@ -95,3 +95,35 @@ def hazard_indices(series: dict[str, list[float]], temporal: str = "monthly") ->
         "composite": composite,
         "normalization_version": NORMALIZATION_VERSION,
     }
+
+
+def hazard_trajectory(timestamps: list[str], series: dict[str, list[float]],
+                      temporal: str = "monthly") -> list[dict]:
+    """Per-timestep hazard indices aligned to ``timestamps``, for a forecast chart.
+
+    Unlike ``hazard_indices`` (which aggregates the whole horizon into one number
+    each), this returns one {heat, flood, storm, drought} per forecast step, using
+    the same ``index_from`` + bounds. Drought here is a per-step *dryness proxy*
+    (how far the step's precipitation falls below the "wet" reference) rather than
+    the horizon's dry-run/dry-month count, so it varies smoothly month to month.
+    """
+    daily = temporal == "daily"
+    flood_hi = FLOOD_BOUNDS_DAILY[1] if daily else FLOOD_BOUNDS_MONTHLY[1]
+    t2m = series.get("T2M_MAX", [])
+    precip = series.get("PRECTOTCORR", [])
+    wind = series.get("WS10M", [])
+
+    def at(xs: list[float], i: int) -> float | None:
+        return xs[i] if i < len(xs) else None
+
+    out: list[dict] = []
+    for i, ts in enumerate(timestamps):
+        h, p, w = at(t2m, i), at(precip, i), at(wind, i)
+        out.append({
+            "timestamp": ts,
+            "heat": 0 if h is None else index_from(h, *HEAT_BOUNDS),
+            "flood": 0 if p is None else index_from(p, 0.0, flood_hi),
+            "storm": 0 if w is None else index_from(w, *STORM_BOUNDS),
+            "drought": 0 if p is None else index_from(flood_hi - p, 0.0, flood_hi),
+        })
+    return out
