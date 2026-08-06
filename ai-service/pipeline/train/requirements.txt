@@ -1,0 +1,16 @@
+# AfyaSolar AI Engine - training deps.
+#
+# Climate forecasting (Chronos fine-tune) needs a GPU; free Google Colab is
+# enough. Predictive-maintenance training (RUL + anomaly) is CPU-only and fast.
+#
+# Install:  pip install -r pipeline/train/requirements.txt
+autogluon.timeseries>=1.2   # fine-tunes Chronos-Bolt (pulls torch, transformers, gluonts)
+pyyaml>=6.0
+pyarrow>=14.0
+pandas>=2.0
+
+# Predictive maintenance (CPU)
+xgboost>=2.0
+scikit-learn>=1.3
+joblib>=1.3
+shap>=0.44                  # optional: SHAP feature attribution for RUL (falls back to gain)
