@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Data + model artifacts (large / regenerable) - never commit
+pipeline/data/raw/
+pipeline/datasets/processed/
+pipeline/train/outputs/
+models/
+*.parquet
+*.ckpt
+*.safetensors
+
+# HuggingFace / caches
+.cache/
