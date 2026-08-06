@@ -9,10 +9,12 @@
 #   - Chronos-Bolt FineTuned (LoRA fine-tuned on our NASA series)
 
 model:
-  # AutoGluon shorthand for amazon/chronos-bolt-base (Apache-2.0 on HuggingFace).
-  # Use bolt_small for a faster/cheaper run, bolt_base for accuracy.
-  chronos_model: bolt_base
-  fine_tune: true
+  # AutoGluon shorthand for amazon/chronos-bolt-* (Apache-2.0 on HuggingFace).
+  # bolt_small = faster/cheaper (CPU-friendly), bolt_base = more accurate.
+  chronos_model: bolt_small
+  # fine_tune: false serves Chronos "as-is" (zero-shot) - no gradient training,
+  # no GPU. Set to true (with a GPU) to LoRA fine-tune on the NASA series later.
+  fine_tune: false
   fine_tune_steps: 2000
   fine_tune_lr: 1.0e-4
 

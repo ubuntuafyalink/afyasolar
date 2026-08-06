@@ -91,6 +91,8 @@ import { LogoutButton } from "@/components/logout-button"
 import { UserManagement } from "@/components/dashboard/user-management"
 import { TechnicianManagement } from "@/components/dashboard/technician-management"
 import { AdminPower } from "@/components/admin/intelligence/admin-power"
+import { AdminMaintenance } from "@/components/admin/intelligence/admin-maintenance"
+import { AdminAdvisory } from "@/components/admin/intelligence/admin-advisory"
 import AdminSolarCarbonCredits from "@/components/solar/admin-solar-carbon-credits"
 import { AdminCarbonCredits } from "@/components/afya-solar/admin-carbon-credits"
 import { InternalSystemTools } from "@/components/admin/internal-system-tools"
@@ -134,6 +136,8 @@ type SectionId =
   | 'climate-outlook'
   // Energy
   | 'solar-live-monitoring' // "Power"
+  | 'solar-maintenance' // "Maintenance"
+  | 'solar-advisory' // "Advisory"
   | 'afya-solar-portfolio-assessments' // "Energy Efficiency"
   // Updates
   | 'reports'
@@ -187,6 +191,8 @@ const navGroups: Record<NavGroup, { items: { id: SectionId; label: string; icon:
   energy: {
     items: [
       { id: 'solar-live-monitoring', label: 'Power', icon: PlugZap },
+      { id: 'solar-maintenance', label: 'Maintenance', icon: Wrench },
+      { id: 'solar-advisory', label: 'Advisory', icon: Sparkles },
       { id: 'afya-solar-portfolio-assessments', label: 'Energy Efficiency', icon: Gauge },
     ],
   },
@@ -516,6 +522,10 @@ export function AdminDashboard({ initialSection = "overview" }: AdminDashboardPr
             {activeSection === 'afya-solar-portfolio-billing' && <AdminPortfolioSolarBilling />}
 
             {activeSection === 'solar-live-monitoring' && <AdminPower />}
+
+            {activeSection === 'solar-maintenance' && <AdminMaintenance />}
+
+            {activeSection === 'solar-advisory' && <AdminAdvisory />}
 
 
             {activeSection === 'solar-carbon-credits' && <AdminCarbonCredits />}

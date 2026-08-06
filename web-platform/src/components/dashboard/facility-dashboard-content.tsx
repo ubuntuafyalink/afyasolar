@@ -141,6 +141,14 @@ const ReportsSection = dynamic(
   () => import("@/components/dashboard/facility/reports-section").then((m) => m.ReportsSection),
   { loading: () => <ChartSkeleton />, ssr: false },
 )
+const MaintenanceSection = dynamic(
+  () => import("@/components/dashboard/facility/maintenance-section").then((m) => m.MaintenanceSection),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
+const AiAdvisoryCard = dynamic(
+  () => import("@/components/dashboard/facility/ai-advisory-card").then((m) => m.AiAdvisoryCard),
+  { loading: () => <ChartSkeleton />, ssr: false },
+)
 const AuditEnhancements = dynamic(
   () => import("@/components/dashboard/facility/audit-enhancements").then((m) => m.AuditEnhancements),
   { loading: () => <ChartSkeleton />, ssr: false },
@@ -1149,6 +1157,25 @@ export function FacilityDashboardContent({
                 region={facility?.region ?? null}
               />
             )}
+
+            {FACILITY_V2_ENABLED && currentActiveSection === 'maintenance' && (() => {
+              const sub = afyaSolarSubscriber
+              const dateStr = sub?.installationDate || sub?.subscriptionStartDate || sub?.createdAt
+              const t = dateStr ? new Date(dateStr).getTime() : NaN
+              const ageDays = Number.isNaN(t) ? undefined : Math.max(1, Math.floor((Date.now() - t) / 86_400_000))
+              const systemKw = sub?.packageRatedKw != null ? Number(sub.packageRatedKw) : undefined
+              return (
+                <div className="space-y-6">
+                  <AiAdvisoryCard
+                    facilityId={facilityId}
+                    region={facility?.region ?? null}
+                    systemKw={systemKw}
+                    ageDays={ageDays}
+                  />
+                  <MaintenanceSection facilityId={facilityId} systemKw={systemKw} ageDays={ageDays} />
+                </div>
+              )
+            })()}
 
             {FACILITY_V2_ENABLED && currentActiveSection === 'reports' && (
               <ReportsSection facilityId={facilityId} />

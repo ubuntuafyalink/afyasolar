@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
 import { useAdminPortfolioClimate } from "@/hooks/use-admin-portfolio-climate"
+import { AdminPortfolioForecastCard } from "@/components/admin/intelligence/admin-portfolio-forecast-card"
 import { projectCvi } from "@/lib/climate/nasa-power"
 import type { PortfolioFacility } from "@/lib/dashboard/admin-portfolio-types"
 
@@ -347,6 +348,9 @@ export function AdminClimateOutlook({
           </Card>
         )}
       </div>
+
+      {/* Forward-looking portfolio AI forecast (Chronos, served by the AI service) */}
+      <AdminPortfolioForecastCard />
 
       {/* Facility map (real OpenStreetMap tiles) */}
       <AdminFacilitiesLeafletMap facilities={facilities} />
