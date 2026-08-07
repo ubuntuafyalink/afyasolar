@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { useAdminPortfolioForecast } from "@/hooks/use-admin-portfolio-forecast"
@@ -132,11 +133,14 @@ export function AdminPortfolioForecastCard() {
         <AnimatePresence>{predicting ? <PredictingOverlay months={months} /> : null}</AnimatePresence>
 
         {isLoading ? (
-          <div className="space-y-2" aria-hidden>
-            <div className="h-48 animate-pulse rounded bg-muted" />
-            {HAZARD_SERIES.map((h) => (
-              <div key={h.key} className="h-5 animate-pulse rounded bg-muted" />
-            ))}
+          <div className="space-y-3">
+            <AiLoadingIndicator label="Forecasting climate hazards across all facilities…" />
+            <div className="space-y-2" aria-hidden>
+              <div className="h-48 animate-pulse rounded bg-muted" />
+              {HAZARD_SERIES.map((h) => (
+                <div key={h.key} className="h-5 animate-pulse rounded bg-muted" />
+              ))}
+            </div>
           </div>
         ) : isError || !agg ? (
           <p className="text-sm text-muted-foreground" role="status">

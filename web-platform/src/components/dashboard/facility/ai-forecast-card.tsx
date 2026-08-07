@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Sparkles, ChevronDown, ChevronRight } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { useAiForecast } from "@/hooks/use-ai-forecast"
@@ -104,11 +105,14 @@ export function AiForecastCard({
 
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className="space-y-2" aria-hidden>
-            <div className="h-48 animate-pulse rounded bg-muted" />
-            {HAZARD_SERIES.map((h) => (
-              <div key={h.key} className="h-5 animate-pulse rounded bg-muted" />
-            ))}
+          <div className="space-y-3">
+            <AiLoadingIndicator label="Forecasting climate & solar yield…" />
+            <div className="space-y-2" aria-hidden>
+              <div className="h-48 animate-pulse rounded bg-muted" />
+              {HAZARD_SERIES.map((h) => (
+                <div key={h.key} className="h-5 animate-pulse rounded bg-muted" />
+              ))}
+            </div>
           </div>
         ) : isError ? (
           <p className="text-sm text-muted-foreground" role="status">

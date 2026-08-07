@@ -3,6 +3,7 @@
 import { Sparkles, BatteryWarning, Activity, ShieldAlert } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { useAdminAdvisory } from "@/hooks/use-admin-advisory"
 
 const STATUS_COLOR = {
@@ -72,10 +73,11 @@ export function AdminAdvisory() {
 
       {isLoading ? (
         <div className="space-y-4">
+          <AiLoadingIndicator label="Preparing fleet briefing across all facilities…" />
           <div className="h-28 animate-pulse rounded-lg bg-muted" aria-hidden />
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3" aria-hidden>
             {[0, 1, 2].map((i) => (
-              <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" aria-hidden />
+              <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
             ))}
           </div>
         </div>

@@ -22,6 +22,9 @@ export async function fetchAiAdvisoryServer(args: {
   lon?: number
   ageDays?: number
   systemKw?: number
+  batteryLevel?: number
+  lang?: "en" | "sw"
+  medical?: Record<string, unknown>
   timeoutMs?: number
 }): Promise<AiAdvisory> {
   const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
@@ -37,6 +40,9 @@ export async function fetchAiAdvisoryServer(args: {
         lon: args.lon,
         age_days: args.ageDays != null ? Math.round(args.ageDays) : undefined,
         system_kw: args.systemKw,
+        battery_level: args.batteryLevel,
+        lang: args.lang,
+        medical: args.medical,
       }),
       signal: controller.signal,
       cache: "no-store",
