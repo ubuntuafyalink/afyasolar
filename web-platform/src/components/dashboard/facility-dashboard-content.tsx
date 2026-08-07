@@ -1164,6 +1164,23 @@ export function FacilityDashboardContent({
               const t = dateStr ? new Date(dateStr).getTime() : NaN
               const ageDays = Number.isNaN(t) ? undefined : Math.max(1, Math.floor((Date.now() - t) / 86_400_000))
               const systemKw = sub?.packageRatedKw != null ? Number(sub.packageRatedKw) : undefined
+              // Compact this facility's medical-equipment load for the advisory.
+              const meu = persistedMeuSummary as MeuSummary | null
+              const medical = meu
+                ? {
+                    total_daily_load: meu.totalDailyLoad,
+                    peak_load_kw: meu.peakLoadKw,
+                    criticality: {
+                      critical: meu.criticalityBreakdown?.critical,
+                      essential: meu.criticalityBreakdown?.essential,
+                      non_essential: meu.criticalityBreakdown?.nonEssential,
+                    },
+                    top_critical_devices: (meu.topDevices ?? [])
+                      .filter((d) => d.criticality === "critical")
+                      .map((d) => d.name)
+                      .slice(0, 3),
+                  }
+                : undefined
               return (
                 <div className="space-y-6">
                   <AiAdvisoryCard
@@ -1171,6 +1188,8 @@ export function FacilityDashboardContent({
                     region={facility?.region ?? null}
                     systemKw={systemKw}
                     ageDays={ageDays}
+                    batteryLevel={batteryLevel}
+                    medical={medical}
                   />
                   <MaintenanceSection facilityId={facilityId} systemKw={systemKw} ageDays={ageDays} />
                 </div>

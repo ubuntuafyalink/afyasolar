@@ -3,6 +3,7 @@
 import { Wrench, BatteryWarning, Activity, Gauge } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { useAdminMaintenance } from "@/hooks/use-admin-maintenance"
 
 const STATUS_COLOR = {
@@ -60,10 +61,13 @@ export function AdminMaintenance() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" aria-hidden />
-          ))}
+        <div className="space-y-3">
+          <AiLoadingIndicator label="Analyzing battery life & anomalies across the fleet…" />
+          <div className="grid gap-3 sm:grid-cols-3" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
         </div>
       ) : isError || !agg ? (
         <Card>

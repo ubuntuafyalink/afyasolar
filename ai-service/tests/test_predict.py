@@ -99,17 +99,31 @@ def test_predict_maintenance_rejects_empty_facility():
     assert r.status_code == 422  # pydantic min_length
 
 
-def test_predict_advisory_returns_advisory():
-    # Composes climate (best-effort) + maintenance (best-effort), then the LLM/
-    # fallback advisory. Always 200: legs are optional and the fallback is keyless.
-    r = client.post("/predict/advisory",
-                    json={"facility_id": "fac-1", "lat": -6.79, "lon": 39.21,
-                          "age_days": 700, "system_kw": 6})
+def test_predict_advisory_returns_facility_advisory():
+    # Single-facility operations advisory: power/climate/medical/health, with the
+    # medical load driving an energy-balance hint. Always 200 (legs optional, keyless).
+    r = client.post("/predict/advisory", json={
+        "facility_id": "fac-1", "lat": -6.79, "lon": 39.21,
+        "age_days": 700, "system_kw": 6, "battery_level": 62,
+        "medical": {"total_daily_load": 9.5, "peak_load_kw": 2.1,
+                    "criticality": {"critical": 3, "essential": 5, "non_essential": 4},
+                    "top_critical_devices": ["Vaccine fridge", "Oxygen concentrator"]},
+    })
     assert r.status_code == 200
     j = r.json()
     assert isinstance(j["advisory"], str) and j["advisory"].strip()
     assert j["source"] in ("llm", "fallback")
-    assert "inputs" in j and "generated_at" in j
+    assert j["inputs"].get("medical") is not None
+    assert "generated_at" in j
+
+
+def test_predict_advisory_swahili():
+    r = client.post("/predict/advisory", json={
+        "facility_id": "fac-1", "lang": "sw",
+        "medical": {"total_daily_load": 4.0, "criticality": {"critical": 2}},
+    })
+    assert r.status_code == 200
+    assert r.json()["advisory"].strip()
 
 
 def test_predict_advisory_rejects_empty_facility():

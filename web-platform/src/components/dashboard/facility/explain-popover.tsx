@@ -5,6 +5,7 @@ import { Sparkles } from "lucide-react"
 import { m } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
+import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { LazyMotionProvider } from "@/components/motion/lazy-motion-provider"
 import { useAiExplain } from "@/hooks/use-ai-explain"
@@ -124,11 +125,13 @@ export function ExplainPopover({
           </div>
 
           {isLoading ? (
-            <div className="space-y-1.5" aria-live="polite">
-              <div className="h-3 w-full animate-pulse rounded bg-muted" />
-              <div className="h-3 w-11/12 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-3/5 animate-pulse rounded bg-muted" />
-              <span className="sr-only">{t("loading")}</span>
+            <div className="space-y-2">
+              <AiLoadingIndicator label={t("loading")} className="px-2 py-1.5" />
+              <div className="space-y-1.5" aria-hidden>
+                <div className="h-3 w-full animate-pulse rounded bg-muted" />
+                <div className="h-3 w-11/12 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-3/5 animate-pulse rounded bg-muted" />
+              </div>
             </div>
           ) : isError || !data ? (
             <p className="text-xs text-muted-foreground">{t("error")}</p>

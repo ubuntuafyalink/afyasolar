@@ -9,13 +9,14 @@ Both compose the existing pure/model services into one web-facing call.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app import config
 from app.services.hazards import hazard_indices, hazard_trajectory
-from app.services.llm import build_advisory, build_portfolio_advisory
+from app.services.llm import build_facility_advisory, build_portfolio_advisory
 from app.services.locations import location_exists, nearest_location
 
 router = APIRouter(prefix="/predict", tags=["predict"])
@@ -126,16 +127,22 @@ class AdvisoryPredictRequest(BaseModel):
     lon: float | None = Field(None, ge=-180, le=180)
     age_days: int = Field(400, ge=1, description="System age in days (from install date).")
     system_kw: float = Field(5.0, gt=0, description="Installed PV capacity.")
+    lang: str = Field("en", pattern="^(en|sw)$")
+    battery_level: float | None = Field(None, ge=0, le=100, description="Current battery SoC %.")
+    medical: dict[str, Any] | None = Field(
+        None, description="Compact medical-load summary (total_daily_load, peak_load_kw, "
+                          "criticality, top_critical_devices).")
 
 
-@router.post("/advisory", summary="Plain-language advisory composing climate + maintenance for a facility")
+@router.post("/advisory", summary="Facility operations advisory (power/climate/medical/health)")
 def predict_advisory(req: AdvisoryPredictRequest) -> dict:
-    """Compose the engine's outputs (climate hazards + solar yield + battery RUL +
-    anomalies) for one facility and turn them into a manager-facing advisory.
+    """Compose this facility's own signals - solar yield + climate hazards + battery
+    RUL/anomalies + its medical-equipment load - into a single-facility operations
+    advisory (power, climate, medical equipment, system health & energy security).
 
-    Both the climate and maintenance legs are best-effort: a missing model or a
-    forecast error is swallowed so the advisory still returns from whatever inputs
-    are available (and works keyless via the rule-based fallback in ``build_advisory``).
+    Every leg is best-effort: a missing model is swallowed so the advisory still
+    returns from whatever is available (and works keyless via the rule-based
+    fallback). It never references other facilities or the wider network.
     """
     context: dict = {"facility_id": req.facility_id}
     inputs: dict = {}
@@ -175,7 +182,27 @@ def predict_advisory(req: AdvisoryPredictRequest) -> dict:
         except Exception:  # noqa: BLE001 - maintenance is optional; never fail the advisory
             pass
 
-    result = build_advisory(context)
+    # 3. Power: current battery level (if the app has a live reading).
+    if req.battery_level is not None:
+        context["battery_level"] = req.battery_level
+        inputs["battery_level"] = req.battery_level
+
+    # 4. Medical equipment load + energy balance (does expected yield cover the load?).
+    if req.medical:
+        context["medical"] = req.medical
+        inputs["medical"] = req.medical
+        load = req.medical.get("total_daily_load")
+        expected = inputs.get("mean_daily_kwh")
+        if isinstance(load, (int, float)) and isinstance(expected, (int, float)):
+            balance = {
+                "expected_kwh": round(expected, 2),
+                "load_kwh": round(load, 2),
+                "covers_load": expected >= load,
+            }
+            context["energy_balance"] = balance
+            inputs["energy_balance"] = balance
+
+    result = build_facility_advisory(context, req.lang)
     result["inputs"] = inputs
     result["generated_at"] = datetime.now(timezone.utc).isoformat()
     return result
