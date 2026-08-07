@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { fetchAiAdvisory, type AiAdvisory } from "@/lib/ai/advisory-service"
+import { fetchAiAdvisory, type AiAdvisory, type AiAdvisoryMedical } from "@/lib/ai/advisory-service"
 
 export type UseAiAdvisoryArgs = {
   facilityId: string | null
@@ -10,16 +10,22 @@ export type UseAiAdvisoryArgs = {
   lon?: number
   ageDays?: number
   systemKw?: number
+  batteryLevel?: number
+  lang?: "en" | "sw"
+  medical?: AiAdvisoryMedical
   enabled?: boolean
 }
 
-/** LLM advisory for a facility via the internal /api/ai/advisory proxy. */
+/** Facility operations advisory via the internal /api/ai/advisory proxy. */
 export function useAiAdvisory(args: UseAiAdvisoryArgs) {
-  const { facilityId, lat, lon, ageDays, systemKw, enabled = true } = args
+  const { facilityId, lat, lon, ageDays, systemKw, batteryLevel, lang, medical, enabled = true } = args
   return useQuery<AiAdvisory>({
-    queryKey: ["ai-advisory", facilityId, lat ?? null, lon ?? null, ageDays ?? null, systemKw ?? null],
+    queryKey: [
+      "ai-advisory", facilityId, lat ?? null, lon ?? null, ageDays ?? null, systemKw ?? null,
+      batteryLevel ?? null, lang ?? "en", medical?.total_daily_load ?? null,
+    ],
     queryFn: () =>
-      fetchAiAdvisory({ facilityId: facilityId as string, lat, lon, ageDays, systemKw }),
+      fetchAiAdvisory({ facilityId: facilityId as string, lat, lon, ageDays, systemKw, batteryLevel, lang, medical }),
     enabled: enabled && !!facilityId,
     staleTime: 10 * 60 * 1000,
     retry: 1,

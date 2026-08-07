@@ -1,9 +1,12 @@
 /**
- * Server proxy for the AI service's LLM advisory. Reads AI_SERVICE_URL
- * server-side and POSTs to /predict/advisory. Session-gated like the other
- * AI routes.
+ * Server proxy for the FACILITY operations advisory (power / climate / medical /
+ * system health). Reads AI_SERVICE_URL server-side and POSTs to /predict/advisory.
+ * POST because the body carries the medical-load summary.
  *
- * Example: /api/ai/advisory?facility_id=abc&lat=-6.79&lon=39.21&age_days=700&system_kw=6
+ * Access control: a facility user can only get THEIR OWN facility's advisory
+ * (the session's facilityId overrides whatever is sent). Admins/technicians may
+ * request any facility_id. This is a single-facility advisory only — the
+ * network/fleet briefing lives at /api/admin/solar/advisory (admin-gated).
  */
 import { z } from "zod"
 import { getServerSession } from "next-auth"
@@ -13,42 +16,57 @@ import { AiAdvisoryServerError, fetchAiAdvisoryServer } from "@/lib/ai/advisory-
 
 export const runtime = "nodejs"
 
-const QuerySchema = z.object({
+const BodySchema = z.object({
   facility_id: z.string().min(1),
-  lat: z.coerce.number().min(-90).max(90).optional(),
-  lon: z.coerce.number().min(-180).max(180).optional(),
-  age_days: z.coerce.number().int().positive().optional(),
-  system_kw: z.coerce.number().positive().optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  lon: z.number().min(-180).max(180).optional(),
+  age_days: z.number().int().positive().optional(),
+  system_kw: z.number().positive().optional(),
+  battery_level: z.number().min(0).max(100).optional(),
+  lang: z.enum(["en", "sw"]).optional(),
+  medical: z.record(z.string(), z.unknown()).optional(),
 })
 
 function errorResponse(code: string, message: string, status: number) {
   return Response.json({ error: { code, message } }, { status })
 }
 
-export async function GET(request: Request) {
+export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
-  if (!session) return errorResponse("unauthorized", "Sign in required", 401)
+  if (!session?.user) return errorResponse("unauthorized", "Sign in required", 401)
 
-  const { searchParams } = new URL(request.url)
-  const parsed = QuerySchema.safeParse({
-    facility_id: searchParams.get("facility_id") ?? undefined,
-    lat: searchParams.get("lat") ?? undefined,
-    lon: searchParams.get("lon") ?? undefined,
-    age_days: searchParams.get("age_days") ?? undefined,
-    system_kw: searchParams.get("system_kw") ?? undefined,
-  })
+  const raw = await request.json().catch(() => null)
+  const parsed = BodySchema.safeParse(raw)
   if (!parsed.success) {
     return errorResponse(
-      "invalid_query",
+      "invalid_body",
       parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
       400,
     )
   }
 
-  const { facility_id, lat, lon, age_days, system_kw } = parsed.data
+  const data = parsed.data
+  // Ownership: a facility user is scoped to their own facility, regardless of
+  // what facility_id the client sent. Admin/technician may query any facility.
+  let facilityId = data.facility_id
+  if (session.user.role === "facility") {
+    if (!session.user.facilityId) {
+      return errorResponse("forbidden", "No facility is associated with this account", 403)
+    }
+    facilityId = session.user.facilityId
+  }
+
   try {
     const result = await fetchAiAdvisoryServer({
-      facilityId: facility_id, lat, lon, ageDays: age_days, systemKw: system_kw, timeoutMs: 60_000,
+      facilityId,
+      lat: data.lat,
+      lon: data.lon,
+      ageDays: data.age_days,
+      systemKw: data.system_kw,
+      batteryLevel: data.battery_level,
+      lang: data.lang,
+      medical: data.medical,
+      timeoutMs: 60_000,
     })
     return Response.json(result, { headers: { "Cache-Control": "private, max-age=300" } })
   } catch (err) {

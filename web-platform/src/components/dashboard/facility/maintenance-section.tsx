@@ -3,6 +3,7 @@
 import { Wrench, BatteryWarning, Activity, ShieldCheck } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { cn } from "@/lib/utils"
 import { useAiMaintenance } from "@/hooks/use-ai-maintenance"
 import { ExplainPopover, type ExplainDriver } from "./explain-popover"
@@ -87,8 +88,9 @@ export function MaintenanceSection({
       {isLoading ? (
         <Card>
           <CardContent className="space-y-3 p-6">
-            <div className="h-24 animate-pulse rounded bg-muted" />
-            <div className="h-16 animate-pulse rounded bg-muted" />
+            <AiLoadingIndicator label="Analyzing equipment health…" />
+            <div className="h-24 animate-pulse rounded bg-muted" aria-hidden />
+            <div className="h-16 animate-pulse rounded bg-muted" aria-hidden />
           </CardContent>
         </Card>
       ) : isError || !data || !status ? (
