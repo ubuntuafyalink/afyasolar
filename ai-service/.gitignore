@@ -19,5 +19,11 @@ models/
 *.ckpt
 *.safetensors
 
+# Large fetched NASA POWER datasets (kept local; regenerable via pipeline/data/).
+# Small config/docs (grid_locations.json, *.info.json) stay tracked.
+dataset/*.csv
+dataset/csv/
+dataset/raw/
+
 # HuggingFace / caches
 .cache/
