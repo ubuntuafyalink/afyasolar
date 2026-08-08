@@ -7,11 +7,18 @@ API process boots for /health even before the training stack is installed.
 """
 from __future__ import annotations
 
+import threading
 from functools import lru_cache
 
 import pandas as pd
 
 from app import config
+
+# AutoGluon's TimeSeriesPredictor is not safe under concurrent predict() calls
+# (its trainer mutates shared model state; parallel requests fail with
+# "Following models failed to predict"). Inference is CPU-bound anyway, so all
+# predictions are serialized behind this lock.
+_PREDICT_LOCK = threading.Lock()
 
 
 @lru_cache(maxsize=1)
@@ -97,6 +104,17 @@ def _resolve_model(predictor, pref: str) -> str | None:
 
 def forecast_location(horizon: str, location_id: str,
                       variables: list[str] | None = None) -> dict:
+    """Forecast a location's variables. Results are cached per (horizon,
+    location, variables): the model and context data are fixed for the process
+    lifetime, so a location's forecast is deterministic - and fleet callers
+    (e.g. the portfolio outlook) hit the same few grid points repeatedly."""
+    return _forecast_location_cached(
+        horizon, location_id, tuple(variables) if variables else None)
+
+
+@lru_cache(maxsize=128)
+def _forecast_location_cached(horizon: str, location_id: str,
+                              variables: tuple[str, ...] | None = None) -> dict:
     from autogluon.timeseries import TimeSeriesDataFrame
 
     suffix = "D" if horizon == "daily" else "M"
@@ -117,7 +135,8 @@ def forecast_location(horizon: str, location_id: str,
     )
     predictor = _load_predictor(horizon)
     model = _resolve_model(predictor, config.CLIMATE_MODEL)
-    predictions = predictor.predict(tsdf, model=model).reset_index()
+    with _PREDICT_LOCK:
+        predictions = predictor.predict(tsdf, model=model).reset_index()
     model_used = model or predictor.model_best
 
     out: dict[str, list[dict]] = {}
