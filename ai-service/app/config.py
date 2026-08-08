@@ -44,6 +44,11 @@ LOCATIONS_PATH = Path(os.getenv("AI_ENGINE_LOCATIONS", str(PIPELINE / "data" / "
 
 HORIZONS = ("daily", "monthly")
 
+# Pre-load the horizon predictors in a background thread at startup so the
+# first forecast request after a restart doesn't pay the (potentially >60s)
+# model-load cost inside a web proxy's timeout window. Set to 0 to disable.
+WARM_START = os.getenv("AI_ENGINE_WARM_START", "1").lower() not in ("0", "false", "no")
+
 # Predictive-maintenance model artifacts (Phase 3).
 RUL_MODEL_PATH = Path(os.getenv(
     "AI_ENGINE_RUL_MODEL", str(MODEL_DIR / "rul" / "model.json")))

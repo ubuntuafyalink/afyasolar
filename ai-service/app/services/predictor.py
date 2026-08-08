@@ -21,6 +21,11 @@ from app.services.artifacts import data_base
 # predictions are serialized behind this lock.
 _PREDICT_LOCK = threading.Lock()
 
+# Serializes predictor loading: lru_cache misses are not atomic, so without
+# this the startup warm-up thread and a concurrent request could both load the
+# same multi-GB predictor.
+_LOAD_LOCK = threading.Lock()
+
 
 @lru_cache(maxsize=1)
 def _model_base():
@@ -109,6 +114,26 @@ def _resolve_model(predictor, pref: str) -> str | None:
     return None  # not found -> fall back to best
 
 
+def warm_start() -> None:
+    """Pre-load each horizon's predictor + context so the first request after a
+    restart is fast (a cold load can exceed web-proxy timeouts). Runs in a
+    daemon thread from the app lifespan; must never raise. Monthly first - it
+    is the horizon the Climate Outlook UI serves."""
+    from app.services.artifacts import set_warm_state
+
+    for horizon in ("monthly", "daily"):
+        set_warm_state(horizon, "warming")
+        try:
+            data_base()  # resolve/download the dataset snapshot (no-op if unset)
+            with _LOAD_LOCK:
+                _load_predictor(horizon)
+            _load_context(horizon)
+            set_warm_state(horizon, "ready")
+        except Exception:  # noqa: BLE001 - warm-up is best-effort; the first
+            # request will retry the load and surface the real error as a 503.
+            set_warm_state(horizon, "failed")
+
+
 def forecast_location(horizon: str, location_id: str,
                       variables: list[str] | None = None) -> dict:
     """Forecast a location's variables. Results are cached per (horizon,
@@ -140,7 +165,8 @@ def _forecast_location_cached(horizon: str, location_id: str,
     tsdf = TimeSeriesDataFrame.from_data_frame(
         sub, id_column="item_id", timestamp_column="timestamp"
     )
-    predictor = _load_predictor(horizon)
+    with _LOAD_LOCK:
+        predictor = _load_predictor(horizon)
     model = _resolve_model(predictor, config.CLIMATE_MODEL)
     with _PREDICT_LOCK:
         predictions = predictor.predict(tsdf, model=model).reset_index()
