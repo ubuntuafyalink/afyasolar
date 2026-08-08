@@ -23,6 +23,21 @@ def test_hazards_endpoint():
     assert body["heat"] > 0 and body["storm"] > 0
 
 
+def test_hazards_endpoint_precip_unit():
+    # Chronos-style monthly totals: without the unit flag they pin flood/drought
+    # (the historical bug); with precip_unit="mm_per_month" they normalize sanely.
+    body = {
+        "series": {"PRECTOTCORR": [90.0, 15.0, 5.0, 200.0]},
+        "temporal": "monthly",
+        "timestamps": ["2025-01-01", "2025-02-01", "2025-03-01", "2025-04-01"],
+    }
+    pinned = client.post("/hazards", json={**body, "precip_unit": "mm_per_day"}).json()
+    assert pinned["flood"] == 100 and pinned["drought"] == 0
+    fixed = client.post("/hazards", json={**body, "precip_unit": "mm_per_month"}).json()
+    assert 0 < fixed["flood"] < 100     # peak 200/30 = 6.67 mm/day -> 44
+    assert fixed["drought"] > 0         # Feb 0.54 + Mar 0.16 mm/day dry -> 2/12
+
+
 def test_yield_endpoint():
     r = client.post("/yield", json={"irradiance_psh": [5.5, 6.0], "system_kw": 4.2})
     assert r.status_code == 200
@@ -34,10 +49,12 @@ def test_yield_rejects_bad_system():
     assert r.status_code == 422  # pydantic gt=0 validation
 
 
-def test_forecast_requires_model():
-    # Use a horizon with no trained model (daily is not built in this setup) so the
-    # guard is exercised deterministically whether or not other horizons exist.
-    r = client.post("/forecast", json={"location_id": "tz-2", "horizon": "daily"})
+def test_forecast_requires_model(monkeypatch, tmp_path):
+    # Point MODEL_DIR at an empty dir so the missing-model guard fires
+    # deterministically, whichever horizons are actually built on this machine.
+    from app import config
+    monkeypatch.setattr(config, "MODEL_DIR", tmp_path / "no-models")
+    r = client.post("/forecast", json={"location_id": "ea_m7_39", "horizon": "daily"})
     assert r.status_code == 503  # no trained Chronos predictor for this horizon
 
 
