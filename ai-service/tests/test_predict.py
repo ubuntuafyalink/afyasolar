@@ -25,17 +25,31 @@ def test_hazard_trajectory_shape_and_bounds():
     assert traj[2]["flood"] == 100 and traj[2]["drought"] == 0
 
 
+def test_hazard_trajectory_monthly_totals():
+    # Chronos monthly series are monthly-total mm; with precip_unit="mm_per_month"
+    # a 200 mm March (~6.5 mm/day) must NOT saturate flood, and the dryness proxy
+    # must vary smoothly instead of pinning at 0 for every wet month.
+    ts = ["2025-01-01", "2025-02-01", "2025-03-01"]
+    series = {"PRECTOTCORR": [0.0, 8.0, 200.0]}
+    traj = hazard_trajectory(ts, series, temporal="monthly", precip_unit="mm_per_month")
+    assert traj[0]["flood"] == 0 and traj[0]["drought"] == 100
+    assert traj[1]["flood"] == 2            # 8/28 = 0.29 mm/day
+    assert traj[2]["flood"] == 43           # 200/31 = 6.45 mm/day in [0,15]
+    assert traj[2]["drought"] == 57         # 15 - 6.45 over [0,15] -> smooth, not 0
+
+
 def test_nearest_location_dar_es_salaam():
-    # tz-2 is Dar es Salaam at (-6.79, 39.21); an exact hit -> ~0 km.
+    # On the 275-point East-Africa grid, Dar es Salaam resolves to ea_m7_39
+    # (grid spacing is ~1 deg, so the snap distance stays well under a cell).
     loc_id, dist = nearest_location(-6.79, 39.21)
-    assert loc_id == "tz-2"
-    assert dist < 1.0
+    assert loc_id == "ea_m7_39"
+    assert dist < 80.0
 
 
 def test_nearest_location_picks_closest_not_arbitrary():
-    # A point near Arusha (-3.39, 36.68 = tz-1) should resolve there.
+    # A point near Arusha should resolve to its own grid cell, not Dar's.
     loc_id, _ = nearest_location(-3.4, 36.7)
-    assert loc_id == "tz-1"
+    assert loc_id == "ea_m3_37"
 
 
 def test_haversine_zero_distance():
@@ -43,7 +57,7 @@ def test_haversine_zero_distance():
 
 
 def test_location_exists():
-    assert location_exists("tz-2")
+    assert location_exists("ea_m7_39")
     assert not location_exists("does-not-exist")
 
 
