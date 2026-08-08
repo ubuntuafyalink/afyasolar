@@ -77,10 +77,15 @@ def predict_climate(req: ClimatePredictRequest) -> dict:
         timestamps = timestamps[:req.months]
 
     temporal = "daily" if req.horizon == "daily" else "monthly"
-    hazards = hazard_indices(series, temporal)
+    # Chronos monthly series carry monthly-total precipitation (the dataset sums
+    # PRECTOTCORR); declare it so the v1 mm/day bounds apply to converted values.
+    precip_unit = "mm_per_month" if temporal == "monthly" else "mm_per_day"
+    hazards = hazard_indices(series, temporal,
+                             precip_unit=precip_unit, timestamps=timestamps)
 
     # Per-step hazard trajectory (for the forecast chart), aligned to timestamps.
-    hazards_monthly = hazard_trajectory(timestamps, series, temporal)
+    hazards_monthly = hazard_trajectory(timestamps, series, temporal,
+                                        precip_unit=precip_unit)
 
     result = {
         "location_id": location_id,
@@ -161,7 +166,9 @@ def predict_advisory(req: AdvisoryPredictRequest) -> dict:
             forecast = forecast_location("monthly", location_id)["forecast"]
             series = {var: [pt["mean"] for pt in pts if "mean" in pt]
                       for var, pts in forecast.items()}
-            hazards = hazard_indices(series, "monthly")
+            timestamps = [pt["timestamp"] for pt in next(iter(forecast.values()), [])]
+            hazards = hazard_indices(series, "monthly",
+                                     precip_unit="mm_per_month", timestamps=timestamps)
             context["hazards"] = hazards
             inputs["hazards"] = hazards
             irradiance = series.get("ALLSKY_SFC_SW_DWN")
