@@ -17,8 +17,7 @@ from app import config
 
 @lru_cache(maxsize=1)
 def _locations() -> list[dict]:
-    path = config.PIPELINE / "data" / "locations.json"
-    return json.loads(path.read_text(encoding="utf-8"))["locations"]
+    return json.loads(config.LOCATIONS_PATH.read_text(encoding="utf-8"))["locations"]
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

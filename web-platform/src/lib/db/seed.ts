@@ -17,6 +17,10 @@ import * as path from "path"
 
 try {
   require("dotenv").config()
+  // `.env.local` must win, matching Next.js precedence. Without this a local
+  // override is ignored and this seeder writes fabricated telemetry into the
+  // `.env` (production) database.
+  require("dotenv").config({ path: ".env.local", override: true })
 } catch {
   const envPath = path.join(process.cwd(), ".env")
   if (fs.existsSync(envPath)) {
@@ -39,6 +43,7 @@ import { eq, like } from "drizzle-orm"
 import { randomUUID } from "crypto"
 import * as schema from "./schema"
 import { deviceTelemetry, deviceHealth, type DeviceTelemetry } from "./schema-telemetry"
+import { assertLocalDatabase } from "./load-env"
 
 // ---------------------------------------------------------------------------
 // Pure, deterministic generation (unit-tested in seed.test.ts)
@@ -145,6 +150,9 @@ function getSSLConfig() {
 }
 
 async function seed() {
+  // This seeder writes fabricated telemetry. Never let it reach production.
+  assertLocalDatabase("seed telemetry")
+
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || "localhost",
     port: parseInt(process.env.DB_PORT || "4000"),

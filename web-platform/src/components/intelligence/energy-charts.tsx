@@ -36,11 +36,14 @@ export function ChartFallback({ message }: { message: string }) {
 }
 
 export function LoadBreakdownBarChart({ meu }: { meu: MeuSummary | null }) {
-  const data =
-    meu?.topDevices.map((d) => ({
-      name: d.name.length > 18 ? `${d.name.slice(0, 16)}…` : d.name,
-      kwh: Number(d.dailyKwh.toFixed(2)),
-    })) ?? []
+  // `meu` is typed non-null-safe on topDevices, but it is hydrated from a
+  // persisted assessment payload, so an older or partial snapshot can arrive
+  // without the field. Guard the array (and each numeric) rather than let one
+  // legacy row crash the whole Energy & Cost Insights panel.
+  const data = (meu?.topDevices ?? []).map((d) => ({
+    name: d.name?.length > 18 ? `${d.name.slice(0, 16)}…` : d.name ?? "Unknown",
+    kwh: Number((Number(d.dailyKwh) || 0).toFixed(2)),
+  }))
 
   if (!data.length) {
     return <ChartFallback message="Enter devices to see load breakdown by equipment." />
