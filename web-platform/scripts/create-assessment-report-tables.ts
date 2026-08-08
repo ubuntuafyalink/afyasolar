@@ -1,9 +1,13 @@
 import fs from "fs"
 import path from "path"
 import mysql from "mysql2/promise"
-import dotenv from "dotenv"
 
-dotenv.config({ path: path.join(process.cwd(), ".env") })
+import { loadEnv } from "../src/lib/db/load-env"
+
+// Loads .env then .env.local with override, matching Next.js precedence. The
+// previous `.env`-only load meant a local run silently targeted the production
+// database even when .env.local pointed at localhost.
+loadEnv()
 
 async function run() {
   const migrationPath = path.join(
@@ -24,6 +28,8 @@ async function run() {
 
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST,
+    // Was omitted, so this silently defaulted to 3306 regardless of DB_PORT.
+    port: Number(process.env.DB_PORT) || 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,

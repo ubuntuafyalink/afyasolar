@@ -38,10 +38,13 @@ def _seasonal(day: int, base: float, amp: float, phase: float = 0.0) -> float:
     return base + amp * math.sin(2 * math.pi * (day + phase) / 365.0)
 
 
-def simulate_facility(fac_idx: int, days: int, seed: int) -> pd.DataFrame:
+def simulate_facility(fac_idx: int, days: int, seed: int,
+                      system_kw: float | None = None) -> pd.DataFrame:
     rng = np.random.RandomState(seed + fac_idx)
 
-    system_kw = float(rng.choice([2.0, 4.2, 6.0, 10.0]))
+    # Use the caller's installed capacity when given (serving path); otherwise
+    # pick one at random (training generates a diverse fleet).
+    system_kw = float(system_kw) if system_kw else float(rng.choice([2.0, 4.2, 6.0, 10.0]))
     batt_kwh = system_kw * rng.uniform(2.2, 3.0)          # nameplate storage
     load_factor = rng.uniform(2.5, 3.6)                   # daily load, kWh per installed kW
     night_fraction = rng.uniform(0.35, 0.45)             # share of load served from battery

@@ -3,7 +3,7 @@
 ## Overview
 
 AfyaSolar Intelligence is an open-source project stewarded by **Ubuntu Afyalink Company
-Limited** (the "Maintainer"). It is released under the [Apache License 2.0](./LICENSE) and is
+Limited** (the "Maintainer"). It is released under the [MIT License](./LICENSE) and is
 intended to meet the [Digital Public Good](https://digitalpublicgoods.net/) standard.
 
 This document describes how decisions are made and how the project is maintained, in line with

@@ -7,8 +7,11 @@ import * as path from 'path'
 // Load environment variables from .env file
 // This is needed for standalone scripts (not running through Next.js)
 try {
-  // Try to use dotenv if available
+  // Try to use dotenv if available. `.env.local` must win, matching Next.js
+  // precedence — without the second call a local override is ignored and this
+  // script silently targets the `.env` (production) database.
   require('dotenv').config()
+  require('dotenv').config({ path: '.env.local', override: true })
 } catch (error) {
   // If dotenv is not installed, manually load .env file
   const envPath = path.join(process.cwd(), '.env')

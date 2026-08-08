@@ -16,6 +16,9 @@ import * as path from 'path'
 
 try {
   require('dotenv').config()
+  // `.env.local` must win, matching Next.js precedence — otherwise a local
+  // override is ignored and this script writes into the `.env` database.
+  require('dotenv').config({ path: '.env.local', override: true })
 } catch (error) {
   const envPath = path.join(process.cwd(), '.env')
   if (fs.existsSync(envPath)) {

@@ -201,6 +201,7 @@ const en: Messages = {
   "nav.assistant": "Assistant",
   "nav.channels": "Channels",
   "nav.climate-outlook": "Climate Outlook",
+  "nav.maintenance": "Maintenance",
   "nav.help": "Help",
 
   // Dashboard shell chrome
@@ -669,6 +670,7 @@ const sw: Messages = {
   "nav.assistant": "Msaidizi",
   "nav.channels": "Njia",
   "nav.climate-outlook": "Mtazamo wa Hali ya Hewa",
+  "nav.maintenance": "Matengenezo",
   "nav.help": "Msaada",
 
   // Sehemu kuu za dashibodi

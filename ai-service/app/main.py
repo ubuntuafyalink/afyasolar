@@ -14,7 +14,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from app import config
-from app.routers import advisory, energy, forecast, hazards, health, maintenance
+from app.routers import advisory, energy, explain, forecast, hazards, health, maintenance, predict
 
 app = FastAPI(
     title=config.API_TITLE,
@@ -32,3 +32,5 @@ app.include_router(hazards.router)    # /hazards   - heat/flood/storm/drought
 app.include_router(energy.router)     # /yield     - solar generation estimate
 app.include_router(maintenance.router)  # /maintenance/rul, /maintenance/anomaly
 app.include_router(advisory.router)   # /advisory  - LLM plain-language summary
+app.include_router(explain.router)    # /explain   - per-metric plain-language explainer
+app.include_router(predict.router)    # /predict/climate - combined forecast+hazards+yield

@@ -1,13 +1,14 @@
 {
   "name": "afyasolar",
   "version": "0.1.0",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "scripts": {
     "build": "next build --webpack",
     "dev": "next dev --webpack",
     "lint": "eslint src",
     "start": "next start",
     "type-check": "tsc --noEmit",
+    "db:whereami": "tsx scripts/whereami.ts",
     "db:migrate": "tsx src/lib/db/migrate.ts",
     "db:create-assessment-report-tables": "tsx scripts/create-assessment-report-tables.ts",
     "db:ensure-efficiency-climate": "tsx src/lib/db/run-ensure-efficiency-climate-cli.ts",

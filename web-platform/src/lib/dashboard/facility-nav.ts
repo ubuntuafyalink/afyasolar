@@ -17,6 +17,7 @@ import {
   BarChart3,
   Satellite,
   LifeBuoy,
+  Wrench,
 } from "lucide-react"
 import { FACILITY_V2_ENABLED } from "@/lib/dashboard/facility-features"
 
@@ -39,6 +40,7 @@ export type NavSection =
   | "climate-outlook"
   | "fridge"
   | "power"
+  | "maintenance"
   | "reports"
   | "assistant"
   | "channels"
@@ -67,6 +69,7 @@ export const FACILITY_V2_NAV_ITEMS: { id: NavSection; label: string; icon: Lucid
   { id: "rcs", label: "Resilience Score", icon: BarChart3 },
   { id: "climate-outlook", label: "Climate Outlook", icon: Satellite },
   { id: "power", label: "Power", icon: PlugZap },
+  { id: "maintenance", label: "Maintenance", icon: Wrench },
   { id: "reports", label: "Reports", icon: ClipboardList },
   { id: "assistant", label: "Assistant", icon: Bot },
   { id: "channels", label: "Channels", icon: MessageCircle },
@@ -101,7 +104,7 @@ const GROUP_ORDER: NavGroupId[] = ["home", "resilience", "energy", "updates", "b
 const GROUP_MEMBERS: Record<NavGroupId, NavSection[]> = {
   home: ["overview"],
   resilience: ["child-services", "rcs", "climate-outlook"],
-  energy: ["power", "energy-efficiency"],
+  energy: ["power", "maintenance", "energy-efficiency"],
   updates: ["reports", "notifications", "assistant", "channels"],
   billing: ["bills-payment", "carbon-credits", "subscription", "package-selection"],
   support: ["help"],

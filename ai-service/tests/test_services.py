@@ -2,7 +2,8 @@
 import math
 
 from app.services.energy_yield import estimate_yield
-from app.services.hazards import hazard_indices, index_from
+from app.services.hazards import (DAYS_PER_MONTH_AVG, hazard_indices,
+                                  index_from, monthly_totals_to_daily_means)
 from app.services.maintenance_features import (ANOMALY_FEATURES,
                                                build_anomaly_features_rows)
 
@@ -19,6 +20,7 @@ def test_index_from_bounds_and_linearity():
 
 
 def test_hazard_indices_monthly():
+    # Default precip_unit="mm_per_day": NASA POWER monthly means, the v1 contract.
     h = hazard_indices(
         {"T2M_MAX": [31, 31], "PRECTOTCORR": [7.5, 0.0], "WS10M": [0, 15]},
         temporal="monthly",
@@ -41,6 +43,58 @@ def test_hazard_indices_missing_variables_are_zero():
     h = hazard_indices({}, temporal="monthly")
     assert h == {"heat": 0, "flood": 0, "storm": 0, "drought": 0,
                  "composite": 0, "normalization_version": "v1"}
+
+
+# ---- monthly-total precipitation (Chronos series, precip_unit="mm_per_month") --
+
+MONTH_STARTS_2025 = [f"2025-{m:02d}-01T00:00:00" for m in range(1, 13)]
+
+
+def test_monthly_totals_to_daily_means_exact_and_fallback():
+    # January has 31 days -> exact conversion when the timestamp is given.
+    assert monthly_totals_to_daily_means([310.0], ["2025-01-01T00:00:00"]) == [10.0]
+    # Without timestamps, the average month length is the divisor.
+    (approx,) = monthly_totals_to_daily_means([310.0])
+    assert abs(approx - 310.0 / DAYS_PER_MONTH_AVG) < 1e-9
+
+
+def test_hazard_indices_monthly_totals_realistic():
+    """Unit-consistency: realistic Tanzanian monthly totals (mm) must yield varied
+    flood/drought, not the pinned 100/0 the raw totals produce against mm/day bounds."""
+    totals = [90, 120, 180, 250, 60, 15, 5, 3, 10, 40, 110, 160]
+    h = hazard_indices(
+        {"T2M_MAX": [31] * 12, "PRECTOTCORR": totals, "WS10M": [5] * 12},
+        temporal="monthly", precip_unit="mm_per_month", timestamps=MONTH_STARTS_2025,
+    )
+    # Peak is April: 250 mm / 30 d = 8.33 mm/day in [0,15] -> 56.
+    assert h["flood"] == 56
+    assert 0 < h["flood"] < 100
+    # Dry months (< 1 mm/day): Jun 0.50, Jul 0.16, Aug 0.10, Sep 0.33 -> 4/12 -> 33.
+    assert h["drought"] == 33
+    assert h["normalization_version"] == "v1"
+    # Same totals WITHOUT the unit flag reproduce the bug shape (guards the contrast).
+    pinned = hazard_indices({"PRECTOTCORR": totals}, temporal="monthly")
+    assert pinned["flood"] == 100 and pinned["drought"] == 0
+
+
+def test_hazard_indices_monthly_totals_not_pinned():
+    # An extreme-but-real wet month (789 mm, the dataset's peak) may legitimately
+    # saturate flood, but stays in range and doesn't error.
+    h = hazard_indices({"PRECTOTCORR": [789.0]}, temporal="monthly",
+                       precip_unit="mm_per_month")
+    assert 0 <= h["flood"] <= 100
+    # A uniform ~100 mm/month (~3.3 mm/day) is unremarkable: low flood, no drought.
+    h = hazard_indices({"PRECTOTCORR": [100.0] * 12}, temporal="monthly",
+                       precip_unit="mm_per_month")
+    assert h["flood"] == 22
+    assert h["drought"] == 0
+
+
+def test_hazard_indices_daily_ignores_precip_unit():
+    series = {"PRECTOTCORR": [0, 0, 0, 0, 0, 5, 0]}
+    default = hazard_indices(series, temporal="daily")
+    flagged = hazard_indices(series, temporal="daily", precip_unit="mm_per_month")
+    assert default == flagged
 
 
 # ---- yield -----------------------------------------------------------------
