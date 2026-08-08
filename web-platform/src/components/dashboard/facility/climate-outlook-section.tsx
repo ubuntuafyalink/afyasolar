@@ -72,6 +72,8 @@ export function ClimateOutlookSection({
 
   const [coords, setCoords] = useState<Coords>(defaultCoords)
   const [locationLabel, setLocationLabel] = useState<string | null>(facilityName ?? region ?? null)
+  // Forecast window shared by the AI forecast card and the outlook report card.
+  const [aiMonths, setAiMonths] = useState(12)
   const [latInput, setLatInput] = useState(String(defaultCoords.lat))
   const [lonInput, setLonInput] = useState(String(defaultCoords.lon))
   const [preset, setPreset] = useState<RangePreset>("10y")
@@ -356,10 +358,10 @@ export function ClimateOutlookSection({
       ) : null}
 
       {/* Forward-looking AI forecast (Chronos, served by the AI service) */}
-      <AiForecastCard lat={coords.lat} lon={coords.lon} />
+      <AiForecastCard lat={coords.lat} lon={coords.lon} months={aiMonths} onMonthsChange={setAiMonths} />
 
       {/* What the forecast means: recommended actions or an explicit safe outlook */}
-      <ClimateOutlookReportCard lat={coords.lat} lon={coords.lon} />
+      <ClimateOutlookReportCard lat={coords.lat} lon={coords.lon} months={aiMonths} />
 
       {/* Per-hazard charts */}
       {showSkeleton ? (
