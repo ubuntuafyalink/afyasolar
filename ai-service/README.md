@@ -116,6 +116,15 @@ Chronos is public/Apache-2.0 — **no token needed to download or fine-tune it**
 Write scope) is only needed to **push your fine-tuned model** to a HF repo and to
 **deploy this service to a HuggingFace Space**.
 
+### Licensing of the models
+This repository's **code** is MIT (see the root `LICENSE`). The **fine-tuned
+climate weights are a derivative of `amazon/chronos-bolt-base`, which is
+Apache-2.0**, so those weights must be redistributed under Apache-2.0 with
+Amazon's copyright notice and a note that they were modified (Apache-2.0 §4).
+Publish them that way on HuggingFace. The predictive-maintenance models (RUL,
+anomaly) are trained from scratch on our own synthetic telemetry and carry no
+upstream obligation — release them MIT alongside the code.
+
 ## Deploy
 
 Build the container (or push to a HF Space — it uses the `Dockerfile` and port

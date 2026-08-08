@@ -202,7 +202,8 @@ Add valid `CLOUDINARY_*` variables to `.env`.
 
 ## License
 
-**Apache License 2.0** — see [`LICENSE`](./LICENSE).
+**MIT License** — see [`LICENSE`](../LICENSE) at the repository root (it covers both
+`web-platform/` and `ai-service/`).
 
 AfyaSolar Intelligence is developed by **Ubuntu Afyalink Company Limited** and is being
 open-sourced as part of the UNICEF Venture Fund (Climate) engagement,
