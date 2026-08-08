@@ -46,7 +46,7 @@ Metric = **WQL** (weighted quantile loss); AutoGluon reports `score_val` as *neg
 WQL, so **higher is better**. Success = `ChronosFineTuned` on top.
 
 > **Before you start:** `Runtime ▸ Change runtime type ▸ T4 GPU`.
-> You will upload `daily.parquet` and `monthly.parquet` (from `dataset/processed/`) in Step 3.
+> Training data is pulled straight from HuggingFace in Step 3 — nothing to upload.
 """)
 
 # ── Step 1 ───────────────────────────────────────────────────────────────────
@@ -67,13 +67,37 @@ print("✅ installed — restart runtime if prompted, then continue at Step 3")
 """)
 
 # ── Step 3 ───────────────────────────────────────────────────────────────────
-md("## Step 3 · Upload the processed series\nUpload **both** files from `dataset/processed/`: `daily.parquet` and `monthly.parquet` (~76 MB total).")
+md("## Step 3 · Download the processed series from HuggingFace\n"
+   "Pulls `daily.parquet` + `monthly.parquet` (~76 MB) from the public dataset repo\n"
+   "[`afyalink/afyasolar-nasa-power-east-africa`](https://huggingface.co/datasets/afyalink/afyasolar-nasa-power-east-africa)"
+   " — no token, nothing to upload.")
 code("""
-from google.colab import files
-import os
-up = files.upload()   # select daily.parquet AND monthly.parquet
+import os, shutil
+from huggingface_hub import hf_hub_download   # preinstalled on Colab; repo is public
+
+DATA_REPO = "afyalink/afyasolar-nasa-power-east-africa"
 for f in ["monthly.parquet", "daily.parquet"]:
-    print(f, "✓" if os.path.exists(f) else "❌ MISSING — upload it")
+    cached = hf_hub_download(DATA_REPO, f"processed/{f}", repo_type="dataset")
+    shutil.copy(cached, f)                    # later steps read bare working-dir names
+    print(f, f"{os.path.getsize(f)/1e6:.1f} MB", "OK")
+""")
+
+# ── Step 3b (optional) ───────────────────────────────────────────────────────
+md("## Step 3b · *(Optional)* Load the published model from HuggingFace\n"
+   "Skip when training from scratch. Downloads the currently-deployed\n"
+   "[`afyalink/afyasolar-chronos-48m-climate-ea-v1`](https://huggingface.co/afyalink/afyasolar-chronos-48m-climate-ea-v1)"
+   " (~1.4 GB) so you can evaluate it or compare its leaderboard against your retrain.")
+code("""
+RUN_OPTIONAL_LOAD = False   # flip to True to download + load the published model
+if RUN_OPTIONAL_LOAD:
+    from huggingface_hub import snapshot_download
+    from autogluon.timeseries import TimeSeriesPredictor
+    MODEL_REPO = "afyalink/afyasolar-chronos-48m-climate-ea-v1"
+    base = snapshot_download(MODEL_REPO)      # public - no token
+    published = {h: TimeSeriesPredictor.load(f"{base}/{h}") for h in ["monthly", "daily"]}
+    for h, p in published.items():
+        print(f"== published {h} ==")
+        print(p.leaderboard(silent=True).to_string(index=False))
 """)
 
 # ── Step 4 ───────────────────────────────────────────────────────────────────
@@ -267,6 +291,25 @@ from google.colab import files
 shutil.make_archive(MODEL_NAME, "zip", "models", MODEL_NAME)
 print(f"{MODEL_NAME}.zip ready")
 files.download(f"{MODEL_NAME}.zip")
+""")
+
+# ── Step 10 (optional) ───────────────────────────────────────────────────────
+md("## Step 10 · *(Optional)* Push the retrained model to HuggingFace\n"
+   "Publishes `models/afyasolar-chronos-48m-climate-ea-v1` back to the model repo so the\n"
+   "AI service (which serves via `AI_ENGINE_MODEL_REPO`) picks it up on its next restart.\n"
+   "Needs a Colab secret named `HF_TOKEN` with **Write** scope: key icon in the left\n"
+   "sidebar → *Add new secret* → enable notebook access. Never paste tokens into cells.")
+code("""
+PUSH_TO_HF = False   # flip to True to publish (overwrites files in the model repo)
+if PUSH_TO_HF:
+    from google.colab import userdata
+    from huggingface_hub import HfApi
+    token = userdata.get("HF_TOKEN")          # Colab secret - never hardcode
+    MODEL_REPO = "afyalink/afyasolar-chronos-48m-climate-ea-v1"
+    HfApi(token=token).upload_folder(
+        folder_path=f"models/{MODEL_NAME}", repo_id=MODEL_REPO, repo_type="model",
+        commit_message=f"retrain {MODEL_NAME} (Colab)")
+    print("pushed:", f"https://huggingface.co/{MODEL_REPO}")
 """)
 
 # ── Assemble notebook ────────────────────────────────────────────────────────
