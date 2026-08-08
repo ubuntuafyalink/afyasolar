@@ -20,6 +20,26 @@ function canAccessFacility(session: any, facilityId: string): boolean {
  * Query `assessmentCycleId`: when set, returns the latest snapshot **for that cycle** (join on
  * `facility_energy_assessments.assessment_cycle_id` / `facility_climate_assessments.assessment_cycle_id`).
  */
+/**
+ * Guarantees `payload` reaches the client as an object regardless of engine.
+ *
+ * The column is declared `json`, but MariaDB implements JSON as an alias for
+ * LONGTEXT, so mysql2 hands back a raw string there while MySQL/TiDB return a
+ * parsed object. Consumers read `payload.sizingSummary` directly, so without
+ * this the whole overview silently degrades to "N/A" on a MariaDB host — the
+ * default for most self-hosted deployments.
+ */
+function normalizePayload<T extends { payload?: unknown } | null>(row: T): T {
+  if (!row || typeof row.payload !== "string") return row
+  try {
+    return { ...row, payload: JSON.parse(row.payload) }
+  } catch {
+    // Malformed JSON in the column: leave it untouched rather than throw, so
+    // one bad row cannot take down the whole endpoint.
+    return row
+  }
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ facilityId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
@@ -72,8 +92,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             .limit(1),
     ])
 
-    const energyRow = latestEnergy[0] ?? null
-    const climateRow = latestClimate[0] ?? null
+    const energyRow = normalizePayload(latestEnergy[0] ?? null)
+    const climateRow = normalizePayload(latestClimate[0] ?? null)
 
     return NextResponse.json({
       success: true,

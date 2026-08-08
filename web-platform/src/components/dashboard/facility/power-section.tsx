@@ -72,11 +72,14 @@ export function PowerSection({
     sky: solar?.sky ?? "partly",
   }
 
+  // Provenance badge. Shown only when an assessment backs the figures — the
+  // climate-only fallback ("Based on Climate Outlook") added noise without
+  // telling the user anything actionable, so it is omitted instead.
   const badgeLabel = hasAssessment
     ? solar
       ? t("power.basedOnBoth")
       : t("power.basedOnEnergy")
-    : t("power.basedOnClimate")
+    : null
 
   return (
     <div className="space-y-4">
@@ -85,10 +88,12 @@ export function PowerSection({
           <h2 className="text-xl font-semibold text-foreground">{t("power.title")}</h2>
           <p className="text-sm text-muted-foreground">{t("power.subtitle")}</p>
         </div>
-        <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
-          <Satellite className="size-3" aria-hidden />
-          {badgeLabel}
-        </span>
+        {badgeLabel && (
+          <span className="inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
+            <Satellite className="size-3" aria-hidden />
+            {badgeLabel}
+          </span>
+        )}
       </div>
 
       <PowerLiveReadout facilityId={facilityId} batteryLevel={batteryLevel} inputs={inputs} />

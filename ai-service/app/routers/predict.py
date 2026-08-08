@@ -53,9 +53,12 @@ def predict_climate(req: ClimatePredictRequest) -> dict:
                  "(pipeline: fetch -> build -> finetune_chronos).")
 
     # 2. Forecast the raw NASA variables (Chronos).
-    from app.services.predictor import forecast_location
+    from app.services.predictor import deployed_model_name, forecast_location
     try:
-        forecast = forecast_location(req.horizon, location_id)["forecast"]
+        fc = forecast_location(req.horizon, location_id)
+        forecast = fc["forecast"]
+        model_used = fc.get("model_used")
+        model_name = deployed_model_name()
     except FileNotFoundError as err:
         raise HTTPException(503, str(err))
     except ValueError as err:
@@ -86,6 +89,8 @@ def predict_climate(req: ClimatePredictRequest) -> dict:
         "hazards": hazards,
         "hazards_monthly": hazards_monthly,
         "forecast_raw": forecast,
+        "model_used": model_used,
+        "model_name": model_name,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 

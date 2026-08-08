@@ -19,9 +19,22 @@ except ImportError:  # python-dotenv is optional; env vars still work without it
 # Where fine-tuned predictors and their context datasets live. Defaults point at
 # the in-repo pipeline outputs; override in production (e.g. a mounted volume or
 # a path populated from a HuggingFace model repo).
+# Optional: pull the climate model from a HuggingFace repo instead of a local dir
+# (portable production deploys). When set, it is snapshot-downloaded + cached and
+# used as the model base; otherwise MODEL_DIR (local files) is used.
+MODEL_REPO = os.getenv("AI_ENGINE_MODEL_REPO", "")
+
+# Which climate model to serve from the predictor:
+#   "finetuned" (default) | "zeroshot" | "best" (AutoGluon's top) | exact model name.
+CLIMATE_MODEL = os.getenv("AI_ENGINE_CLIMATE_MODEL", "finetuned")
+
 MODEL_DIR = Path(os.getenv("AI_ENGINE_MODEL_DIR", str(PIPELINE / "train" / "outputs")))
 PROCESSED_DIR = Path(os.getenv("AI_ENGINE_PROCESSED_DIR", str(PIPELINE / "datasets" / "processed")))
 DATA_FORMAT = os.getenv("AI_ENGINE_DATA_FORMAT", "parquet")  # parquet | csv
+
+# The location list nearest_location() maps facilities onto. Must match the
+# location ids present in PROCESSED_DIR (defaults to the in-repo training points).
+LOCATIONS_PATH = Path(os.getenv("AI_ENGINE_LOCATIONS", str(PIPELINE / "data" / "locations.json")))
 
 HORIZONS = ("daily", "monthly")
 

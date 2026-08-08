@@ -102,7 +102,7 @@ export function AdminPortfolioForecastCard() {
             Portfolio AI Forecast
           </CardTitle>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-            {agg ? `Chronos zero-shot · ${agg.facilitiesForecast} facilities` : "Chronos zero-shot"}
+            {agg ? `${agg.modelName ?? "Chronos"} · ${agg.facilitiesForecast} facilities` : "Chronos"}
           </span>
           {!isError ? (
             <div className="ml-auto flex items-center gap-1" role="group" aria-label="Forecast window (months ahead)">
