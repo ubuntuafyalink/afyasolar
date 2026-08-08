@@ -28,7 +28,9 @@ export async function fetchAiClimateForecastServer(args: {
 }): Promise<AiClimateForecast> {
   const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 60_000)
+  // Default gives headroom for a cold AI-service start: the first forecast
+  // after a restart can wait ~60-90s behind the predictor warm-up load.
+  const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 150_000)
   try {
     const res = await fetch(`${base}/predict/climate`, {
       method: "POST",
