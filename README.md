@@ -44,14 +44,14 @@ afyasolar/                 (this repo)
 ├── web-platform/          Next.js web application
 ├── ai-service/            FastAPI AI/ML service
 ├── .github/workflows/     CI (one job per project, path-scoped)
-├── LICENSE                Apache-2.0 (covers both projects)
+├── LICENSE                MIT (covers both projects)
 ├── CONTRIBUTING.md · GOVERNANCE.md · SECURITY.md · CODE_OF_CONDUCT.md
 └── README.md              (this file)
 ```
 
 ## Open source & DPG
 
-Licensed **Apache-2.0**. Built as a Digital Public Good candidate: open data
+Licensed **MIT**. Built as a Digital Public Good candidate: open data
 (NASA POWER), open-weights models (Chronos-Bolt, Groq), and a public,
 de-identified resilience data API. Governance and contribution guidelines are at
 the repository root and apply to both projects.
