@@ -60,6 +60,12 @@ uvicorn app.main:app --reload
 `pipeline/train/outputs/<horizon>/`. Install `requirements-serve.txt` to enable
 actual forecasting.
 
+**Zero local data:** a fresh clone serves full forecasts without copying any
+model or data files — set `AI_ENGINE_MODEL_REPO` and `AI_ENGINE_DATA_REPO` in
+`.env` (see below) and everything is pulled from HuggingFace and cached. The
+first forecast call downloads ~1.5 GB into `~/.cache/huggingface` (minutes);
+subsequent calls are instant.
+
 ## API endpoints
 
 | Method + path | Purpose | Needs a trained model? |
@@ -115,6 +121,32 @@ Chronos is public/Apache-2.0 — **no token needed to download or fine-tune it**
 (AutoGluon pulls `amazon/chronos-bolt-base` automatically). A token (`HF_TOKEN`,
 Write scope) is only needed to **push your fine-tuned model** to a HF repo and to
 **deploy this service to a HuggingFace Space**.
+
+### Serving straight from HuggingFace (zero local data)
+
+The deployed model and its context data are published publicly:
+
+- model — [`afyalink/afyasolar-chronos-48m-climate-ea-v1`](https://huggingface.co/afyalink/afyasolar-chronos-48m-climate-ea-v1)
+- dataset — [`afyalink/afyasolar-nasa-power-east-africa`](https://huggingface.co/datasets/afyalink/afyasolar-nasa-power-east-africa)
+
+Set both repos in `.env` and the service needs no local model folder, no
+processed parquets, and no locations file:
+
+```
+AI_ENGINE_MODEL_REPO=afyalink/afyasolar-chronos-48m-climate-ea-v1
+AI_ENGINE_DATA_REPO=afyalink/afyasolar-nasa-power-east-africa
+```
+
+Snapshots are cached in the standard HF cache and reused across restarts; only
+`processed/*` and `grid_locations.json` are fetched from the dataset repo (the
+raw CSV is skipped). No token is needed to serve — both repos are public;
+Write access matters only for publishing (`pipeline/data/hf_upload.py` or the
+notebook's push step). In repo mode `GET /health`'s `models_available` means
+"configured to serve from the repo" (verified against the cached snapshot once
+one exists) — the probe never downloads; the first forecast call does. On CI or
+offline boxes set `HF_HUB_OFFLINE=1` for deterministic 503s instead of network
+attempts. A retrained model pushed to the repo is picked up on the next process
+restart (each start resolves the latest revision).
 
 ### Licensing of the models
 This repository's **code** is MIT (see the root `LICENSE`). The **fine-tuned
