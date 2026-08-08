@@ -48,9 +48,10 @@ export async function GET(request: Request) {
   const { lat, lon, horizon, system_kw } = parsed.data
 
   try {
-    // Chronos CPU inference + a cold predictor load on the first call can be slow.
+    // Chronos CPU inference is fast once warm, but the first call after an
+    // AI-service restart may wait behind the predictor warm-up load (~60-90s).
     const forecast = await fetchAiClimateForecastServer({
-      lat, lon, horizon, systemKw: system_kw, timeoutMs: 60_000,
+      lat, lon, horizon, systemKw: system_kw, timeoutMs: 150_000,
     })
     return Response.json(forecast, { headers: { "Cache-Control": "private, max-age=300" } })
   } catch (err) {
