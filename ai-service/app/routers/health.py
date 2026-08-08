@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app import config
-from app.services.artifacts import model_available
+from app.services.artifacts import model_available, warm_state
 
 router = APIRouter(tags=["health"])
 
@@ -33,4 +33,7 @@ def health() -> dict:
         "model_source": "huggingface" if config.MODEL_REPO else "local",
         "model_repo": config.MODEL_REPO or None,
         "data_repo": config.DATA_REPO or None,
+        # Startup warm-up progress (pending | warming | ready | failed) per
+        # horizon; "ready" means the first forecast request will be fast.
+        "predictors_warm": warm_state(),
     }
