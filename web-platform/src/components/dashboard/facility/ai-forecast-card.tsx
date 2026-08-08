@@ -77,7 +77,7 @@ export function AiForecastCard({
             AI Climate Forecast
           </CardTitle>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-            Chronos zero-shot
+            {data?.model_name ?? "Chronos"}
           </span>
           {data ? (
             <div className="ml-auto flex items-center gap-1" role="group" aria-label="Months ahead">

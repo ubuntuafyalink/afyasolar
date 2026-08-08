@@ -48,8 +48,19 @@ export type AiClimateForecast = {
   hazards: AiHazards
   hazards_monthly?: HazardTrajectoryPoint[]
   forecast_raw: Record<string, AiForecastPoint[]>
+  model_used?: string
+  model_name?: string
   generated_at: string
   yield?: AiYield
+}
+
+/** Human label for the served AutoGluon model name (e.g. "ChronosFineTuned[bolt_small]"). */
+export function modelLabel(model?: string): string {
+  if (!model) return "Chronos"
+  if (/finetuned/i.test(model)) return "Chronos fine-tuned"
+  if (/zeroshot/i.test(model)) return "Chronos zero-shot"
+  if (/seasonalnaive/i.test(model)) return "Seasonal baseline"
+  return model
 }
 
 export type FetchAiForecastArgs = {

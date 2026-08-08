@@ -28,6 +28,7 @@ export type PortfolioForecastAggregate = {
   composite: number
   trajectory: HazardTrajectoryPoint[]
   facilitiesForecast: number
+  modelName?: string
 }
 
 export type PortfolioForecastResult = {
@@ -69,6 +70,7 @@ type CoordForecast = {
   hazards: (HazardKeys & { composite: number }) | null
   trajectory: HazardTrajectoryPoint[]
   degraded: boolean
+  modelName?: string
 }
 
 export async function computePortfolioForecast(months?: number): Promise<PortfolioForecastResult> {
@@ -99,6 +101,7 @@ export async function computePortfolioForecast(months?: number): Promise<Portfol
         hazards: { heat: h.heat, flood: h.flood, storm: h.storm, drought: h.drought, composite: h.composite },
         trajectory: f.hazards_monthly ?? [],
         degraded: false,
+        modelName: f.model_name,
       })
     } catch {
       byKey.set(key, { hazards: null, trajectory: [], degraded: true })
@@ -162,6 +165,7 @@ export async function computePortfolioForecast(months?: number): Promise<Portfol
     composite: n ? Math.round(sum.composite / n) : 0,
     trajectory,
     facilitiesForecast: n,
+    modelName: [...byKey.values()].find((c) => !c.degraded && c.modelName)?.modelName,
   }
 
   return { data, aggregate }
