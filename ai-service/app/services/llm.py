@@ -385,3 +385,9 @@ def _explain_fallback(payload: dict, meaning: dict, lang: str) -> str:
                   else " Inspect the battery and inverter for unusual behaviour.")
 
     return " ".join(p for p in (definition, line2 + driver) if p).strip()
+
+
+# Public aliases for sibling services (app/services/report.py builds on these).
+call_llm = _call_llm
+hazard_band = _hazard_band
+BAND_LABELS = _BAND_LABELS

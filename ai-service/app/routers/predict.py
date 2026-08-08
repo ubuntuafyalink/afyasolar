@@ -18,6 +18,7 @@ from app import config
 from app.services.hazards import hazard_indices, hazard_trajectory
 from app.services.llm import build_facility_advisory, build_portfolio_advisory
 from app.services.locations import location_exists, nearest_location
+from app.services.report import build_outlook_report
 
 router = APIRouter(prefix="/predict", tags=["predict"])
 
@@ -216,6 +217,36 @@ def predict_advisory(req: AdvisoryPredictRequest) -> dict:
 
     result = build_facility_advisory(context, req.lang)
     result["inputs"] = inputs
+    result["generated_at"] = datetime.now(timezone.utc).isoformat()
+    return result
+
+
+class OutlookHazards(BaseModel):
+    heat: int = Field(..., ge=0, le=100)
+    flood: int = Field(..., ge=0, le=100)
+    storm: int = Field(..., ge=0, le=100)
+    drought: int = Field(..., ge=0, le=100)
+    composite: int = Field(..., ge=0, le=100)
+
+
+class OutlookReportRequest(BaseModel):
+    hazards: OutlookHazards
+    lang: str = Field("en", pattern="^(en|sw)$")
+    scope: str = Field("facility", pattern="^(facility|portfolio)$")
+    context: dict[str, Any] | None = Field(
+        None, description="Optional extras, e.g. {'facility_count': 14, 'months': 12}.")
+
+
+@router.post("/outlook-report",
+             summary="Recommended actions / safe-outlook report from hazard scores")
+def predict_outlook_report(req: OutlookReportRequest) -> dict:
+    """Turn already-computed hazard indices into an explicit report: per-hazard
+    recommended actions when any hazard is high (>=50, band 'high'/'severe'), or
+    an explicit all-clear when none is. The caller passes the same numbers it
+    displays (from /predict/climate or a portfolio aggregate), so the report
+    always agrees with the charts. Deterministic + bilingual; works keyless."""
+    result = build_outlook_report(req.hazards.model_dump(), req.lang,
+                                  req.scope, req.context)
     result["generated_at"] = datetime.now(timezone.utc).isoformat()
     return result
 
