@@ -24,6 +24,7 @@ import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { useAdminPortfolio } from "@/hooks/use-admin-portfolio"
 import { useAdminPortfolioClimate } from "@/hooks/use-admin-portfolio-climate"
 import { AdminPortfolioForecastCard } from "@/components/admin/intelligence/admin-portfolio-forecast-card"
+import { AdminOutlookReportCard } from "@/components/admin/intelligence/admin-outlook-report-card"
 import { projectCvi } from "@/lib/climate/nasa-power"
 import type { PortfolioFacility } from "@/lib/dashboard/admin-portfolio-types"
 
@@ -222,6 +223,8 @@ export function AdminClimateOutlook({
   const [category, setCategory] = React.useState("all")
   const [hazard, setHazard] = React.useState<HazardFilter>("all")
   const [page, setPage] = React.useState(1)
+  // Forecast window shared by the AI forecast card and the outlook report card.
+  const [forecastMonths, setForecastMonths] = React.useState(12)
   const [selected, setSelected] = React.useState<PortfolioFacility | null>(null)
 
   // Deep-link: a notification can request a facility's detail open directly.
@@ -350,7 +353,10 @@ export function AdminClimateOutlook({
       </div>
 
       {/* Forward-looking portfolio AI forecast (Chronos, served by the AI service) */}
-      <AdminPortfolioForecastCard />
+      <AdminPortfolioForecastCard months={forecastMonths} onMonthsChange={setForecastMonths} />
+
+      {/* What the portfolio forecast means: recommended actions or a safe outlook */}
+      <AdminOutlookReportCard months={forecastMonths} />
 
       {/* Facility map (real OpenStreetMap tiles) */}
       <AdminFacilitiesLeafletMap facilities={facilities} />
