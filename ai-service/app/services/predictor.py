@@ -13,6 +13,7 @@ from functools import lru_cache
 import pandas as pd
 
 from app import config
+from app.services.artifacts import data_base
 
 # AutoGluon's TimeSeriesPredictor is not safe under concurrent predict() calls
 # (its trainer mutates shared model state; parallel requests fail with
@@ -72,9 +73,15 @@ def _load_predictor(horizon: str):
 
 
 def _load_context(horizon: str) -> pd.DataFrame:
-    """The series the model conditions on (same schema build_dataset.py emits)."""
+    """The series the model conditions on (same schema build_dataset.py emits).
+
+    Read from the HF dataset snapshot when AI_ENGINE_DATA_REPO is set, else
+    from the local PROCESSED_DIR.
+    """
     name = "daily" if horizon == "daily" else "monthly"
-    path = config.PROCESSED_DIR / f"{name}.{config.DATA_FORMAT}"
+    base = data_base()
+    path = ((base / "processed" / f"{name}.{config.DATA_FORMAT}") if base is not None
+            else config.PROCESSED_DIR / f"{name}.{config.DATA_FORMAT}")
     if not path.exists():
         raise FileNotFoundError(
             f"Context dataset not found: {path}. Build datasets before serving."
