@@ -24,6 +24,12 @@ except ImportError:  # python-dotenv is optional; env vars still work without it
 # used as the model base; otherwise MODEL_DIR (local files) is used.
 MODEL_REPO = os.getenv("AI_ENGINE_MODEL_REPO", "")
 
+# Same idea for the context data: pull the processed series + grid locations
+# from a HuggingFace *dataset* repo instead of local files. When set, it is
+# snapshot-downloaded (only processed/* and grid_locations.json) + cached and
+# supersedes PROCESSED_DIR / LOCATIONS_PATH; otherwise the local paths are used.
+DATA_REPO = os.getenv("AI_ENGINE_DATA_REPO", "")
+
 # Which climate model to serve from the predictor:
 #   "finetuned" (default) | "zeroshot" | "best" (AutoGluon's top) | exact model name.
 CLIMATE_MODEL = os.getenv("AI_ENGINE_CLIMATE_MODEL", "finetuned")

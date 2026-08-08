@@ -50,9 +50,11 @@ def test_yield_rejects_bad_system():
 
 
 def test_forecast_requires_model(monkeypatch, tmp_path):
-    # Point MODEL_DIR at an empty dir so the missing-model guard fires
+    # Point MODEL_DIR at an empty dir (and force local mode - the deployed .env
+    # sets AI_ENGINE_MODEL_REPO) so the missing-model guard fires
     # deterministically, whichever horizons are actually built on this machine.
     from app import config
+    monkeypatch.setattr(config, "MODEL_REPO", "")
     monkeypatch.setattr(config, "MODEL_DIR", tmp_path / "no-models")
     r = client.post("/forecast", json={"location_id": "ea_m7_39", "horizon": "daily"})
     assert r.status_code == 503  # no trained Chronos predictor for this horizon

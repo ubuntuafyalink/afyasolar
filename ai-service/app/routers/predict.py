@@ -15,6 +15,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app import config
+from app.services.artifacts import model_available
 from app.services.hazards import hazard_indices, hazard_trajectory
 from app.services.llm import build_facility_advisory, build_portfolio_advisory
 from app.services.locations import location_exists, nearest_location
@@ -48,10 +49,11 @@ def predict_climate(req: ClimatePredictRequest) -> dict:
     else:
         raise HTTPException(400, "Provide either location_id or both lat and lon.")
 
-    if not (config.MODEL_DIR / req.horizon).exists():
+    if not model_available(req.horizon):
         raise HTTPException(
             503, f"No trained model for horizon '{req.horizon}'. Build it first "
-                 "(pipeline: fetch -> build -> finetune_chronos).")
+                 "(pipeline: fetch -> build -> finetune_chronos) or set "
+                 "AI_ENGINE_MODEL_REPO.")
 
     # 2. Forecast the raw NASA variables (Chronos).
     from app.services.predictor import deployed_model_name, forecast_location
@@ -160,7 +162,7 @@ def predict_advisory(req: AdvisoryPredictRequest) -> dict:
 
     # 1. Climate (optional): hazards + yield from the monthly forecast at the
     #    nearest known location.
-    if req.lat is not None and req.lon is not None and (config.MODEL_DIR / "monthly").exists():
+    if req.lat is not None and req.lon is not None and model_available("monthly"):
         try:
             location_id, _ = nearest_location(req.lat, req.lon)
             from app.services.predictor import forecast_location

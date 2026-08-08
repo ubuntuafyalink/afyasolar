@@ -17,7 +17,10 @@ from app import config
 
 @lru_cache(maxsize=1)
 def _locations() -> list[dict]:
-    return json.loads(config.LOCATIONS_PATH.read_text(encoding="utf-8"))["locations"]
+    from app.services.artifacts import data_base
+    base = data_base()
+    path = (base / "grid_locations.json") if base is not None else config.LOCATIONS_PATH
+    return json.loads(path.read_text(encoding="utf-8"))["locations"]
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
