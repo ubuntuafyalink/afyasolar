@@ -19,5 +19,15 @@ models/
 *.ckpt
 *.safetensors
 
+# Large fetched NASA POWER datasets (kept local; regenerable via pipeline/data/).
+# Small config/docs (grid_locations.json, *.info.json) stay tracked.
+dataset/*.csv
+dataset/csv/
+dataset/raw/
+dataset/processed/
+
+# Locally deployed fine-tuned model snapshot (published on HuggingFace)
+afyasolar-chronos-48m-climate-ea-v1/
+
 # HuggingFace / caches
 .cache/

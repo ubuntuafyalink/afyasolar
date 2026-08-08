@@ -25,6 +25,8 @@ import type { ResolvedLocation } from "@/lib/geo/africa-locations"
 import { reverseGeocode } from "@/lib/geo/reverse-geocode"
 import { useNasaPower } from "@/hooks/use-nasa-power"
 import { HazardScorePanel } from "./hazard-score-panel"
+import { AiForecastCard } from "./ai-forecast-card"
+import { ClimateOutlookReportCard } from "./climate-outlook-report-card"
 import { CviPanel } from "./cvi-panel"
 import { HazardChartCard } from "./hazard-chart-card"
 import { ClimateInterpretation } from "./climate-interpretation"
@@ -352,6 +354,12 @@ export function ClimateOutlookSection({
           queryKey={queryKey}
         />
       ) : null}
+
+      {/* Forward-looking AI forecast (Chronos, served by the AI service) */}
+      <AiForecastCard lat={coords.lat} lon={coords.lon} />
+
+      {/* What the forecast means: recommended actions or an explicit safe outlook */}
+      <ClimateOutlookReportCard lat={coords.lat} lon={coords.lon} />
 
       {/* Per-hazard charts */}
       {showSkeleton ? (

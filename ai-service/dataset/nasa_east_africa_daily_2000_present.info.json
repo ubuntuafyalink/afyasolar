@@ -1,0 +1,186 @@
+{
+  "dataset": {
+    "name": "NASA POWER — East Africa Daily Climate (2000–present)",
+    "file": "nasa_east_africa_daily_2000_present.csv",
+    "format": "CSV, long/tidy (one row per location × date × variable)",
+    "encoding": "utf-8",
+    "rows": 18684050,
+    "size_mb": 663.4,
+    "generated_utc": "2026-08-07T12:27:15Z",
+    "description": "Daily historical climate for a 1-degree land grid over East Africa, from the NASA POWER reanalysis. Built to fine-tune the AfyaSolar climate forecaster (Chronos-Bolt): the model forecasts these raw variables and the app derives climate-hazard indices (heat/flood/storm/drought) and solar yield from them.",
+    "license": "NASA POWER data are free and openly available (U.S. Government, public domain). https://power.larc.nasa.gov/"
+  },
+  "source": {
+    "provider": "NASA POWER (Prediction Of Worldwide Energy Resources), NASA Langley Research Center",
+    "endpoint": "https://power.larc.nasa.gov/api/temporal/daily/regional",
+    "community": "RE (Renewable Energy)",
+    "keyless": true,
+    "note": "Meteorology is from MERRA-2; solar (ALLSKY_SFC_SW_DWN) is satellite-derived on a coarser grid."
+  },
+  "schema": {
+    "columns": [
+      {
+        "name": "location_id",
+        "type": "string",
+        "description": "Grid point id, format 'ea_<lat>_<lon>' where 'm' marks a minus sign (e.g. 'ea_m6_39' = latitude -6, longitude 39)."
+      },
+      {
+        "name": "date",
+        "type": "date (YYYY-MM-DD)",
+        "description": "Calendar day (UTC-aggregated)."
+      },
+      {
+        "name": "variable",
+        "type": "string",
+        "description": "NASA POWER parameter name (one of 7)."
+      },
+      {
+        "name": "value",
+        "type": "float",
+        "description": "Daily value in the variable's unit; empty cell = missing."
+      }
+    ],
+    "long_format": "One row per (location_id, date, variable). To get a wide table: df.pivot_table(index=['location_id','date'], columns='variable', values='value')"
+  },
+  "spatial": {
+    "region": "East Africa (Tanzania + Kenya, Uganda, Rwanda, Burundi, Malawi, northern Mozambique border zones)",
+    "grid": "1-degree land grid (ocean cells removed with a land mask)",
+    "n_points": 275,
+    "bbox": {
+      "lat_min": -17.0,
+      "lat_max": 5.0,
+      "lon_min": 29.0,
+      "lon_max": 41.0
+    },
+    "point_assembly": "Each grid point's series is taken from NASA POWER's nearest NATIVE cell, resolved PER variable (meteorology 0.5x0.625 deg, solar ~1 deg).",
+    "note_on_facilities": "Intentionally NOT built from facility coordinates — a clean geographic grid avoids facility-location errors and gives diverse, decoupled training series. At inference a facility maps to its nearest grid point."
+  },
+  "temporal": {
+    "start": "2000-01-01",
+    "end": "2026-07-28",
+    "frequency": "daily",
+    "n_days": 9706,
+    "timezone": "UTC (POWER daily values are UTC-day aggregates)"
+  },
+  "variables": [
+    {
+      "name": "ALLSKY_SFC_SW_DWN",
+      "label": "All-sky surface shortwave downward irradiance",
+      "unit": "kWh/m^2/day",
+      "description": "Sunlight reaching the ground; drives solar PV yield.",
+      "native_grid": "~1 deg (satellite/CERES)",
+      "stats": {
+        "count": 2668994,
+        "missing_pct": 0.006,
+        "min": 0.33,
+        "max": 8.88,
+        "mean": 5.62
+      }
+    },
+    {
+      "name": "T2M",
+      "label": "Air temperature at 2 m (mean)",
+      "unit": "deg C",
+      "description": "Daily mean near-surface air temperature.",
+      "native_grid": "0.5x0.625 deg (MERRA-2)",
+      "stats": {
+        "count": 2666797,
+        "missing_pct": 0.088,
+        "min": 8.76,
+        "max": 37.91,
+        "mean": 23.56
+      }
+    },
+    {
+      "name": "T2M_MAX",
+      "label": "Air temperature at 2 m (daily max)",
+      "unit": "deg C",
+      "description": "Daytime peak; drives the heat hazard index.",
+      "native_grid": "0.5x0.625 deg (MERRA-2)",
+      "stats": {
+        "count": 2666797,
+        "missing_pct": 0.088,
+        "min": 13.19,
+        "max": 46.37,
+        "mean": 29.57
+      }
+    },
+    {
+      "name": "T2M_MIN",
+      "label": "Air temperature at 2 m (daily min)",
+      "unit": "deg C",
+      "description": "Overnight low near-surface temperature.",
+      "native_grid": "0.5x0.625 deg (MERRA-2)",
+      "stats": {
+        "count": 2666797,
+        "missing_pct": 0.088,
+        "min": 1.8,
+        "max": 31.36,
+        "mean": 18.49
+      }
+    },
+    {
+      "name": "PRECTOTCORR",
+      "label": "Precipitation (bias-corrected)",
+      "unit": "mm/day",
+      "description": "Total daily rainfall; drives flood and drought indices.",
+      "native_grid": "0.5x0.625 deg (MERRA-2)",
+      "stats": {
+        "count": 2666797,
+        "missing_pct": 0.088,
+        "min": 0.0,
+        "max": 1293.43,
+        "mean": 2.91
+      }
+    },
+    {
+      "name": "WS10M",
+      "label": "Wind speed at 10 m",
+      "unit": "m/s",
+      "description": "Near-surface wind; drives the storm hazard index.",
+      "native_grid": "0.5x0.625 deg (MERRA-2)",
+      "stats": {
+        "count": 2666797,
+        "missing_pct": 0.088,
+        "min": 0.28,
+        "max": 14.49,
+        "mean": 3.48
+      }
+    },
+    {
+      "name": "RH2M",
+      "label": "Relative humidity at 2 m",
+      "unit": "%",
+      "description": "Near-surface humidity; context feature.",
+      "native_grid": "0.5x0.625 deg (MERRA-2)",
+      "stats": {
+        "count": 2666797,
+        "missing_pct": 0.088,
+        "min": 9.76,
+        "max": 97.8,
+        "mean": 66.55
+      }
+    }
+  ],
+  "quality": {
+    "overall_missing_pct": 0.076,
+    "missing_value_encoding": "empty cell (NASA POWER's -999 fill sentinel is converted to empty)",
+    "rows_per_variable": 2669150,
+    "balanced": true
+  },
+  "provenance": {
+    "grid_definition": "pipeline/data/make_grid.py -> dataset/grid_locations.json",
+    "fetcher": "pipeline/data/fetch_regional.py (regional endpoint, concurrent, band-by-band)",
+    "this_card": "pipeline/data/describe_dataset.py"
+  },
+  "usage": {
+    "intended_use": "Fine-tune Chronos-Bolt (AutoGluon-TimeSeries) to forecast the raw variables.",
+    "next_step": "pipeline/datasets/build_dataset.py turns this into per-series item_id|timestamp|target (daily + monthly), with gap-filling and a validation split.",
+    "load_python": "import pandas as pd; df = pd.read_csv('nasa_east_africa_daily_2000_present.csv', parse_dates=['date'])",
+    "caveats": [
+      "Reanalysis/model-derived data, not station observations — excellent coverage, but smoothed vs point measurements.",
+      "Recent ~10 days may be absent (POWER lags real time).",
+      "Solar is on a coarser grid, so nearby points can share a solar cell."
+    ]
+  }
+}

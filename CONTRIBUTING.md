@@ -55,4 +55,4 @@ For anything security- or data-protection-related, follow [SECURITY.md](./SECURI
 ## License of contributions
 
 By contributing, you agree that your contributions are licensed under the project's
-[Apache License 2.0](./LICENSE).
+[MIT License](./LICENSE).
