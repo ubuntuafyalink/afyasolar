@@ -86,9 +86,23 @@ function PredictingOverlay({ months }: { months: number }) {
  * Interactive: a months-ahead selector re-runs the forecast over that window (the
  * AI service re-derives the hazard indices), with an in-place "predicting"
  * animation while the new window loads.
+ *
+ * `months` can be controlled by the parent (so sibling cards, e.g. the outlook
+ * report, stay on the same forecast window); uncontrolled it keeps local state.
  */
-export function AdminPortfolioForecastCard() {
-  const [months, setMonths] = useState<number>(12)
+export function AdminPortfolioForecastCard({
+  months: monthsProp,
+  onMonthsChange,
+}: {
+  months?: number
+  onMonthsChange?: (months: number) => void
+} = {}) {
+  const [monthsState, setMonthsState] = useState<number>(12)
+  const months = monthsProp ?? monthsState
+  const setMonths = (m: number) => {
+    setMonthsState(m)
+    onMonthsChange?.(m)
+  }
   const { data, isLoading, isFetching, isError } = useAdminPortfolioForecast(months)
   const agg = data?.aggregate
   const predicting = isFetching && !isLoading // re-forecasting while old data is on screen
