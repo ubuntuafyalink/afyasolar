@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app import config
+from app.services.artifacts import model_available
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])
 
@@ -21,11 +22,11 @@ class ForecastRequest(BaseModel):
 
 @router.post("", summary="Forecast raw NASA climate variables for a location")
 def forecast(req: ForecastRequest) -> dict:
-    if not (config.MODEL_DIR / req.horizon).exists():
+    if not model_available(req.horizon):
         raise HTTPException(
             status_code=503,
             detail=f"No trained model for horizon '{req.horizon}'. Fine-tune it first "
-                   "(see pipeline/train).",
+                   "(see pipeline/train) or set AI_ENGINE_MODEL_REPO.",
         )
     # Heavy ML deps are imported lazily so the service boots without them.
     try:
