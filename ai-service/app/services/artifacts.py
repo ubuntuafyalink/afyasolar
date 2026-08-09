@@ -27,6 +27,22 @@ def data_base() -> Path | None:
                                   allow_patterns=_DATA_PATTERNS))
 
 
+# Predictor warm-up state, written by predictor.warm_start() and read by
+# /health. Lives here (not in predictor.py) so /health never imports pandas.
+_WARM_STATE: dict[str, str] = {h: "pending" for h in config.HORIZONS}
+_WARM_STATUSES = ("pending", "warming", "ready", "failed")
+
+
+def warm_state() -> dict[str, str]:
+    return dict(_WARM_STATE)
+
+
+def set_warm_state(horizon: str, status: str) -> None:
+    if status not in _WARM_STATUSES:
+        raise ValueError(f"Unknown warm status '{status}'")
+    _WARM_STATE[horizon] = status
+
+
 def model_available(horizon: str) -> bool:
     """Cheap availability probe for the route guards and /health. NEVER downloads.
 

@@ -14,25 +14,50 @@ Limited**. Contributions of all kinds are welcome: bug reports, documentation, t
 
 ## Development setup
 
+This is a **monorepo** with two independent projects; set up whichever you are working on
+(they run as separate services and talk over HTTP).
+
 ```bash
 git clone <repo-url>
 cd afyasolar
-npm install                 # Node 20 LTS
+```
+
+**Web platform** (Node 20 LTS):
+
+```bash
+cd web-platform
+npm install
 cp .env.example .env         # then fill in local values (DB_*, NEXTAUTH_SECRET, ...)
 npm run db:migrate
 npm run dev                  # http://localhost:3000
 ```
 
-See the "Getting started" section of the [README](./README.md) for the full flow.
+**AI service** (Python 3.10):
+
+```bash
+cd ai-service
+python -m venv .venv && .venv/Scripts/activate   # macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env         # optional: LLM_API_KEY, model/data overrides
+uvicorn app.main:app --reload                    # http://127.0.0.1:8000
+```
+
+See the "Getting started" section of the [README](./README.md) and each project's own README
+for the full flow.
 
 ## Before you open a pull request
 
-Run the same checks our CI runs (see `.github/workflows/ci.yml`):
+Run the same checks our CI runs — one workflow per project, path-scoped
+(`.github/workflows/web-platform.yml`, `.github/workflows/ai-service.yml`):
 
 ```bash
+# web-platform/
 npm run lint
 npm run type-check
 npm run test
+
+# ai-service/
+pytest
 ```
 
 - Add or update **unit tests** for any behavior you change. Pure logic (scoring, climate

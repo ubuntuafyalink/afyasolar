@@ -30,10 +30,13 @@ the UNICEF Venture Fund open-source commitments (RFPS-NYH-2026-503931).
 - The **entire funded solution** is and will remain open source — application code, the
   resilience-scoring engine, climate and carbon modules, messaging, the open-data API, the
   database schema, and (as they are built) all machine-learning training/inference code **and
-  their trained scoring weights**.
-- The project maintains a **public real-time open-data API** and commits to keeping it
-  available and to publishing patches in perpetuity, funded by the platform's recurring
-  managed-service revenue.
+  their trained scoring weights**. Already published: the platform and AI-service source in this
+  repository, plus the climate model and training dataset on Hugging Face
+  (`afyalink/afyasolar-chronos-48m-climate-ea-v1`, `afyalink/afyasolar-nasa-power-east-africa`).
+- The project **commits to publishing a public real-time open-data API** (anonymised, read-only
+  facility-resilience data), to keeping it available once launched, and to publishing patches in
+  perpetuity, funded by the platform's recurring managed-service revenue. This feed is on the
+  roadmap and not yet live — see the status table in the [README](./README.md).
 - What is *not* published is the live operational data, any personal data (protected by law,
   not by closed source), and the separately-funded commercial energy-service operation — none
   of which are funded code.

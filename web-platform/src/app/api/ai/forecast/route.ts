@@ -20,6 +20,9 @@ const QuerySchema = z.object({
   lon: z.coerce.number().min(-180).max(180),
   horizon: z.enum(["daily", "monthly"]).default("monthly"),
   system_kw: z.coerce.number().positive().optional(),
+  // Forecast window: the AI service re-derives hazards/yield over the first N
+  // steps (flood/storm are peaks, drought a dry-count - genuinely window-dependent).
+  months: z.coerce.number().int().min(1).max(24).optional(),
 })
 
 function errorResponse(code: string, message: string, status: number) {
@@ -36,6 +39,7 @@ export async function GET(request: Request) {
     lon: searchParams.get("lon") ?? undefined,
     horizon: searchParams.get("horizon") ?? undefined,
     system_kw: searchParams.get("system_kw") ?? undefined,
+    months: searchParams.get("months") ?? undefined,
   })
   if (!parsed.success) {
     return errorResponse(
@@ -45,12 +49,13 @@ export async function GET(request: Request) {
     )
   }
 
-  const { lat, lon, horizon, system_kw } = parsed.data
+  const { lat, lon, horizon, system_kw, months } = parsed.data
 
   try {
-    // Chronos CPU inference + a cold predictor load on the first call can be slow.
+    // Chronos CPU inference is fast once warm, but the first call after an
+    // AI-service restart may wait behind the predictor warm-up load (~60-90s).
     const forecast = await fetchAiClimateForecastServer({
-      lat, lon, horizon, systemKw: system_kw, timeoutMs: 60_000,
+      lat, lon, horizon, systemKw: system_kw, months, timeoutMs: 150_000,
     })
     return Response.json(forecast, { headers: { "Cache-Control": "private, max-age=300" } })
   } catch (err) {

@@ -118,7 +118,8 @@ the endpoint always works. See `.env.example`.
 
 ### HuggingFace access
 Chronos is public/Apache-2.0 — **no token needed to download or fine-tune it**
-(AutoGluon pulls `amazon/chronos-bolt-base` automatically). A token (`HF_TOKEN`,
+(AutoGluon pulls `amazon/chronos-bolt-small` automatically — see
+`pipeline/train/config.yaml`). A token (`HF_TOKEN`,
 Write scope) is only needed to **push your fine-tuned model** to a HF repo and to
 **deploy this service to a HuggingFace Space**.
 
@@ -150,7 +151,7 @@ restart (each start resolves the latest revision).
 
 ### Licensing of the models
 This repository's **code** is MIT (see the root `LICENSE`). The **fine-tuned
-climate weights are a derivative of `amazon/chronos-bolt-base`, which is
+climate weights are a derivative of `amazon/chronos-bolt-small` (~48M), which is
 Apache-2.0**, so those weights must be redistributed under Apache-2.0 with
 Amazon's copyright notice and a note that they were modified (Apache-2.0 §4).
 Publish them that way on HuggingFace. The predictive-maintenance models (RUL,

@@ -115,6 +115,29 @@ def test_health_reports_repo_mode(tmp_path, monkeypatch):
     assert body["data_repo"] == "afyalink/fake-dataset"
 
 
+def test_warm_state_roundtrip_and_validation():
+    st = artifacts.warm_state()
+    assert set(st) == set(config.HORIZONS)
+    assert all(v in ("pending", "warming", "ready", "failed") for v in st.values())
+    prev = st["monthly"]
+    try:
+        artifacts.set_warm_state("monthly", "warming")
+        assert artifacts.warm_state()["monthly"] == "warming"
+        with pytest.raises(ValueError):
+            artifacts.set_warm_state("monthly", "hot")
+    finally:
+        artifacts.set_warm_state("monthly", prev)
+
+
+def test_health_reports_predictor_warm_state(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "MODEL_REPO", "")
+    monkeypatch.setattr(config, "MODEL_DIR", tmp_path / "empty")
+    body = client.get("/health").json()
+    warm = body["predictors_warm"]
+    assert set(warm) == set(config.HORIZONS)
+    assert all(v in ("pending", "warming", "ready", "failed") for v in warm.values())
+
+
 def test_health_reports_local_mode(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "MODEL_REPO", "")
     monkeypatch.setattr(config, "MODEL_DIR", tmp_path / "empty")

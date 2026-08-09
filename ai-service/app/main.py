@@ -11,12 +11,32 @@ Interactive docs at http://127.0.0.1:8000/docs
 """
 from __future__ import annotations
 
+import threading
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app import config
 from app.routers import advisory, energy, explain, forecast, hazards, health, maintenance, predict
 
+
+def _warm_models() -> None:
+    # Heavy imports (pandas/autogluon/torch) happen inside the thread so app
+    # startup and /health stay instant while the predictors load behind it.
+    from app.services.predictor import warm_start
+    warm_start()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    if config.WARM_START:
+        threading.Thread(target=_warm_models, daemon=True,
+                         name="predictor-warmup").start()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=config.API_TITLE,
     version=config.API_VERSION,
     description=(
