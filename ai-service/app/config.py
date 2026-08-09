@@ -39,8 +39,11 @@ PROCESSED_DIR = Path(os.getenv("AI_ENGINE_PROCESSED_DIR", str(PIPELINE / "datase
 DATA_FORMAT = os.getenv("AI_ENGINE_DATA_FORMAT", "parquet")  # parquet | csv
 
 # The location list nearest_location() maps facilities onto. Must match the
-# location ids present in PROCESSED_DIR (defaults to the in-repo training points).
-LOCATIONS_PATH = Path(os.getenv("AI_ENGINE_LOCATIONS", str(PIPELINE / "data" / "locations.json")))
+# location ids the served model was trained on. Defaults to the East-Africa grid
+# that ships with the repo (dataset/grid_locations.json) - the same list the HF
+# dataset repo provides - so local-file serving and HF serving resolve the same
+# ids. pipeline/data/locations.json is the legacy 34-point set.
+LOCATIONS_PATH = Path(os.getenv("AI_ENGINE_LOCATIONS", str(ROOT / "dataset" / "grid_locations.json")))
 
 HORIZONS = ("daily", "monthly")
 
