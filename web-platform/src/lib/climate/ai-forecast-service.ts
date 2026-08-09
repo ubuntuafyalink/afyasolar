@@ -68,6 +68,8 @@ export type FetchAiForecastArgs = {
   lon: number
   horizon?: "daily" | "monthly"
   systemKw?: number
+  /** Forecast window: the AI service re-derives hazards/yield over the first N steps. */
+  months?: number
 }
 
 /** Call the internal /api/ai/forecast proxy (which forwards to the AI service). */
@@ -78,6 +80,7 @@ export async function fetchAiForecast(args: FetchAiForecastArgs): Promise<AiClim
     horizon: args.horizon ?? "monthly",
   })
   if (args.systemKw != null) params.set("system_kw", String(args.systemKw))
+  if (args.months != null) params.set("months", String(args.months))
 
   const res = await fetch(`/api/ai/forecast?${params.toString()}`)
   const json = await res.json().catch(() => null)

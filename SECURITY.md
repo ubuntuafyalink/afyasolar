@@ -6,12 +6,15 @@ If you discover a security vulnerability, a leaked secret, or a personal-data ex
 AfyaSolar Intelligence, **please report it privately. Do not open a public GitHub issue or
 pull request**, and do not include any secret values or personal data in your report.
 
-- Email the maintainer: **security@ubuntuafyalink.co.tz**
-  (until this address is live, contact the repository owner directly through the platform
-  operator, Ubuntu Afyalink Company Limited).
-- Include: a description of the issue, steps to reproduce, affected components/paths, and the
-  potential impact. Please give us a reasonable window to respond and remediate before any
-  public disclosure.
+Use either channel:
+
+- **Email the maintainer:** **info@ubuntuafyalink.co.tz** (Ubuntu Afyalink Company Limited).
+- **GitHub private vulnerability reporting:** the repository's *Security → Report a
+  vulnerability* tab, which opens a private advisory visible only to the maintainers.
+
+Include: a description of the issue, steps to reproduce, affected components/paths, and the
+potential impact. Please give us a reasonable window to respond and remediate before any
+public disclosure.
 
 We will acknowledge receipt, investigate, and keep you informed of remediation progress.
 
@@ -21,7 +24,8 @@ We will acknowledge receipt, investigate, and keep you informed of remediation p
   git-ignored `.env` file. `.env.example` documents the required keys with placeholder values.
 - `.gitignore` excludes `.env` and `.env.*` (except `.env.example`). If you believe a real
   secret has been committed, report it privately (above) so it can be rotated and purged.
-- Required environment variables are validated at runtime via `src/lib/env.ts`.
+- Required environment variables are validated at runtime via
+  `web-platform/src/lib/env.ts`; the AI service reads its own git-ignored `ai-service/.env`.
 
 ## Data protection (children as a vulnerable population)
 

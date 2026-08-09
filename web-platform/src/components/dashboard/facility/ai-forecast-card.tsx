@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { AnimatePresence } from "framer-motion"
 import { Sparkles, ChevronDown, ChevronRight } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +9,7 @@ import { AiLoadingIndicator } from "@/components/ui/ai-loading"
 import { cn } from "@/lib/utils"
 import { FOCUS_RING } from "@/lib/dashboard/facility-ui"
 import { useAiForecast } from "@/hooks/use-ai-forecast"
+import { PredictingOverlay } from "@/components/dashboard/predicting-overlay"
 import type { AiForecastPoint } from "@/lib/climate/ai-forecast-service"
 import {
   HAZARD_SERIES,
@@ -43,29 +45,45 @@ const VARIABLES = [
 
 /**
  * AI Climate Forecast card: forward-looking hazard outlook from the AI service
- * (Chronos zero-shot on NASA POWER), served via /api/ai/forecast. Interactive:
- * a months-ahead selector, a hazard-trajectory chart, per-variable forecasts with
- * confidence bands, and a solar-yield chart. Re-forecasts when coords change.
+ * (Chronos, fine-tuned on NASA POWER), served via /api/ai/forecast. Interactive:
+ * a months-ahead selector that RE-RUNS the forecast over that window (the AI
+ * service re-derives the hazard indices - flood/storm are peaks, drought a
+ * dry-count, so they genuinely depend on the window), a hazard-trajectory chart,
+ * per-variable forecasts with confidence bands, and a solar-yield chart.
+ *
+ * `months` can be controlled by the parent (so sibling cards, e.g. the outlook
+ * report, stay on the same forecast window); uncontrolled it keeps local state.
  */
 export function AiForecastCard({
   lat,
   lon,
   systemKw = 5,
+  months: monthsProp,
+  onMonthsChange,
 }: {
   lat: number
   lon: number
   systemKw?: number
+  months?: number
+  onMonthsChange?: (months: number) => void
 }) {
-  const [months, setMonths] = useState<number>(12)
+  const [monthsState, setMonthsState] = useState<number>(12)
+  const months = monthsProp ?? monthsState
+  const setMonths = (m: number) => {
+    setMonthsState(m)
+    onMonthsChange?.(m)
+  }
   const [showVars, setShowVars] = useState(false)
-  const { data, isLoading, isError, error } = useAiForecast({
+  const { data, isLoading, isFetching, isError, error } = useAiForecast({
     lat,
     lon,
     horizon: "monthly",
     systemKw,
+    months,
   })
 
   const modelNotReady = (error as Error | undefined)?.message?.toLowerCase().includes("model")
+  const predicting = isFetching && !isLoading // re-forecasting while old data is on screen
   const trajectory = (data?.hazards_monthly ?? []).slice(0, months)
 
   return (
@@ -86,6 +104,7 @@ export function AiForecastCard({
                   key={m}
                   type="button"
                   aria-pressed={months === m}
+                  disabled={predicting}
                   onClick={() => setMonths(m)}
                   className={cn(
                     "rounded-md border px-2 py-0.5 text-[11px] font-medium transition-colors",
@@ -93,6 +112,7 @@ export function AiForecastCard({
                     months === m
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border text-muted-foreground hover:bg-muted",
+                    predicting && "cursor-not-allowed opacity-60",
                   )}
                 >
                   {m}m
@@ -103,7 +123,9 @@ export function AiForecastCard({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="relative space-y-4">
+        <AnimatePresence>{predicting ? <PredictingOverlay months={months} /> : null}</AnimatePresence>
+
         {isLoading ? (
           <div className="space-y-3">
             <AiLoadingIndicator label="Forecasting climate & solar yield…" />
