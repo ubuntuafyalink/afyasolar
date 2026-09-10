@@ -84,6 +84,3 @@ the repository root and apply to both projects.
 Note on model licensing: the code is MIT, but the fine-tuned climate weights are a
 derivative of Apache-2.0 `chronos-bolt-small` and are redistributed under
 Apache-2.0 — see [`ai-service/README.md`](ai-service/README.md).
-
-Prepared for the UNICEF Venture Fund (Climate). See each project's README for
-capability detail and roadmap.
