@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 .next/
 .next-build/
 .env
@@ -7,10 +7,11 @@
 .DS_Store
 certs/
 
-# local/editor artifacts
+# local editor / tooling artifacts
+.vscode/
+.idea/
 .cursor/
-AGENTS.md
-CLAUDE.md
+.claude/
 tsconfig.tsbuildinfo
 
 # test coverage output

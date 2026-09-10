@@ -1,9 +1,8 @@
 # AfyaSolar Intelligence — Technology Guide & Engineering Standards
 
 > **Status:** Authoritative. This document governs technology choices across the entire
-> AfyaSolar Intelligence codebase (v2). Both human contributors and AI coding assistants
-> (e.g. Claude Code) **must** follow it. Propose changes via PR + an ADR entry (see §8),
-> never silently.
+> AfyaSolar Intelligence codebase (v2). All contributors **must** follow it. Propose
+> changes via PR + an ADR entry (see §8), never silently.
 >
 > **Last updated:** 2026-05-29 · **Applies to:** v2 ("AfyaSolar Intelligence")
 
