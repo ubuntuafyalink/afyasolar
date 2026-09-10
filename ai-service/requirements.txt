@@ -12,4 +12,4 @@ requests>=2.31
 pyyaml>=6.0
 # Resolves model/data artifacts from the public HuggingFace repos at boot
 # (app/services/artifacts.py). Light: no torch/ML stack pulled in.
-huggingface_hub>=0.23
+huggingface_hub>=1.30.0
