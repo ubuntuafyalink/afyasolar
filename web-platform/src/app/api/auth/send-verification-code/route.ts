@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomInt } from 'crypto'
 import { rateLimit, getClientIdentifier } from '@/lib/rate-limit'
 import { sendVerificationCodeEmail } from '@/lib/email'
 import { storeVerificationCode } from '@/lib/verification-store'
@@ -39,8 +40,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
     }
 
-    // Generate 6-digit code
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    // Generate 6-digit code. Math.random() is not cryptographically secure and
+    // its internal state is recoverable from observed output, which would make
+    // these codes predictable; randomInt draws from the CSPRNG. The rest of the
+    // auth surface (reset tokens, verification tokens) already uses crypto.
+    const code = randomInt(100000, 1000000).toString()
     const expiresAt = Date.now() + 5 * 60 * 1000 // 5 minutes
 
     // Store code in database
