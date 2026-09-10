@@ -37,6 +37,12 @@ export default defineConfig({
         "src/lib/climate/portfolio-climate-server.ts",
         "src/lib/climate/nasa-power-server.ts",
         "src/lib/climate/facility-climate-persist.ts",
+        // Added with the AI-service integration and missed here at the time,
+        // which is what took the gate below its threshold. Both are network/DB
+        // glue: ai-forecast-server mirrors nasa-power-server, and
+        // portfolio-forecast-server mirrors portfolio-climate-server.
+        "src/lib/climate/ai-forecast-server.ts",
+        "src/lib/climate/portfolio-forecast-server.ts",
         "src/lib/carbon/apply-carbon-transition.ts",
       ],
       // Enforce the spec's coverage target on the unit-testable logic surface.
