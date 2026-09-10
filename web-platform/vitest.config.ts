@@ -27,6 +27,7 @@ export default defineConfig({
         "src/lib/intelligence/climate-alert-rules.ts",
         "src/lib/messaging/**/*.ts",
         "src/lib/auth/device-token.ts",
+        "src/lib/auth/management-panel.ts",
         "src/lib/validations/telemetry.ts",
         "src/lib/afya-solar/sizing-engine.ts",
       ],

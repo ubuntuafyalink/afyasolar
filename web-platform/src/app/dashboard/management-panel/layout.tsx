@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
 import { ManagementPanelSidebar } from '@/components/management-panel/management-panel-sidebar'
+import { isManagementPanelUser } from '@/lib/auth/management-panel'
 
-const MANAGEMENT_PANEL_EMAIL = 'services@ubuntuafyalink.co.tz'
 
 export default async function ManagementPanelLayout({
   children,
@@ -16,8 +16,7 @@ export default async function ManagementPanelLayout({
     redirect('/auth/signin')
   }
 
-  const email = session.user?.email?.toLowerCase()
-  if (email !== MANAGEMENT_PANEL_EMAIL) {
+  if (!isManagementPanelUser(session.user?.email)) {
     redirect('/auth/signin')
   }
 

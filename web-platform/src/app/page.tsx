@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/config"
+import { isManagementPanelUser } from "@/lib/auth/management-panel"
 
 const FACILITY_SOLAR_ROUTE = "/services/afya-solar"
 
@@ -16,7 +17,7 @@ export default async function Home() {
       facilityId: session.user.facilityId,
     })
 
-    if (email === "services@ubuntuafyalink.co.tz") {
+    if (isManagementPanelUser(email)) {
       redirect("/dashboard/management-panel")
     }
     if (role === "facility") {

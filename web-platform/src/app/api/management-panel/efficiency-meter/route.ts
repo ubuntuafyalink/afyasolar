@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/config"
+import { isManagementPanelUser } from "@/lib/auth/management-panel"
 import { buildEfficiencyPerformancePayload } from "@/lib/efficiency-climate/efficiency-service"
 
 export const dynamic = "force-dynamic"
 
-const MANAGEMENT_PANEL_EMAIL = "services@ubuntuafyalink.co.tz"
 
 /**
  * GET /api/management-panel/efficiency-meter?facilityId=&days=30&solarCapacityKw=
@@ -14,7 +14,7 @@ const MANAGEMENT_PANEL_EMAIL = "services@ubuntuafyalink.co.tz"
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.email || session.user.email.toLowerCase() !== MANAGEMENT_PANEL_EMAIL) {
+    if (!isManagementPanelUser(session?.user?.email)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

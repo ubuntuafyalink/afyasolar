@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth/config'
+import { isManagementPanelUser } from '@/lib/auth/management-panel'
 import { db } from '@/lib/db'
 import {
   simulatedFacilities,
@@ -9,12 +10,11 @@ import {
 } from '@/lib/db/schema'
 import { desc, asc, sql, max } from 'drizzle-orm'
 
-const MANAGEMENT_PANEL_EMAIL = 'services@ubuntuafyalink.co.tz'
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.email || session.user.email.toLowerCase() !== MANAGEMENT_PANEL_EMAIL) {
+    if (!isManagementPanelUser(session?.user?.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

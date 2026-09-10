@@ -173,6 +173,8 @@ The payment rail is AzamPay. Subscriptions and microgrid billing do not work wit
 | `OPENAI_API_KEY` | No | Optional alternative assistant provider |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | No | Climate Outlook map; falls back to OpenStreetMap when unset |
 | `NEXT_PUBLIC_DEMO_TELEMETRY` | No | Renders demo telemetry on power surfaces |
+| `MANAGEMENT_PANEL_EMAIL` | No | The one account allowed into the management panel. Defaults to the shipped address; set it when self-hosting. |
+| `NEXT_PUBLIC_MANAGEMENT_PANEL_EMAIL` | No | Same value again, readable by the sign-in page, which is a client component. |
 
 \*Required at runtime when features that upload media are used.
 

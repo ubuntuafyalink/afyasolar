@@ -1,6 +1,7 @@
 "use client"
 
 import { Suspense, useState } from "react"
+import { isManagementPanelUser } from "@/lib/auth/management-panel"
 import { signIn } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -88,7 +89,7 @@ function SignInContent() {
               const userRole = session?.user?.role
 
               const email = session?.user?.email?.toLowerCase()
-              if (email === "services@ubuntuafyalink.co.tz") {
+              if (isManagementPanelUser(email)) {
                 window.location.href = "/dashboard/management-panel"
                 return
               }

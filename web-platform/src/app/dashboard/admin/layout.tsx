@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/config"
+import { isManagementPanelUser } from "@/lib/auth/management-panel"
 
-const MANAGEMENT_PANEL_EMAIL = 'services@ubuntuafyalink.co.tz'
 
 export default async function AdminLayout({
   children,
@@ -19,7 +19,7 @@ export default async function AdminLayout({
     redirect("/dashboard/facility")
   }
 
-  if (session.user.email?.toLowerCase() === MANAGEMENT_PANEL_EMAIL) {
+  if (isManagementPanelUser(session.user.email)) {
     redirect("/dashboard/management-panel")
   }
 
