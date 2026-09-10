@@ -92,6 +92,7 @@ export const env = {
 
   // AI service (FastAPI) base URL - server-only; the browser calls it via /api/ai/forecast
   get AI_SERVICE_URL() { return getEnvVarOptional('AI_SERVICE_URL', 'http://localhost:8000') },
+  get AI_SERVICE_TOKEN() { return getEnvVarOptional('AI_SERVICE_TOKEN') },
 
   // Payments (Azam Pay)
   get AZAM_PAY_ENVIRONMENT() { return getEnvVarOptional('AZAM_PAY_ENVIRONMENT', 'sandbox') },

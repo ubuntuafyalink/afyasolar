@@ -3,7 +3,7 @@
  * Reads AI_SERVICE_URL (server-only) and POSTs to FastAPI /predict/maintenance.
  * Used by the /api/ai/maintenance proxy and the admin portfolio compute.
  */
-import { env } from "@/lib/env"
+import { aiServiceBase, aiServiceHeaders } from "@/lib/ai/service-request"
 
 import type { AiMaintenance } from "./maintenance-service"
 
@@ -22,13 +22,13 @@ export async function fetchAiMaintenanceServer(args: {
   systemKw?: number
   timeoutMs?: number
 }): Promise<AiMaintenance> {
-  const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
+  const base = aiServiceBase()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 60_000)
   try {
     const res = await fetch(`${base}/predict/maintenance`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiServiceHeaders(),
       body: JSON.stringify({
         facility_id: args.facilityId,
         age_days: args.ageDays != null ? Math.round(args.ageDays) : undefined,

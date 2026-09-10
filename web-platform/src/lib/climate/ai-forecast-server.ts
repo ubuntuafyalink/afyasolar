@@ -5,7 +5,7 @@
  * endpoint. Used by the /api/ai/forecast proxy (single point) and by the admin
  * portfolio-forecast compute (many points). Mirrors nasa-power-server.ts.
  */
-import { env } from "@/lib/env"
+import { aiServiceBase, aiServiceHeaders } from "@/lib/ai/service-request"
 
 import type { AiClimateForecast } from "./ai-forecast-service"
 
@@ -26,7 +26,7 @@ export async function fetchAiClimateForecastServer(args: {
   months?: number
   timeoutMs?: number
 }): Promise<AiClimateForecast> {
-  const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
+  const base = aiServiceBase()
   const controller = new AbortController()
   // Default gives headroom for a cold AI-service start: the first forecast
   // after a restart can wait ~60-90s behind the predictor warm-up load.
@@ -34,7 +34,7 @@ export async function fetchAiClimateForecastServer(args: {
   try {
     const res = await fetch(`${base}/predict/climate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiServiceHeaders(),
       body: JSON.stringify({
         lat: args.lat,
         lon: args.lon,

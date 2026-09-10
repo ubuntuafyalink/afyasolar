@@ -70,7 +70,7 @@ def improvement(leaderboard: pd.DataFrame, score_col: str) -> str:
             return "n/a"
         pct = (naive_err - best_err) / naive_err * 100
         return f"{pct:+.1f}% vs SeasonalNaive (best model: {best['model']})"
-    except Exception as err:  # noqa: BLE001
+    except Exception as err:
         return f"n/a ({err})"
 
 
@@ -96,7 +96,7 @@ def report_horizon(name: str, processed_dir: Path, fmt: str) -> None:
         try:
             scores = predictor.evaluate(sub, metrics=METRICS)
             rows.append({"variable": var, **{m: abs(float(scores[m])) for m in METRICS}})
-        except Exception as err:  # noqa: BLE001 - report and continue
+        except Exception as err:
             rows.append({"variable": var, **{m: float("nan") for m in METRICS}, "error": str(err)})
     per_var = pd.DataFrame(rows)
 

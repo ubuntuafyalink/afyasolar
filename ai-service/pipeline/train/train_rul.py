@@ -20,7 +20,10 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # ai-engine root
-from app.services.maintenance_features import RUL_FEATURES, build_rul_features  # noqa: E402
+from app.services.maintenance_features import (
+    RUL_FEATURES,
+    build_rul_features,
+)
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_TELEMETRY = HERE.parent / "synthetic" / "out" / "telemetry.parquet"
@@ -41,7 +44,7 @@ def importances(model, X: pd.DataFrame) -> dict:
         vals = shap.TreeExplainer(model).shap_values(sample)
         imp = np.abs(vals).mean(axis=0)
         return {"method": "shap", **{f: float(v) for f, v in zip(X.columns, imp)}}
-    except Exception:  # noqa: BLE001 - shap optional
+    except Exception:
         booster = model.get_booster()
         score = booster.get_score(importance_type="gain")
         return {"method": "xgboost_gain", **{f: float(score.get(f, 0.0)) for f in X.columns}}

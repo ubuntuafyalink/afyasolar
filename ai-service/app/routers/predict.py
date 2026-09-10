@@ -180,7 +180,7 @@ def predict_advisory(req: AdvisoryPredictRequest) -> dict:
                 yld = estimate_yield(irradiance, req.system_kw)
                 context["yield"] = yld
                 inputs["mean_daily_kwh"] = yld.get("mean_daily_kwh")
-        except Exception:  # noqa: BLE001 - climate is optional; never fail the advisory
+        except Exception:
             pass
 
     # 2. Maintenance (optional): battery RUL + anomaly + health.
@@ -194,7 +194,7 @@ def predict_advisory(req: AdvisoryPredictRequest) -> dict:
             inputs["rul_days"] = maint["rul"].get("rul_days")
             inputs["health"] = maint["health"]
             inputs["anomalies"] = maint["anomaly"]["n"]
-        except Exception:  # noqa: BLE001 - maintenance is optional; never fail the advisory
+        except Exception:
             pass
 
     # 3. Power: current battery level (if the app has a live reading).

@@ -65,7 +65,7 @@ def fetch_regional(lat0, lat1, lon0, lon1, param, yr, end_last, retries=4):
                 last = f"HTTP {r.status_code}"
             else:
                 r.raise_for_status()
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             last = str(e)
         time.sleep(min(30, 2 ** a))
     raise RuntimeError(f"regional {param} {yr} [{lat0},{lat1}]x[{lon0},{lon1}]: {last}")

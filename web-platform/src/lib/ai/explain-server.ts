@@ -3,7 +3,7 @@
  * Reads AI_SERVICE_URL (server-only) and POSTs to FastAPI /explain.
  * Used by the /api/ai/explain proxy.
  */
-import { env } from "@/lib/env"
+import { aiServiceBase, aiServiceHeaders } from "@/lib/ai/service-request"
 
 import type { AiExplanation, ExplainMetric } from "./explain-service"
 
@@ -24,13 +24,13 @@ export async function fetchAiExplanationServer(args: {
   context?: Record<string, unknown>
   timeoutMs?: number
 }): Promise<AiExplanation> {
-  const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
+  const base = aiServiceBase()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 60_000)
   try {
     const res = await fetch(`${base}/explain`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiServiceHeaders(),
       body: JSON.stringify({
         metric: args.metric,
         value: args.value,

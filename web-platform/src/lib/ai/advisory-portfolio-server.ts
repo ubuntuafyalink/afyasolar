@@ -3,7 +3,7 @@
  * Reads AI_SERVICE_URL (server-only) and POSTs a pre-ranked portfolio summary
  * to FastAPI /predict/portfolio-advisory. Used by computePortfolioAdvisory().
  */
-import { env } from "@/lib/env"
+import { aiServiceBase, aiServiceHeaders } from "@/lib/ai/service-request"
 
 export type PortfolioAdvisoryFacilitySummary = {
   name: string
@@ -41,13 +41,13 @@ export async function fetchPortfolioAdvisoryServer(
   summary: PortfolioAdvisorySummary,
   timeoutMs = 60_000,
 ): Promise<PortfolioAdvisoryNarrative> {
-  const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
+  const base = aiServiceBase()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const res = await fetch(`${base}/predict/portfolio-advisory`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiServiceHeaders(),
       body: JSON.stringify(summary),
       signal: controller.signal,
       cache: "no-store",

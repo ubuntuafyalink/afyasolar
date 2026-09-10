@@ -15,9 +15,20 @@ import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import config
-from app.routers import advisory, energy, explain, forecast, hazards, health, maintenance, predict
+from app.routers import (
+    advisory,
+    energy,
+    explain,
+    forecast,
+    hazards,
+    health,
+    maintenance,
+    predict,
+)
+from app.security import BearerTokenMiddleware
 
 
 def _warm_models() -> None:
@@ -45,6 +56,21 @@ app = FastAPI(
         "maintenance (RUL + anomaly), and an LLM advisory layer."
     ),
 )
+
+# Optional shared-secret gate. No-op unless AI_SERVICE_TOKEN is set.
+app.add_middleware(BearerTokenMiddleware)
+
+# Browsers may only call this service from origins an operator names. The web
+# platform reaches it server-to-server, which CORS does not govern, so the
+# default of no allowed origins is correct for the normal deployment.
+if config.ALLOWED_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=config.ALLOWED_ORIGINS,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
 app.include_router(health.router)
 app.include_router(forecast.router)   # /forecast  - raw NASA variable forecasts

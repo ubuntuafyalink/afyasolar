@@ -1,0 +1,17 @@
+# Lint policy for the AI service.
+#
+# The rule set is pinned rather than left to ruff's default, because that
+# default widens between releases: an unpinned `ruff check` turns every ruff
+# upgrade into a surprise CI failure on code nobody touched.
+#
+# Selected today: pyflakes (F) plus the pycodestyle error classes that catch
+# real defects, and import sorting (I), which is mechanical and auto-fixable.
+# Widening this to the security (S) and bugbear (B) families is worthwhile and
+# tracked in ROADMAP.md; those need judgement calls on existing code rather
+# than a bulk fix.
+
+target-version = "py311"
+extend-exclude = ["notebooks", "*.ipynb"]
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I"]

@@ -2,11 +2,16 @@
 import math
 
 from app.services.energy_yield import estimate_yield
-from app.services.hazards import (DAYS_PER_MONTH_AVG, hazard_indices,
-                                  index_from, monthly_totals_to_daily_means)
-from app.services.maintenance_features import (ANOMALY_FEATURES,
-                                               build_anomaly_features_rows)
-
+from app.services.hazards import (
+    DAYS_PER_MONTH_AVG,
+    hazard_indices,
+    index_from,
+    monthly_totals_to_daily_means,
+)
+from app.services.maintenance_features import (
+    ANOMALY_FEATURES,
+    build_anomaly_features_rows,
+)
 
 # ---- hazards (port of nasa-power.ts normalization "v1") --------------------
 

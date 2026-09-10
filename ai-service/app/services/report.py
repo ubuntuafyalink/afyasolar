@@ -136,7 +136,7 @@ def build_outlook_report(hazards: dict, lang: str = "en",
             }
             result.update(summary=call_llm(payload, prompt), source="llm",
                           model=config.LLM_MODEL)
-        except Exception as err:  # noqa: BLE001 - never fail the report on LLM issues
+        except Exception as err:
             result["error"] = str(err)
 
     return result

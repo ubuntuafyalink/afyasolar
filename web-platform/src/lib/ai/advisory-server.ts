@@ -3,7 +3,7 @@
  * Reads AI_SERVICE_URL (server-only) and POSTs to FastAPI /predict/advisory.
  * Used by the /api/ai/advisory proxy.
  */
-import { env } from "@/lib/env"
+import { aiServiceBase, aiServiceHeaders } from "@/lib/ai/service-request"
 
 import type { AiAdvisory } from "./advisory-service"
 
@@ -27,13 +27,13 @@ export async function fetchAiAdvisoryServer(args: {
   medical?: Record<string, unknown>
   timeoutMs?: number
 }): Promise<AiAdvisory> {
-  const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
+  const base = aiServiceBase()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 60_000)
   try {
     const res = await fetch(`${base}/predict/advisory`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiServiceHeaders(),
       body: JSON.stringify({
         facility_id: args.facilityId,
         lat: args.lat,

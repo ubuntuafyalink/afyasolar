@@ -53,7 +53,7 @@ def try_land_mask():
     try:
         from global_land_mask import globe  # type: ignore
         return globe.is_land
-    except Exception:  # noqa: BLE001 - optional dependency
+    except Exception:
         return None
 
 

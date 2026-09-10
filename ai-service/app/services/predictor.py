@@ -51,7 +51,7 @@ def deployed_model_name() -> str:
             name = json.loads(card.read_text(encoding="utf-8")).get("name")
             if name:
                 return name
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
     return base.name
 
@@ -129,7 +129,7 @@ def warm_start() -> None:
                 _load_predictor(horizon)
             _load_context(horizon)
             set_warm_state(horizon, "ready")
-        except Exception:  # noqa: BLE001 - warm-up is best-effort; the first
+        except Exception:
             # request will retry the load and surface the real error as a 503.
             set_warm_state(horizon, "failed")
 

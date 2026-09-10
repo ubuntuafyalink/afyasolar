@@ -35,10 +35,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      # Default rule set only (pyflakes + the pycodestyle errors). Notebooks are
-      # exploratory and excluded.
+      # Rule set and exclusions are pinned in ai-service/ruff.toml so a ruff
+      # upgrade cannot widen the default set and fail CI on untouched code.
       - name: Lint
-        run: ruff check . --exclude notebooks --exclude '*.ipynb'
+        run: ruff check .
 
       - name: Run tests
         run: pytest -q

@@ -3,7 +3,7 @@
  * Reads AI_SERVICE_URL (server-only) and POSTs to FastAPI /predict/outlook-report.
  * Used by the /api/ai/outlook-report proxy.
  */
-import { env } from "@/lib/env"
+import { aiServiceBase, aiServiceHeaders } from "@/lib/ai/service-request"
 
 import type { AiOutlookReport, FetchOutlookReportArgs } from "./outlook-report-service"
 
@@ -19,13 +19,13 @@ export class AiOutlookReportServerError extends Error {
 export async function fetchOutlookReportServer(
   args: FetchOutlookReportArgs & { timeoutMs?: number },
 ): Promise<AiOutlookReport> {
-  const base = (env.AI_SERVICE_URL ?? "http://localhost:8000").replace(/\/$/, "")
+  const base = aiServiceBase()
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), args.timeoutMs ?? 60_000)
   try {
     const res = await fetch(`${base}/predict/outlook-report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiServiceHeaders(),
       body: JSON.stringify({
         hazards: args.hazards,
         lang: args.lang ?? "en",

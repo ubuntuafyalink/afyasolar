@@ -38,6 +38,10 @@ services:
       AI_ENGINE_DATA_REPO: ${AI_ENGINE_DATA_REPO:-afyalink/afyasolar-nasa-power-east-africa}
       HF_TOKEN: ${HF_TOKEN:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
+      # Optional shared secret. Set it in .env and the web service picks up the
+      # same value below. Unset means the service accepts unauthenticated calls,
+      # which is fine only because it is not published outside this network.
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
     ports:
       - "8000:7860"
     volumes:
@@ -62,6 +66,7 @@ services:
       # Container-to-container address. ai-service listens on 7860 internally;
       # the 8000 published above is for reaching it from the host.
       AI_SERVICE_URL: http://ai-service:7860
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
     ports:
       - "3000:3000"
 

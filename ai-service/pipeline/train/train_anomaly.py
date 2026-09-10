@@ -18,7 +18,10 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # ai-engine root
-from app.services.maintenance_features import ANOMALY_FEATURES, build_anomaly_features  # noqa: E402
+from app.services.maintenance_features import (
+    ANOMALY_FEATURES,
+    build_anomaly_features,
+)
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_TELEMETRY = HERE.parent / "synthetic" / "out" / "telemetry.parquet"
@@ -34,8 +37,11 @@ def load_telemetry(path: Path) -> pd.DataFrame:
 def main() -> int:
     import joblib
     from sklearn.ensemble import IsolationForest
-    from sklearn.metrics import (average_precision_score,
-                                 precision_recall_fscore_support, roc_auc_score)
+    from sklearn.metrics import (
+        average_precision_score,
+        precision_recall_fscore_support,
+        roc_auc_score,
+    )
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
 

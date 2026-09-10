@@ -64,7 +64,7 @@ def build_advisory(context: dict) -> dict:
         try:
             return {"advisory": _call_llm(context), "source": "llm",
                     "model": config.LLM_MODEL}
-        except Exception as err:  # noqa: BLE001 - never fail the request on LLM issues
+        except Exception as err:
             return {"advisory": _fallback(context), "source": "fallback",
                     "error": str(err)}
     return {"advisory": _fallback(context), "source": "fallback"}
@@ -84,7 +84,7 @@ def build_facility_advisory(context: dict, lang: str = "en") -> dict:
                 " Respond in Swahili (Kiswahili)." if lang == "sw" else " Respond in English.")
             return {"advisory": _call_llm(context, prompt), "source": "llm",
                     "model": config.LLM_MODEL}
-        except Exception as err:  # noqa: BLE001 - never fail the request on LLM issues
+        except Exception as err:
             return {"advisory": _facility_fallback(context, lang), "source": "fallback",
                     "error": str(err)}
     return {"advisory": _facility_fallback(context, lang), "source": "fallback"}
@@ -96,7 +96,7 @@ def build_portfolio_advisory(context: dict) -> dict:
         try:
             return {"advisory": _call_llm(context, PORTFOLIO_SYSTEM_PROMPT),
                     "source": "llm", "model": config.LLM_MODEL}
-        except Exception as err:  # noqa: BLE001 - never fail the request on LLM issues
+        except Exception as err:
             return {"advisory": _portfolio_fallback(context), "source": "fallback",
                     "error": str(err)}
     return {"advisory": _portfolio_fallback(context), "source": "fallback"}
@@ -122,7 +122,7 @@ def build_explanation(payload: dict) -> dict:
             result.update(explanation=_call_llm(payload, prompt), source="llm",
                           model=config.LLM_MODEL)
             return result
-        except Exception as err:  # noqa: BLE001 - never fail the request on LLM issues
+        except Exception as err:
             result.update(explanation=_explain_fallback(payload, meaning, lang),
                           source="fallback", error=str(err))
             return result

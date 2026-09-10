@@ -4,7 +4,7 @@
 > Intelligence: designing, building, refactoring, or reviewing components, pages,
 > layouts, animation, colour, or typography.
 >
-> Read alongside [`TECH_STACK.md`](TECH_STACK.md) for engineering rules.
+> Read alongside [`TECH_STACK.md`](docs/internal/TECH_STACK.md) for engineering rules.
 
 ---
 

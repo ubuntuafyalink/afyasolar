@@ -177,7 +177,7 @@ def main() -> int:
             n = df["date"].nunique()
             miss = df["value"].isna().mean() * 100
             print(f"    ok: {n} days, {miss:.1f}% missing -> {written.name}")
-        except Exception as err:  # noqa: BLE001 - report and continue
+        except Exception as err:
             print(f"    FAILED: {err}", file=sys.stderr)
             failures.append(loc["id"])
         time.sleep(args.pause)

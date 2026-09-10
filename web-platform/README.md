@@ -122,6 +122,7 @@ Open [http://localhost:3000](http://localhost:3000). Sign in at `/auth/signin` w
 | `CLOUDINARY_API_SECRET` | Yes* | Cloudinary API secret |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | No | Outbound email |
 | `AI_SERVICE_URL` | Yes | Where the FastAPI service in `ai-service/` is reachable **from this server**. Every AI surface proxies through it. Defaults to `http://localhost:8000`, so a wrong value fails silently against loopback rather than reporting a missing setting. |
+| `AI_SERVICE_TOKEN` | No | Shared secret sent to the AI service when it requires one. Must match `AI_SERVICE_TOKEN` on that side. |
 | `APP_BASE_URL` | No | Absolute base URL used in outbound links; falls back to `NEXT_PUBLIC_APP_URL` |
 | `NODE_ENV` | No | `development` or `production` |
 
@@ -238,9 +239,13 @@ scripts/        # One-off maintenance scripts
 | [`docs/AFYASOLAR_PLATFORM_DOCUMENTATION.md`](docs/AFYASOLAR_PLATFORM_DOCUMENTATION.md) | Platform overview, roles, and schema reference |
 | [`../docs/architecture/`](../docs/architecture/) | Layered system architecture figure |
 | [`docs/DEMO_ACCESS_GUIDE.md`](docs/DEMO_ACCESS_GUIDE.md) | Demo dashboards and tokens |
-| [`docs/FEATURE_MATRIX.md`](docs/FEATURE_MATRIX.md) | Feature coverage |
 | [`docs/CARBON_CALCULATOR_METHODOLOGY.md`](docs/CARBON_CALCULATOR_METHODOLOGY.md) | Carbon credit calculations |
 | [`docs/INTEGRATION_SEAMS.md`](docs/INTEGRATION_SEAMS.md) | Extension points (device ingestion, messaging, forecast, open data) and how deferred hardware/ML work plugs in |
+
+Internal working documents — engineering standards, the product overview, feature
+backlogs and commercial terms — live in [`docs/internal/`](docs/internal/). They are
+kept in the repository for transparency but are written for the team, not for
+readers evaluating the project.
 
 ## Troubleshooting
 

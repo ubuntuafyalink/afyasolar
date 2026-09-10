@@ -62,7 +62,7 @@ npm run coverage             # CI runs coverage, not plain `test`, and gates on 
 npm run build                # CI builds too; a change can pass the above and break this
 
 # ai-service/
-ruff check . --exclude notebooks --exclude '*.ipynb'
+ruff check .
 pytest -q
 ```
 

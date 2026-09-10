@@ -24,8 +24,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import pyarrow.parquet as pq
-
-from fetch_nasa import fetch_point, to_long_frame, default_end  # reuse tested helpers
+from fetch_nasa import default_end, fetch_point, to_long_frame  # reuse tested helpers
 
 HERE = Path(__file__).resolve().parent
 AI_SERVICE = HERE.parents[1]
@@ -47,7 +46,7 @@ def fetch_one(loc: dict, start: str, end: str, out_dir: Path, force: bool) -> di
         df.to_parquet(out_path, index=False)
         return {"id": loc["id"], "status": "ok", "days": int(df["date"].nunique()),
                 "miss": float(df["value"].isna().mean() * 100)}
-    except Exception as err:  # noqa: BLE001 - report and continue
+    except Exception as err:
         return {"id": loc["id"], "status": "failed", "error": str(err)}
 
 

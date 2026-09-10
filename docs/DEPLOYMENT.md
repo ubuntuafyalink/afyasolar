@@ -134,11 +134,25 @@ starting rather than relying on the application to complain.
 
 ## Security before you expose anything
 
-- **Do not publish the AI service.** It currently has no authentication, no rate
-  limiting and no CORS restriction, and `/advisory` proxies to a paid language
-  model API. Keep it on a private network reachable only by the web platform. In
+- **Keep the AI service off the public internet.** It has no user model, and
+  `/advisory` proxies to a paid language model API, so an open instance is an
+  open bill. Put it on a private network reachable only by the web platform. In
   the compose file it is published on port 8000 for local convenience; remove
   that mapping for any shared environment.
+- **Where you cannot guarantee that**, set `AI_SERVICE_TOKEN` on the service and
+  the same value on the web platform. Every endpoint then requires that bearer
+  token, except `/` and `/health` so health probes keep working. Generate it
+  randomly per environment:
+
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ```
+
+  Set `AI_SERVICE_ALLOWED_ORIGINS` only if a browser genuinely needs to call the
+  service. The web platform reaches it server-to-server, which CORS does not
+  govern, so the default of no allowed origins is correct.
+- There is still **no rate limiting** on the AI service. The bearer token bounds
+  who can call it, not how often.
 - Terminate TLS at a reverse proxy in front of the web platform.
 - `DEVICE_INGEST_TOKEN` and `CRON_SECRET` are bearer tokens. Generate them
   randomly per environment and rotate them.
