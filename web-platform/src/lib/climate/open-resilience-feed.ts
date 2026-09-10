@@ -30,6 +30,12 @@ export type OpenResilienceFeed = {
   source: string
   formulaVersion: string
   normalizationVersion: string
+  /** Smallest number of facilities a region must contain to be reported. */
+  minRegionFacilities: number
+  /** Regions withheld because they fell below `minRegionFacilities`. */
+  suppressedRegions: number
+  /** Facilities in those withheld regions. Excluded from every figure below. */
+  suppressedFacilities: number
   portfolio: {
     facilitiesWithClimate: number
     hazardExposure: number
@@ -42,6 +48,13 @@ export type OpenResilienceFeed = {
 }
 
 const UNSPECIFIED_REGION = "Unspecified"
+
+/**
+ * Small-cell suppression threshold. A region reporting fewer than this many
+ * facilities would describe individual sites closely enough to re-identify
+ * them, so it is withheld entirely.
+ */
+export const MIN_REGION_FACILITIES = 3
 
 type Acc = {
   n: number
@@ -65,13 +78,18 @@ function round(n: number): number {
  * Build the public feed from the internal portfolio result. Degraded facilities
  * (no usable climate data) are excluded. Output contains ONLY region-level
  * aggregates — no facilityId, name, or lat/lon is ever included.
+ *
+ * Regions holding fewer than `MIN_REGION_FACILITIES` facilities are withheld,
+ * and their facilities are also left out of the portfolio totals. Both halves
+ * matter: publishing a portfolio mean alongside every reportable region mean
+ * would let a reader recover the withheld group by subtraction, which for a
+ * single-facility region discloses that facility exactly.
  */
 export function buildOpenResilienceFeed(
   result: PortfolioClimateResult,
   generatedAt: string,
 ): OpenResilienceFeed {
   const byRegion = new Map<string, Acc>()
-  const portfolio = emptyAcc()
 
   for (const f of result.data) {
     if (f.degraded) continue
@@ -85,17 +103,24 @@ export function buildOpenResilienceFeed(
     acc.heat += f.byHazard.heat
     acc.storm += f.byHazard.storm
     byRegion.set(region, acc)
-
-    portfolio.n += 1
-    portfolio.composite += f.composite
-    portfolio.proxy += f.hesScore
-    portfolio.flood += f.byHazard.flood
-    portfolio.drought += f.byHazard.drought
-    portfolio.heat += f.byHazard.heat
-    portfolio.storm += f.byHazard.storm
   }
 
-  const regions: OpenRegionResilience[] = [...byRegion.entries()]
+  const reportable = [...byRegion.entries()].filter(([, a]) => a.n >= MIN_REGION_FACILITIES)
+  const withheld = [...byRegion.entries()].filter(([, a]) => a.n < MIN_REGION_FACILITIES)
+  const suppressedFacilities = withheld.reduce((sum, [, a]) => sum + a.n, 0)
+
+  const portfolio = emptyAcc()
+  for (const [, a] of reportable) {
+    portfolio.n += a.n
+    portfolio.composite += a.composite
+    portfolio.proxy += a.proxy
+    portfolio.flood += a.flood
+    portfolio.drought += a.drought
+    portfolio.heat += a.heat
+    portfolio.storm += a.storm
+  }
+
+  const regions: OpenRegionResilience[] = reportable
     .map(([region, a]) => {
       const proxy = round(a.proxy / a.n)
       return {
@@ -121,6 +146,9 @@ export function buildOpenResilienceFeed(
     source: "NASA POWER climate reanalysis, de-identified and aggregated by region",
     formulaVersion: CRIPHC_FORMULA_VERSION,
     normalizationVersion: NORMALIZATION_VERSION,
+    minRegionFacilities: MIN_REGION_FACILITIES,
+    suppressedRegions: withheld.length,
+    suppressedFacilities,
     portfolio: {
       facilitiesWithClimate: portfolio.n,
       hazardExposure: portfolio.n ? round(portfolio.composite / portfolio.n) : 0,
@@ -136,7 +164,10 @@ export function buildOpenResilienceFeed(
     regions,
     disclaimer:
       "Public open data. Aggregated and de-identified: contains no facility identifiers, " +
-      "names, or precise locations. Hazard exposure and resilience are derived from NASA " +
-      "POWER climate reanalysis. Not personal data.",
+      "names, or precise locations. Regions with fewer than " +
+      `${MIN_REGION_FACILITIES} facilities are withheld, and those facilities are excluded ` +
+      "from the portfolio totals, so withheld values cannot be recovered by subtraction. " +
+      "Hazard exposure and resilience are derived from NASA POWER climate reanalysis. " +
+      "Not personal data.",
   }
 }

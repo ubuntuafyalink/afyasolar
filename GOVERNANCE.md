@@ -34,9 +34,10 @@ the UNICEF Venture Fund open-source commitments (RFPS-NYH-2026-503931).
   repository, plus the climate model and training dataset on Hugging Face
   (`afyalink/afyasolar-chronos-48m-climate-ea-v1`, `afyalink/afyasolar-nasa-power-east-africa`).
 - The project **commits to publishing a public real-time open-data API** (anonymised, read-only
-  facility-resilience data), to keeping it available once launched, and to publishing patches in
-  perpetuity, funded by the platform's recurring managed-service revenue. This feed is on the
-  roadmap and not yet live — see the status table in the [README](./README.md).
+  facility-resilience data), to keeping it available, and to publishing patches in perpetuity,
+  funded by the platform's recurring managed-service revenue. This feed is live at
+  `GET /api/open/resilience`, aggregated to region level with no facility identifiers, names or
+  coordinates. See [`docs/PRIVACY.md`](./docs/PRIVACY.md) for the de-identification method.
 - What is *not* published is the live operational data, any personal data (protected by law,
   not by closed source), and the separately-funded commercial energy-service operation — none
   of which are funded code.
