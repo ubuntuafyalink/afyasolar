@@ -81,7 +81,18 @@ Each project is self-contained with its own README, dependencies, and tests:
 - **Web platform** → [`web-platform/README.md`](web-platform/README.md)
   (`cd web-platform && npm install && npm run dev`)
 - **AI service** → [`ai-service/README.md`](ai-service/README.md)
-  (`cd ai-service && pip install -r requirements.txt && uvicorn app.main:app --reload`)
+  (`cd ai-service && pip install -r requirements-serve.txt && uvicorn app.main:app --reload`)
+
+Or bring up the whole stack, database included, with one command:
+
+```bash
+cp web-platform/.env.example .env   # set NEXTAUTH_SECRET
+docker compose up --build
+docker compose run --rm web npm run db:migrate
+docker compose run --rm web npm run create-admin
+```
+
+Deploying it somewhere real is covered in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Repository layout
 
@@ -89,7 +100,12 @@ Each project is self-contained with its own README, dependencies, and tests:
 afyasolar/                 (this repo)
 ├── web-platform/          Next.js web application
 ├── ai-service/            FastAPI AI/ML service
-├── docs/architecture/     System architecture figures (SVG + PNG)
+├── docs/
+│   ├── architecture/      System architecture figure (SVG + PNG)
+│   ├── DEPLOYMENT.md      How to run it somewhere real
+│   ├── EVALUATION.md      Forecast accuracy against a baseline
+│   └── PRIVACY.md         Data protection and de-identification
+├── docker-compose.yml     One-command local stack
 ├── .github/workflows/     CI (one job per project, path-scoped)
 ├── LICENSE                MIT (covers both projects)
 ├── CONTRIBUTING.md · GOVERNANCE.md · SECURITY.md · CODE_OF_CONDUCT.md

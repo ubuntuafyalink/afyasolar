@@ -1,0 +1,70 @@
+# One-command local stack: database, AI service, web platform.
+#
+#   cp web-platform/.env.example .env
+#   docker compose up --build
+#   docker compose run --rm web npm run db:migrate
+#   docker compose run --rm web npm run create-admin
+#
+# Then open http://localhost:3000.
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-afyasolar}
+      MYSQL_DATABASE: ${DB_NAME:-afya_solar}
+      MYSQL_USER: ${DB_USER:-afyasolar}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-afyasolar}
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_PASSWORD:-afyasolar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  ai-service:
+    build: ./ai-service
+    environment:
+      # Resolve the model and context data from Hugging Face at boot so no
+      # local dataset is required. See ai-service/README.md.
+      AI_ENGINE_MODEL_REPO: ${AI_ENGINE_MODEL_REPO:-afyalink/afyasolar-chronos-48m-climate-ea-v1}
+      AI_ENGINE_DATA_REPO: ${AI_ENGINE_DATA_REPO:-afyalink/afyasolar-nasa-power-east-africa}
+      HF_TOKEN: ${HF_TOKEN:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+    ports:
+      - "8000:7860"
+    volumes:
+      # Cache the ~1.5 GB of model weights across restarts.
+      - hf-cache:/home/appuser/.cache/huggingface
+
+  web:
+    build: ./web-platform
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: ${DB_USER:-afyasolar}
+      DB_PASSWORD: ${DB_PASSWORD:-afyasolar}
+      DB_NAME: ${DB_NAME:-afya_solar}
+      DB_SSL: "false"
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?set NEXTAUTH_SECRET in .env}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      # Container-to-container address. ai-service listens on 7860 internally;
+      # the 8000 published above is for reaching it from the host.
+      AI_SERVICE_URL: http://ai-service:7860
+    ports:
+      - "3000:3000"
+
+volumes:
+  db-data:
+  hf-cache:

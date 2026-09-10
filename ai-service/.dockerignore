@@ -1,0 +1,11 @@
+__pycache__
+*.pyc
+.env
+.env.*
+!.env.example
+notebooks
+dataset/*.csv
+dataset/*.parquet
+pipeline/train/outputs
+.git
+tests

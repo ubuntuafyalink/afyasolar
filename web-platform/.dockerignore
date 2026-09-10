@@ -1,0 +1,12 @@
+node_modules
+.next
+.next-build
+coverage
+certs
+.env
+.env.*
+!.env.example
+tsconfig.tsbuildinfo
+.git
+*.md
+docs
