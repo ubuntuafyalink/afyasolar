@@ -11,9 +11,6 @@ const nextConfig = {
     config.resolve.alias['@'] = path.resolve(__dirname, 'src')
     return config
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     // Scoped to the hosts we actually serve images from. A '**' hostname turns
     // /_next/image into an open proxy: anyone can pass an arbitrary URL and have

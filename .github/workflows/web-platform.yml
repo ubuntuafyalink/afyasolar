@@ -11,7 +11,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Lint, type-check & test
+    name: Lint, type-check, test & build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -40,6 +40,13 @@ jobs:
 
       - name: Unit tests + coverage
         run: npm run coverage
+
+      # The production build path was previously never exercised, so a change
+      # that lints and type-checks but breaks the bundle shipped undetected.
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
 
       - name: Upload coverage report
         if: always()
