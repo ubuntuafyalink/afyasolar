@@ -28,11 +28,16 @@ Before you install, make sure you have:
 
 ### 1. Clone and install dependencies
 
+This repository is a monorepo. The web platform lives in `web-platform/`, and
+there is no package manifest at the root, so install from inside that directory.
+
 ```bash
 git clone https://github.com/ubuntuafyalink/afyasolar.git
-cd afyasolar
+cd afyasolar/web-platform
 npm install
 ```
+
+Every command below runs from `web-platform/`.
 
 ### 2. Configure environment variables
 
@@ -116,11 +121,60 @@ Open [http://localhost:3000](http://localhost:3000). Sign in at `/auth/signin` w
 | `CLOUDINARY_API_KEY` | Yes* | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Yes* | Cloudinary API secret |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | No | Outbound email |
-| `SMARTSMS_API_KEY` | No | SMS via SmartSMS |
-| `TWILIO_*` | No | WhatsApp notifications |
-| `GROQ_API_KEY` | No | AI-assisted features |
+| `AI_SERVICE_URL` | Yes | Where the FastAPI service in `ai-service/` is reachable **from this server**. Every AI surface proxies through it. Defaults to `http://localhost:8000`, so a wrong value fails silently against loopback rather than reporting a missing setting. |
+| `APP_BASE_URL` | No | Absolute base URL used in outbound links; falls back to `NEXT_PUBLIC_APP_URL` |
+| `NODE_ENV` | No | `development` or `production` |
 
-\*Required at runtime when features that upload media are used. Add them to `.env` even if they are not listed in `.env.example`.
+### Payments
+
+The payment rail is AzamPay. Subscriptions and microgrid billing do not work without it.
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `AZAM_PAY_CLIENT_ID` | For payments | AzamPay client id |
+| `AZAM_PAY_CLIENT_SECRET` | For payments | AzamPay client secret |
+| `AZAM_PAY_API_KEY` | For payments | AzamPay API key |
+| `AZAM_PAY_APP_NAME` | For payments | Registered application name |
+| `AZAM_PAY_ENVIRONMENT` | For payments | `sandbox` or `production` |
+
+### Messaging
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `SMS_PROVIDER` | No | Selects the SMS adapter; leave unset for the default |
+| `SMARTSMS_API_KEY` | No | SMS via SmartSMS |
+| `SMARTSMS_API_URL` | No | SmartSMS endpoint override |
+| `SMARTSMS_SENDER_ID` | No | Registered SMS sender id |
+| `AFRICASTALKING_USERNAME` | No | Africa's Talking username |
+| `AFRICASTALKING_API_KEY` | No | Africa's Talking API key |
+| `AFRICASTALKING_SENDER_ID` | No | Africa's Talking sender id |
+| `TWILIO_ACCOUNT_SID` | No | WhatsApp notifications |
+| `TWILIO_AUTH_TOKEN` | No | WhatsApp notifications |
+| `TWILIO_WHATSAPP_NUMBER` | No | Sending WhatsApp number |
+
+### Push notifications
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `VAPID_PRIVATE_KEY` | No | Web push private key |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | No | Web push public key, read by the browser |
+| `VAPID_SUBJECT` | No | Contact URI for the push service, e.g. `mailto:…` |
+
+### Machine access and integrations
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DEVICE_INGEST_TOKEN` | For telemetry | Bearer token gateways present to `POST /api/devices/telemetry` |
+| `CRON_SECRET` | For scheduled jobs | Bearer token required by the scheduled endpoints |
+| `BLOB_READ_WRITE_TOKEN` | No | Vercel Blob storage for generated reports |
+| `GEMINI_API_KEY` | No | Preferred assistant model |
+| `GEMINI_MODEL` | No | Defaults to `gemini-2.0-flash` |
+| `GROQ_API_KEY` | No | Assistant fallback when Gemini is unset |
+| `OPENAI_API_KEY` | No | Optional alternative assistant provider |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | No | Climate Outlook map; falls back to OpenStreetMap when unset |
+| `NEXT_PUBLIC_DEMO_TELEMETRY` | No | Renders demo telemetry on power surfaces |
+
+\*Required at runtime when features that upload media are used.
 
 Full variable names and placeholders are in [`.env.example`](.env.example). Runtime validation lives in [`src/lib/env.ts`](src/lib/env.ts).
 
@@ -222,6 +276,6 @@ and none of which conflict with a fully open codebase.
 - **Digital Public Good:** this project intends to register with, and meet the standard of,
   the [DPG Registry](https://digitalpublicgoods.net/).
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`GOVERNANCE.md`](./GOVERNANCE.md),
-[`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md), and [`SECURITY.md`](./SECURITY.md) for how to
+See [`CONTRIBUTING.md`](../CONTRIBUTING.md), [`GOVERNANCE.md`](../GOVERNANCE.md),
+[`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md), and [`SECURITY.md`](../SECURITY.md) for how to
 participate and report issues.
