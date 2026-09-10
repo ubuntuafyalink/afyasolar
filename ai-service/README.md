@@ -96,8 +96,13 @@ python pipeline/eval/backtest.py              # WQL/MASE vs seasonal-naive basel
 ```
 
 Each horizon trains **SeasonalNaive** (baseline) vs **Chronos ZeroShot** vs
-**Chronos FineTuned** so the fine-tune's value is provable. Predictors land in
+**Chronos FineTuned** so the three can be compared directly. Predictors land in
 `pipeline/train/outputs/<horizon>/`; the API serves them from there.
+
+On the current backtest, Chronos beats the seasonal baseline by roughly 36%
+(monthly) and 52% (daily) on Weighted Quantile Loss, but fine-tuning does **not**
+improve on zero-shot, so the zero-shot predictor is what serves. The full table
+is in [`docs/EVALUATION.md`](../docs/EVALUATION.md).
 
 ### Predictive maintenance (CPU - runs anywhere, no GPU)
 

@@ -36,7 +36,11 @@ Hugging Face at runtime (`AI_ENGINE_MODEL_REPO`, `AI_ENGINE_DATA_REPO`):
 | Climate model (Chronos-Bolt 48M, fine-tuned on East Africa) | [`afyalink/afyasolar-chronos-48m-climate-ea-v1`](https://huggingface.co/afyalink/afyasolar-chronos-48m-climate-ea-v1) |
 | Training dataset (NASA POWER, 275-point East-Africa grid, 2000→present) | [`afyalink/afyasolar-nasa-power-east-africa`](https://huggingface.co/datasets/afyalink/afyasolar-nasa-power-east-africa) |
 
-Layered system figures are in [`docs/architecture/`](docs/architecture/).
+Forecast accuracy against a seasonal-naive baseline is published in
+[`docs/EVALUATION.md`](docs/EVALUATION.md), including the finding that
+fine-tuning did not improve on the zero-shot model.
+
+The layered system figure is in [`docs/architecture/`](docs/architecture/).
 
 ## Status
 
@@ -96,10 +100,10 @@ afyasolar/                 (this repo)
 
 Licensed **MIT**. Built as a Digital Public Good candidate: open data
 (NASA POWER), open-weights models (Chronos-Bolt for forecasting; Llama served via
-Groq for the advisory layer), our own fine-tuned model and training dataset
-published on Hugging Face, and a committed public, de-identified resilience data
-API (planned — see Status above). Governance and contribution guidelines are at
-the repository root and apply to both projects.
+Groq for the advisory layer), our own training dataset and fine-tuned weights
+published on Hugging Face, and a public, de-identified resilience data API that
+is live at `GET /api/open/resilience`. Governance and contribution guidelines are
+at the repository root and apply to both projects.
 
 Note on model licensing: the code is MIT, but the fine-tuned climate weights are a
 derivative of Apache-2.0 `chronos-bolt-small` and are redistributed under
