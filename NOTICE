@@ -1,0 +1,45 @@
+AfyaSolar Intelligence
+Copyright (c) 2026 Ubuntu Afyalink Company Limited
+
+This product includes software developed by Ubuntu Afyalink Company Limited,
+licensed under the MIT License. See LICENSE.
+
+--------------------------------------------------------------------------------
+Third-party components
+--------------------------------------------------------------------------------
+
+Chronos-Bolt (climate forecasting model)
+
+  The fine-tuned climate weights published at
+  https://huggingface.co/afyalink/afyasolar-chronos-48m-climate-ea-v1
+  are a derivative work of amazon/chronos-bolt-small.
+
+    Chronos
+    Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+    Licensed under the Apache License, Version 2.0.
+
+  Those weights have been MODIFIED: they were fine-tuned on daily NASA POWER
+  observations over a 275-point East Africa land grid. As required by section 4
+  of the Apache License, Version 2.0, they are redistributed under that same
+  licence, carrying Amazon's copyright notice and this statement of
+  modification.
+
+  A copy of the Apache License, Version 2.0 is available at
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Note that the MIT licence covering the code in this repository does NOT
+  extend to those weights.
+
+NASA POWER (climate data)
+
+  Source data is from the NASA Prediction Of Worldwide Energy Resources
+  project, which makes it freely available for public use. The packaged
+  dataset at
+  https://huggingface.co/datasets/afyalink/afyasolar-nasa-power-east-africa
+  is released under CC-BY-4.0.
+
+Predictive maintenance models
+
+  The remaining-useful-life and anomaly-detection models are trained from
+  scratch in this repository and are covered by the MIT License, like the rest
+  of the code.

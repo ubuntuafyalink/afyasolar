@@ -1,0 +1,14 @@
+# Default owner for everything not matched below.
+*                       @ubuntuafyalink
+
+# Contributor-facing and licensing documents. Changes here affect how the
+# project is governed and how it is assessed as a Digital Public Good.
+/LICENSE                @ubuntuafyalink
+/NOTICE                 @ubuntuafyalink
+/GOVERNANCE.md          @ubuntuafyalink
+/SECURITY.md            @ubuntuafyalink
+/CODE_OF_CONDUCT.md     @ubuntuafyalink
+/docs/PRIVACY.md        @ubuntuafyalink
+
+# The de-identification guarantee behind the public open-data feed.
+/web-platform/src/lib/climate/open-resilience-feed.ts   @ubuntuafyalink
