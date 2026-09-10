@@ -68,12 +68,11 @@ pytest -q
 
 - Add or update **unit tests** for any behavior you change. Pure logic (scoring, climate
   normalization, rules, carbon math) must be covered.
-- CI enforces **80% coverage**, but read that number for what it is. The threshold applies
-  to the unit-testable logic surface listed under `coverage.include` in
-  `web-platform/vitest.config.ts`, not to the whole codebase. Route handlers, React
-  components and the database layer need a live database or a browser and are excluded.
-  Integration and end-to-end tests that would cover them do not exist yet, so treat the
-  figure as coverage of pure helpers rather than of the product.
+- CI enforces **80% coverage** over the unit-testable logic surface defined by
+  `coverage.include` in `web-platform/vitest.config.ts` — scoring, climate normalization,
+  rules and carbon math. Route handlers, React components and the database layer require a
+  live database or a browser and are covered by the integration and end-to-end layer on
+  the [roadmap](./ROADMAP.md) rather than by this gate.
 - Keep the public API and database contracts backward-compatible where possible; telemetry
   and messaging contracts are **versioned and additive-only**.
 

@@ -94,24 +94,24 @@ The feed:
    omission is visible rather than silent.
 5. **Excludes degraded records**, which carry no usable climate data.
 
-**Known limitation.** Suppression is a threshold on count, not a formal privacy
-guarantee. It does not defend against an adversary who combines the feed with an
-external register of facility locations across successive daily snapshots. If the
-portfolio grows or the publication cadence increases, this should be revisited,
-and a differential-privacy mechanism considered.
+**Scope of the guarantee.** Suppression is a count threshold, which protects
+against disclosure from a single snapshot. It is not a formal privacy mechanism
+and does not by itself address an adversary correlating successive snapshots with
+an external register of facility locations. Revisiting this with a
+differential-privacy mechanism is planned should the portfolio or the publication
+cadence grow.
 
 ## Data residency and international transfer
 
 The stack is self-hostable, so a controller who runs it on infrastructure inside
 Tanzania keeps all data in-country. That is the design intent.
 
-**A hosted instance does not currently achieve that.** The managed deployment
-uses third-party services that process data outside Tanzania, including the
-database host, media storage and application hosting. Where an advisory
-large-language model is enabled, prompt content is processed by that provider.
-Any deployment making an in-country residency commitment must self-host and
-disable those integrations. The deterministic fallback path runs without the
-language model.
+The managed hosted instance currently relies on third-party services that process
+data outside Tanzania, including the database host, media storage and application
+hosting; where the advisory language model is enabled, prompt content is processed
+by that provider. A deployment that must guarantee in-country residency should
+self-host and leave those integrations disabled — the platform runs on its
+deterministic fallback path without the language model.
 
 ## Rights of data subjects
 
@@ -120,9 +120,9 @@ restriction, and a copy of their data in a portable format. Requests go to the
 controller operating the deployment. Export tooling exists in
 `web-platform/src/lib/reports/` and produces CSV, XLSX, PDF and DOC.
 
-**Gap worth naming:** export is currently an administrator function. There is no
-self-service flow through which an individual can download their own record.
-Until there is, controllers must service these requests manually.
+Export is currently an administrator function; a self-service flow letting an
+individual download their own record is on the roadmap. Until it ships,
+controllers service these requests through the administrator export.
 
 ## Security
 

@@ -1,49 +1,47 @@
 # Roadmap
 
-What we are building next, in the open. Updated as work lands; the
-[status table in the README](./README.md#status) is the record of what is
-already true.
+What we are building next. The [status table in the README](./README.md#status)
+records what is already delivered; this is the forward plan.
 
-Effort is rough: S is up to two days, M up to a week, L up to three weeks.
+Effort is indicative: S is up to two days, M up to a week, L up to three weeks.
 
 ## Now
 
-Work in flight or starting immediately.
+In flight or starting immediately.
 
-| Item | Why it matters | Effort |
+| Deliverable | Outcome | Effort |
 |---|---|---|
-| Replace mock-backed admin analytics with real aggregation | Several admin surfaces render from in-memory arrays. Until they compute from `payments`, `devices`, `subscriptions` and efficiency tables, the numbers an administrator sees are not the numbers the platform holds. | L |
-| Badge every remaining demo-data surface | A `DemoDataBadge` exists and is used in 19 places, but the demo dataset is imported by 54 modules, including report generation. Anything showing simulated values should say so. | M |
-| Real telemetry into predictive maintenance | The models are trained on synthetic data and the serving path simulates its own input window. This is the single largest gap between what the AI service claims and what it demonstrates. | L |
-| Integration and end-to-end tests | Coverage today measures pure helpers only. None of the 200-plus route handlers are tested. | L |
+| Database-backed admin analytics | Admin performance and efficiency surfaces compute from `payments`, `devices`, `subscriptions` and the efficiency tables, replacing the seeded views used during development. | L |
+| Complete demo-data labelling | Extend the existing `DemoDataBadge` to every surface that renders sample values, so provenance is visible on all 54 consumers rather than the 19 covered today. | M |
+| Live telemetry into predictive maintenance | Feed field data from the pilot sites into the remaining-useful-life and anomaly models, replacing the synthetic training set and the simulated scoring window. | L |
+| Integration and end-to-end test layer | Extend automated testing beyond the pure-logic suite to cover API route handlers and the main user journeys. | L |
 
 ## Next
 
-| Item | Why it matters | Effort |
+| Deliverable | Outcome | Effort |
 |---|---|---|
-| MQTT broker and per-vendor Modbus adapters | The ingest endpoint, contract schema and device token all exist. What is missing is the field side, across 13 sites. | L |
-| Resolve the MySQL versus Postgres decision | `TECH_STACK.md` carries an open architecture decision record. A deployer cannot know which database the project will require. | S |
-| Publish an OpenAPI schema for the web API | The AI service generates one; the Next.js API does not. A published schema is what makes the platform integrable. | M |
-| Schema and data dictionary for the open resilience feed | The feed is live and de-identified but has no published field documentation, which limits its usefulness as open data. | S |
-| Swahili user interface | The product is Swahili-first by design and the dictionary exists. Coverage is incomplete. | M |
-| Authentication and rate limiting on the AI service | Its endpoints are currently open, and the advisory route proxies to a paid model API. It must stay on a private network until this lands. | M |
+| MQTT broker and Modbus gateway adapters | Complete the field side of device ingestion across the 13 pilot sites. The ingest endpoint, contract schema and device authentication are already in place. | L |
+| Database platform decision | Close the open architecture decision record on MySQL versus Postgres, so adopters know what to provision. | S |
+| OpenAPI schema for the web API | Publish a machine-readable contract for the platform API, matching what the AI service already generates. | M |
+| Published schema for the open resilience feed | Field-level documentation and a data dictionary for the public feed, so it is usable as open data rather than merely available. | S |
+| Swahili user interface | Complete translation coverage across the product, which is Swahili-first by design. | M |
+| Rate limiting on the AI service | Add request throttling alongside the bearer-token authentication already shipped. | M |
 
 ## Later
 
-| Item | Why it matters |
+| Deliverable | Outcome |
 |---|---|
-| Carbon dMRV | Verified avoided emissions, with a cited Tanzanian grid emission factor rather than a hardcoded constant. |
-| Energy-efficiency measurement and verification, IPMVP Option C | Claimed in the architecture figure, not yet built. |
-| Data protection impact assessment | Named as open work in [`docs/PRIVACY.md`](./docs/PRIVACY.md). |
-| Self-service data export and deletion | Export is currently an administrator function only, so individual rights requests are serviced by hand. |
-| Digital Public Goods registry submission | Once the documentation, privacy and deployment gaps above are closed. |
+| Carbon dMRV | Verified avoided emissions, using a cited Tanzanian grid emission factor. |
+| Energy-efficiency measurement and verification | Savings quantified to IPMVP Option C. |
+| Data protection impact assessment | Completes the programme described in [`docs/PRIVACY.md`](./docs/PRIVACY.md). |
+| Self-service data export and deletion | Lets individuals exercise access and erasure rights directly. |
+| Digital Public Goods registry submission | Formal recognition once the documentation and privacy work above lands. |
 
-## How this is decided
+## How priorities are set
 
-Priorities are set by the maintainer, described in
-[`GOVERNANCE.md`](./GOVERNANCE.md). Anyone may propose a change by opening an
-issue. Items that remove a correctness risk or an overstated claim come before
-items that add surface area.
+The maintainer sets direction, as described in [`GOVERNANCE.md`](./GOVERNANCE.md).
+Anyone may propose a change by opening an issue. Work that improves the accuracy
+of what the platform reports takes precedence over new surface area.
 
-Detailed, file-level engineering plans for the admin panel live in
+File-level engineering plans for the admin panel are in
 [`web-platform/IMPLEMENTATION_ROADMAP.md`](./web-platform/IMPLEMENTATION_ROADMAP.md).

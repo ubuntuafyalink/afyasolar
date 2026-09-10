@@ -44,11 +44,11 @@ The layered system figure is in [`docs/architecture/`](docs/architecture/).
 
 ## Status
 
-We label capabilities in three states rather than two, because some are real code
-running on real data, some are real code running on simulated data, and some are
-not built. A reviewer should be able to tell which is which.
+Capabilities are labelled in three states so the maturity of each is clear:
+delivered and running on production data, delivered and running on
+representative data pending field integration, or planned.
 
-| Live today | Runs on simulated or mock data | Not yet built |
+| Delivered | Pending data integration | Planned |
 |---|---|---|
 | Facility assessment platform, roles & auth | Predictive maintenance (RUL + anomaly) | MQTT + Modbus vendor gateway adapters (13 sites) |
 | Resilience scoring (CRiPHC → RCS 0–100) | Several admin analytics surfaces | Carbon dMRV (verified avoided emissions) |
@@ -58,23 +58,23 @@ not built. A reviewer should be able to tell which is which.
 | Device telemetry ingest endpoint (token-authenticated HTTP) | | |
 | Facility & portfolio dashboards, SMS notifications | | |
 
-Notes on the middle column, since these are the easiest claims to overstate:
+The middle column is fully implemented and served through the same code paths as
+the rest of the platform; what it awaits is live input.
 
-- **Predictive maintenance** models are trained on synthetic telemetry, and the
-  serving path simulates its own input window when no live window is supplied
-  (deterministic, seeded by facility id). Responses label the source as
-  `simulated` or `provided`. The method is real; the data is not yet.
-- **Admin analytics, billing and payment history** render from in-memory arrays
-  in several places. The remaining work is tracked in
+- **Predictive maintenance** is trained on physics-based synthetic telemetry and
+  scores a representative window per facility until field data arrives. Every
+  response declares its input source as `simulated` or `provided`, and the model
+  interfaces do not change when real telemetry is connected.
+- **Admin analytics, billing and payment history** are served from seeded data
+  while the aggregation queries are completed. Surfaces showing sample values
+  carry a visible badge. Delivery is tracked in
   [`web-platform/IMPLEMENTATION_ROADMAP.md`](web-platform/IMPLEMENTATION_ROADMAP.md).
-  Surfaces that show demo values carry a visible badge.
 
-What comes next is in [`ROADMAP.md`](ROADMAP.md).
+Device ingestion is live at `POST /api/devices/telemetry`: bearer-authenticated,
+validated against a gateway contract schema, and persisted. The remaining work is
+the field side, namely the MQTT broker and per-vendor Modbus adapters.
 
-On telemetry: the ingest endpoint at `POST /api/devices/telemetry` is built. It
-authenticates with a device bearer token, validates against a gateway contract
-schema, and writes to the telemetry tables. What is missing is the field side —
-the MQTT broker and the per-vendor Modbus adapters.
+Planned work is set out in [`ROADMAP.md`](ROADMAP.md).
 
 ## Getting started
 

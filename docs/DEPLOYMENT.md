@@ -128,17 +128,17 @@ web platform quietly calls its own loopback and every AI surface fails rather
 than reporting a missing setting.
 
 Note that `src/lib/env.ts` treats an unset `VERCEL` variable as a build phase and
-returns defaults instead of throwing. On a self-hosted box that means required
-variables are **not** enforced at runtime. Validate your environment before
-starting rather than relying on the application to complain.
+falls back to defaults rather than raising. On a self-hosted deployment this means
+required variables are not enforced at startup, so validate your environment as
+part of provisioning rather than relying on the application to signal a gap.
 
 ## Security before you expose anything
 
-- **Keep the AI service off the public internet.** It has no user model, and
-  `/advisory` proxies to a paid language model API, so an open instance is an
-  open bill. Put it on a private network reachable only by the web platform. In
-  the compose file it is published on port 8000 for local convenience; remove
-  that mapping for any shared environment.
+- **Keep the AI service on a private network.** It is designed as an internal
+  service reachable only by the web platform, and `/advisory` calls a metered
+  language model API, so restricting access also controls cost. The compose file
+  publishes port 8000 for local development; remove that mapping in any shared
+  environment.
 - **Where you cannot guarantee that**, set `AI_SERVICE_TOKEN` on the service and
   the same value on the web platform. Every endpoint then requires that bearer
   token, except `/` and `/health` so health probes keep working. Generate it
@@ -151,8 +151,9 @@ starting rather than relying on the application to complain.
   Set `AI_SERVICE_ALLOWED_ORIGINS` only if a browser genuinely needs to call the
   service. The web platform reaches it server-to-server, which CORS does not
   govern, so the default of no allowed origins is correct.
-- There is still **no rate limiting** on the AI service. The bearer token bounds
-  who can call it, not how often.
+- The bearer token controls who may call the AI service. Request throttling is on
+  the roadmap; until it ships, apply rate limiting at your reverse proxy if the
+  service is reachable beyond the web platform.
 - Terminate TLS at a reverse proxy in front of the web platform.
 - `DEVICE_INGEST_TOKEN` and `CRON_SECRET` are bearer tokens. Generate them
   randomly per environment and rotate them.
