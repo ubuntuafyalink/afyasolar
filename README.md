@@ -40,15 +40,35 @@ Layered system figures are in [`docs/architecture/`](docs/architecture/).
 
 ## Status
 
-| Live today | Planned |
-|---|---|
-| Facility assessment platform, roles & auth | Device telemetry ingestion (MQTT + Modbus gateway, 13 sites) |
-| Resilience scoring (CRiPHC → RCS 0–100) | Public real-time open-data API (anonymised feed) |
-| AI climate forecast, hazards & solar yield | Carbon dMRV (verified avoided emissions) |
-| Predictive maintenance (RUL + anomaly), LLM advisory & explainer | Energy-efficiency M&V (IPMVP Option C) |
-| Facility & portfolio dashboards, SMS notifications | |
+We label capabilities in three states rather than two, because some are real code
+running on real data, some are real code running on simulated data, and some are
+not built. A reviewer should be able to tell which is which.
 
-The database schema for device telemetry exists; the ingestion path is not yet built.
+| Live today | Runs on simulated or mock data | Not yet built |
+|---|---|---|
+| Facility assessment platform, roles & auth | Predictive maintenance (RUL + anomaly) | MQTT + Modbus vendor gateway adapters (13 sites) |
+| Resilience scoring (CRiPHC → RCS 0–100) | Several admin analytics surfaces | Carbon dMRV (verified avoided emissions) |
+| AI climate forecast, hazards & solar yield | Billing and payment-history views | Energy-efficiency M&V (IPMVP Option C) |
+| LLM advisory & explainer | | |
+| Public open-data resilience API, de-identified | | |
+| Device telemetry ingest endpoint (token-authenticated HTTP) | | |
+| Facility & portfolio dashboards, SMS notifications | | |
+
+Notes on the middle column, since these are the easiest claims to overstate:
+
+- **Predictive maintenance** models are trained on synthetic telemetry, and the
+  serving path simulates its own input window when no live window is supplied
+  (deterministic, seeded by facility id). Responses label the source as
+  `simulated` or `provided`. The method is real; the data is not yet.
+- **Admin analytics, billing and payment history** render from in-memory arrays
+  in several places. The remaining work is tracked in
+  [`web-platform/IMPLEMENTATION_ROADMAP.md`](web-platform/IMPLEMENTATION_ROADMAP.md).
+  Surfaces that show demo values carry a visible badge.
+
+On telemetry: the ingest endpoint at `POST /api/devices/telemetry` is built. It
+authenticates with a device bearer token, validates against a gateway contract
+schema, and writes to the telemetry tables. What is missing is the field side —
+the MQTT broker and the per-vendor Modbus adapters.
 
 ## Getting started
 

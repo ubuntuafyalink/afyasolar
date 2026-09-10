@@ -119,8 +119,8 @@ test enforces it).
 | Inverter telemetry | Contract + ingest endpoint + token | Per-vendor adapters, real 13-site credentials |
 | Messaging | Channel interface + AT skeleton | AT live wiring, USSD/Voice handlers |
 | Forecast | Open-Meteo normalizer + proxy | Anticipatory-action rules |
-| ML / analytics | Shared hazard vocabulary, telemetry store | Python sidecar (RUL, anomaly, SHAP), NILM, MQTT broker |
+| ML / analytics | Shared hazard vocabulary, telemetry store; Python sidecar shipped as `ai-service/` | NILM, MQTT broker, live telemetry into the maintenance models |
 | Open data / DPG | De-identified public endpoint | DPG registry submission, catalogue entry |
 
 See `IMPLEMENTATION_ROADMAP.md` for the phased delivery plan and
-`docs/SIMPLIFIED_SYSTEM_ARCHITECTURE.md` for the overall system diagram.
+`../../docs/architecture/` for the overall system diagram.
