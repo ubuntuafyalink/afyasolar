@@ -23,8 +23,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-import pandas as pd
-import pyarrow as pa
 import pyarrow.parquet as pq
 
 from fetch_nasa import fetch_point, to_long_frame, default_end  # reuse tested helpers
@@ -95,7 +93,8 @@ def main() -> int:
 
     end = args.end or default_end()
     locations = load_locations(args.locations)
-    todo = [l for l in locations if args.force or not (args.out_dir / f"{l['id']}.parquet").exists()]
+    todo = [loc for loc in locations
+            if args.force or not (args.out_dir / f"{loc['id']}.parquet").exists()]
     print(f"{len(locations)} grid points ({args.start}..{end}); {len(todo)} to fetch, "
           f"{len(locations) - len(todo)} cached. Workers={args.workers}\n")
 
@@ -103,7 +102,10 @@ def main() -> int:
     failures: list[str] = []
     t0 = time.time()
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        futures = {ex.submit(fetch_one, l, args.start, end, args.out_dir, args.force): l for l in todo}
+        futures = {
+            ex.submit(fetch_one, loc, args.start, end, args.out_dir, args.force): loc
+            for loc in todo
+        }
         for i, fut in enumerate(as_completed(futures), 1):
             r = fut.result()
             if r["status"] == "ok":

@@ -45,8 +45,8 @@ def main() -> int:
     print(f"Reading {args.csv} ...", flush=True)
     df = pd.read_csv(args.csv, parse_dates=["date"])
     locs = json.loads(args.locations.read_text(encoding="utf-8"))["locations"]
-    lats = [l["lat"] for l in locs]
-    lons = [l["lon"] for l in locs]
+    lats = [loc["lat"] for loc in locs]
+    lons = [loc["lon"] for loc in locs]
 
     # Per-variable real statistics.
     variables = []

@@ -4,7 +4,6 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app import config
 from app.services.artifacts import model_available
 
 router = APIRouter(prefix="/forecast", tags=["forecast"])

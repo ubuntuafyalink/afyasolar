@@ -155,7 +155,7 @@ def main() -> int:
     locations = load_locations(args.locations)
     if args.only:
         wanted = {x.strip() for x in args.only.split(",")}
-        locations = [l for l in locations if l["id"] in wanted]
+        locations = [loc for loc in locations if loc["id"] in wanted]
 
     print(f"Fetching {len(locations)} locations x {len(NASA_PARAMETERS)} variables "
           f"({args.start}..{end}) into {args.out_dir}")

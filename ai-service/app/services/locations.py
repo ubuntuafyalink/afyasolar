@@ -35,10 +35,10 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 def nearest_location(lat: float, lon: float) -> tuple[str, float]:
     """Return (location_id, distance_km) of the closest known point."""
     locs = _locations()
-    best = min(locs, key=lambda l: haversine_km(lat, lon, l["lat"], l["lon"]))
+    best = min(locs, key=lambda loc: haversine_km(lat, lon, loc["lat"], loc["lon"]))
     dist = haversine_km(lat, lon, best["lat"], best["lon"])
     return best["id"], round(dist, 1)
 
 
 def location_exists(location_id: str) -> bool:
-    return any(l["id"] == location_id for l in _locations())
+    return any(loc["id"] == location_id for loc in _locations())
