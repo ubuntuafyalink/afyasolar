@@ -28,16 +28,20 @@ cd afyasolar
 cd web-platform
 npm install
 cp .env.example .env         # then fill in local values (DB_*, NEXTAUTH_SECRET, ...)
+# Create the database named in DB_NAME before migrating:
+#   CREATE DATABASE afya_solar CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 npm run db:migrate
+npm run create-admin         # your first sign-in account
 npm run dev                  # http://localhost:3000
 ```
 
-**AI service** (Python 3.10):
+**AI service** (Python 3.11, matching the Dockerfile and CI):
 
 ```bash
 cd ai-service
-python -m venv .venv && .venv/Scripts/activate   # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt   # API + tests + ruff
+# pip install -r requirements-serve.txt  # add this to actually run forecasts
 cp .env.example .env         # optional: LLM_API_KEY, model/data overrides
 uvicorn app.main:app --reload                    # http://127.0.0.1:8000
 ```
@@ -54,15 +58,22 @@ Run the same checks our CI runs — one workflow per project, path-scoped
 # web-platform/
 npm run lint
 npm run type-check
-npm run test
+npm run coverage             # CI runs coverage, not plain `test`, and gates on it
+npm run build                # CI builds too; a change can pass the above and break this
 
 # ai-service/
-pytest
+ruff check . --exclude notebooks --exclude '*.ipynb'
+pytest -q
 ```
 
 - Add or update **unit tests** for any behavior you change. Pure logic (scoring, climate
-  normalization, rules, carbon math) must be covered. The mid-project coverage target is
-  **≥80%**.
+  normalization, rules, carbon math) must be covered.
+- CI enforces **80% coverage**, but read that number for what it is. The threshold applies
+  to the unit-testable logic surface listed under `coverage.include` in
+  `web-platform/vitest.config.ts`, not to the whole codebase. Route handlers, React
+  components and the database layer need a live database or a browser and are excluded.
+  Integration and end-to-end tests that would cover them do not exist yet, so treat the
+  figure as coverage of pure helpers rather than of the product.
 - Keep the public API and database contracts backward-compatible where possible; telemetry
   and messaging contracts are **versioned and additive-only**.
 

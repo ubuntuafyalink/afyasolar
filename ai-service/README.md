@@ -23,17 +23,18 @@ NASA POWER (open daily climate)
          solar yield from the forecasts using its existing tested logic
 ```
 
-RUL + anomaly (from synthetic telemetry) and an LLM explanation layer are the
-next tracks; they will live under `app/` and `pipeline/` alongside forecasting.
+RUL + anomaly (from synthetic telemetry) and the LLM explanation layer ship
+today, alongside forecasting under `app/` and `pipeline/`.
 
 ## Layout
 
 ```
-ai-engine/
+ai-service/
 ├── app/                  FastAPI service
 │   ├── main.py           entrypoint (uvicorn app.main:app)
 │   ├── config.py         env-overridable paths
-│   ├── routers/          health, forecast
+│   ├── routers/          health, forecast, hazards, yield, maintenance,
+│   │                     advisory, explain, predict
 │   └── services/         predictor loading (lazy heavy deps)
 ├── pipeline/             the ML pipeline (data -> datasets -> train -> eval)
 │   ├── data/             fetch_nasa.py + locations.json
@@ -50,8 +51,9 @@ ai-engine/
 ## Run the API (no model needed for /health)
 
 ```bash
-python -m venv .venv && .venv\Scripts\activate   # Windows
-pip install -r requirements.txt
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt      # API + /health only
+# pip install -r requirements-serve.txt   # add this to actually forecast
 uvicorn app.main:app --reload
 # http://127.0.0.1:8000/docs   ·   GET /health shows which models are trained
 ```
@@ -78,6 +80,26 @@ subsequent calls are instant.
 | `POST /maintenance/anomaly` | flag anomalous telemetry rows | yes (anomaly) |
 | `POST /advisory` | plain-language advisory over the above (LLM or rule-based) | no |
 
+The endpoints above are the primitives. The web platform does **not** call them
+directly — it calls the composed `/predict/*` endpoints, which take a facility or
+a location and orchestrate the primitives internally:
+
+| Method + path | Purpose | Needs a trained model? |
+|---|---|---|
+| `POST /predict/climate` | forecast + hazards + optional yield for a location | yes (climate) |
+| `POST /predict/maintenance` | battery RUL, anomaly and health for a facility | yes (RUL, anomaly) |
+| `POST /predict/advisory` | facility operations advisory (power, climate, medical) | no |
+| `POST /predict/outlook-report` | recommended actions as a safe, structured report | yes (climate) |
+| `POST /predict/portfolio-advisory` | fleet-level advisory over a portfolio summary | no |
+| `POST /explain` | explain one prediction in plain language (en/sw) | no |
+
+`POST /predict/maintenance` currently **simulates** the telemetry window it
+scores, deterministically seeded by facility id, because there is no live daily
+telemetry yet. The response labels the source as `simulated` or `provided`. Pass
+`window` to score real data. See [`docs/EVALUATION.md`](../docs/EVALUATION.md).
+
+FastAPI serves the full generated schema at `/docs`.
+
 `/hazards` and `/yield` are pure derivations (the app's own logic, ported), so
 they work immediately. The main system composes these: forecast -> hazards +
 yield -> advisory. Full request/response shapes are at `/docs`.
@@ -89,7 +111,8 @@ Easiest: open `notebooks/train_colab.ipynb` and run all cells. Or directly:
 ```bash
 pip install -r pipeline/train/requirements.txt
 
-python pipeline/data/fetch_nasa.py            # open NASA POWER, 34 locations
+python pipeline/data/make_grid.py             # 275-point East-Africa land grid
+python pipeline/data/fetch_regional.py        # open NASA POWER for that grid
 python pipeline/datasets/build_dataset.py     # daily + monthly Chronos-ready series
 python pipeline/train/finetune_chronos.py     # fine-tune Chronos-Bolt (both horizons)
 python pipeline/eval/backtest.py              # WQL/MASE vs seasonal-naive baseline

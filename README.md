@@ -69,6 +69,8 @@ Notes on the middle column, since these are the easiest claims to overstate:
   [`web-platform/IMPLEMENTATION_ROADMAP.md`](web-platform/IMPLEMENTATION_ROADMAP.md).
   Surfaces that show demo values carry a visible badge.
 
+What comes next is in [`ROADMAP.md`](ROADMAP.md).
+
 On telemetry: the ingest endpoint at `POST /api/devices/telemetry` is built. It
 authenticates with a device bearer token, validates against a gateway contract
 schema, and writes to the telemetry tables. What is missing is the field side —
@@ -106,6 +108,7 @@ afyasolar/                 (this repo)
 │   ├── EVALUATION.md      Forecast accuracy against a baseline
 │   └── PRIVACY.md         Data protection and de-identification
 ├── docker-compose.yml     One-command local stack
+├── ROADMAP.md             What is being built next, in the open
 ├── .github/workflows/     CI (one job per project, path-scoped)
 ├── LICENSE                MIT (covers both projects)
 ├── CONTRIBUTING.md · GOVERNANCE.md · SECURITY.md · CODE_OF_CONDUCT.md
